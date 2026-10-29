@@ -10,6 +10,9 @@
 
 - Build a rules publisher for one Discord guild initially: a bot that publishes a persistent Components V2 launcher and private, paginated rules views, plus a web admin panel.
 - The panel edits Discord community rules and Open Space game rules, supports ordering and previews, and publishes the active version.
+- The user additionally approved a visual Components V2 block editor, image/file uploads, and sending/editing messages as the bot. Reuse the shared block model for rules and messages. Preserve compatibility with earlier text-only rules and published revisions.
+- Actual message sending or updating is initiated by an authenticated administrator in the panel. Tests and browser QA use FakeDiscord, not the live guild.
+- The user approved detailed admin UI and bot-action logging, including before/after text and line diffs. Persist the full audit in SQLite and daily JSONL; optional Discord delivery is enabled by an administrator selecting a log channel. Do not collect credentials or observe ordinary guild-member messages. Browser observations must remain distinguishable from authoritative server events.
 - The app publishes and navigates rules. It does not scan chat, automatically detect violations, or issue punishments.
 - Follow Discord Components V2 for all bot-rendered rules and navigation. Do not use classic embeds for this experience.
 - Navigation should be ephemeral and scoped to the interacting user. The public launcher remains in the configured channel.

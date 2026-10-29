@@ -1,26 +1,8 @@
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { RuleMarkdown } from './Markdown.js';
 import { ArrowLeft, ArrowRight, House, Eye } from 'lucide-react';
 import { paginate, type Ruleset } from '../shared/rules.js';
+import { BlocksPreview } from './BlockPreview.js';
 
-export function RuleMarkdown({ children }: { children: string }) {
-  return (
-    <Markdown
-      remarkPlugins={[remarkGfm]}
-      skipHtml
-      components={{
-        a: ({ children, href }) => (
-          <a href={href} target="_blank" rel="noreferrer noopener">
-            {children}
-          </a>
-        ),
-        img: ({ alt }) => <span>[{alt || 'Изображение'}]</span>,
-      }}
-    >
-      {children}
-    </Markdown>
-  );
-}
 export function Preview({
   set,
   index,
@@ -52,9 +34,12 @@ export function Preview({
           </div>
           <hr />
           {page ? (
-            <div className="markdown">
-              <RuleMarkdown>{'## ' + page.title + '\n\n' + page.body}</RuleMarkdown>
-            </div>
+            <>
+              <div className="markdown">
+                <RuleMarkdown>{'## ' + page.title}</RuleMarkdown>
+              </div>
+              <BlocksPreview blocks={page.blocks} />
+            </>
           ) : (
             <p>Включите хотя бы одну страницу.</p>
           )}

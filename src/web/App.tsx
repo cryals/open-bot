@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
   BookOpen,
+  ClipboardList,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -25,6 +26,8 @@ import {
 } from 'lucide-react';
 import {
   paginate,
+  pageBlocks,
+  infoBlocks,
   type GuildInfo,
   type RuleKey,
   type RulePage,
@@ -34,8 +37,16 @@ import {
 } from '../shared/rules.js';
 import { api, ApiError, setCsrf } from './api.js';
 import { Preview } from './Preview.js';
+import { BlockEditor } from './BlockEditor.js';
+import { blockText } from '../shared/blocks.js';
+import { BlocksPreview } from './BlockPreview.js';
+import { useActivity } from './activity.js';
+const Composer = lazy(() => import('./Composer.js').then((module) => ({ default: module.Composer })));
+const ActivityView = lazy(() =>
+  import('./ActivityView.js').then((module) => ({ default: module.ActivityView })),
+);
 
-type Mode = 'rules' | 'settings' | 'history';
+type Mode = 'rules' | 'settings' | 'history' | 'messages' | 'info' | 'activity';
 type LoginState =
   { kind: 'loading' } | { kind: 'guest'; error?: string } | { kind: 'member'; user: SessionUser };
 type ModalProps = {
@@ -82,6 +93,7 @@ const date = (value: number) =>
 
 export function App() {
   const [login, setLogin] = useState<LoginState>({ kind: 'loading' });
+  const activityError = useActivity(login.kind === 'member');
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [document, setDocument] = useState<RulesDocument | null>(null);
   const [guild, setGuild] = useState<GuildInfo | null>(null);
@@ -94,17 +106,19 @@ export function App() {
   const [success, setSuccess] = useState('');
   const [sidebar, setSidebar] = useState(false);
   const [modal, setModal] = useState<ModalProps | null>(null);
+  const [composerDirty, setComposerDirty] = useState(false);
+  const [composerOpened, setComposerOpened] = useState(false);
   const dirty = Boolean(
     workspace && document && JSON.stringify(workspace.document) !== JSON.stringify(document),
   );
 
   useEffect(() => {
     const warning = (event: BeforeUnloadEvent) => {
-      if (dirty) event.preventDefault();
+      if (dirty || composerDirty) event.preventDefault();
     };
     window.addEventListener('beforeunload', warning);
     return () => window.removeEventListener('beforeunload', warning);
-  }, [dirty]);
+  }, [dirty, composerDirty]);
   useEffect(() => {
     let alive = true;
     async function load() {
@@ -222,7 +236,7 @@ export function App() {
         setModal(null);
         void run(async () => {
           accept(await api<Workspace>('/publish', 'POST', { version: workspace!.version }));
-          setSuccess('Правила опубликованы в Discord');
+          setSuccess('Информация и правила опубликованы в Discord');
         });
       },
       children: (
@@ -298,6 +312,17 @@ export function App() {
         <div className="nav-label">РАЗДЕЛЫ</div>
         <nav className="primary-nav" aria-label="Разделы панели">
           <button
+            className={mode === 'info' ? 'active' : ''}
+            onClick={() => {
+              setMode('info');
+              setSidebar(false);
+            }}
+          >
+            <Radio size={18} />
+            Информация
+            <ChevronRight size={15} />
+          </button>
+          <button
             className={mode === 'rules' && key === 'discord' ? 'active' : ''}
             onClick={() => switchSet('discord')}
           >
@@ -311,6 +336,18 @@ export function App() {
           >
             <Gamepad2 size={18} />
             Правила игры
+            <ChevronRight size={15} />
+          </button>
+          <button
+            className={mode === 'messages' ? 'active' : ''}
+            onClick={() => {
+              setComposerOpened(true);
+              setMode('messages');
+              setSidebar(false);
+            }}
+          >
+            <Send size={18} />
+            Сообщения бота
             <ChevronRight size={15} />
           </button>
         </nav>
@@ -374,6 +411,16 @@ export function App() {
         )}
         <nav className="secondary-nav" aria-label="Настройки панели">
           <button
+            className={mode === 'activity' ? 'active' : ''}
+            onClick={() => {
+              setMode('activity');
+              setSidebar(false);
+            }}
+          >
+            <ClipboardList size={17} />
+            Журнал действий
+          </button>
+          <button
             className={mode === 'settings' ? 'active' : ''}
             onClick={() => {
               setMode('settings');
@@ -408,7 +455,7 @@ export function App() {
             aria-label="Выйти"
             disabled={busy}
             onClick={() => {
-              if (dirty && !window.confirm('Выйти без сохранения изменений?')) return;
+              if ((dirty || composerDirty) && !window.confirm('Выйти без сохранения изменений?')) return;
               void run(async () => {
                 await api('/logout', 'POST');
                 setLogin({ kind: 'guest' });
@@ -438,7 +485,13 @@ export function App() {
                   : 'Discord'
                 : mode === 'settings'
                   ? 'Настройки'
-                  : 'История'}
+                  : mode === 'messages'
+                    ? 'Сообщения бота'
+                    : mode === 'info'
+                      ? 'Информация'
+                      : mode === 'activity'
+                        ? 'Журнал действий'
+                        : 'История'}
             </strong>
           </div>
           <div className="user">
@@ -455,17 +508,29 @@ export function App() {
                 ? 'Редактор правил'
                 : mode === 'settings'
                   ? 'Настройки'
-                  : 'История публикаций'}
+                  : mode === 'messages'
+                    ? 'Сообщения бота'
+                    : mode === 'info'
+                      ? 'Информация'
+                      : mode === 'activity'
+                        ? 'Журнал действий'
+                        : 'История публикаций'}
             </h1>
             <p>
               {mode === 'rules'
                 ? 'Понятные правила. Одна актуальная версия.'
                 : mode === 'settings'
                   ? 'Канал публикации и доступ к панели.'
-                  : 'Опубликованные версии можно вернуть в черновик.'}
+                  : mode === 'messages'
+                    ? 'Создавайте сообщения из блоков и отправляйте от имени бота.'
+                    : mode === 'info'
+                      ? 'Главное сообщение: правила, полезные ссылки и информация о проекте.'
+                      : mode === 'activity'
+                        ? 'Нажатия, изменения текста, публикации и действия бота.'
+                        : 'Опубликованные версии можно вернуть в черновик.'}
             </p>
           </div>
-          <div className="heading-actions">
+          <div className="heading-actions" hidden={mode === 'messages' || mode === 'activity'}>
             <span className={'save-state ' + (dirty ? 'unsaved' : '')}>
               {dirty ? (
                 <>
@@ -507,10 +572,54 @@ export function App() {
             </button>
           </div>
         )}
+        {activityError && (
+          <div className="alert error" role="alert">
+            {activityError}
+          </div>
+        )}
+        {mode === 'activity' && (
+          <Suspense fallback={<p className="composer-loading">Открываем журнал…</p>}>
+            <ActivityView />
+          </Suspense>
+        )}
         {success && (
           <div className="alert success" role="status">
             <CheckCircle2 size={17} />
             {success}
+          </div>
+        )}
+        {mode === 'info' && (
+          <div className="workspace-grid">
+            <section className="editor-panel">
+              <fieldset disabled={busy}>
+                <div className="info-editor-hint">
+                  <BookOpen size={18} />
+                  <p>
+                    Соберите информационное сообщение из блоков. Добавляйте контейнеры для вики, лаунчера,
+                    поддержки и документов. В блоке «Ряд кнопок» доступны ссылки и кнопка «Читать правила».
+                  </p>
+                </div>
+                <BlockEditor
+                  blocks={infoBlocks(document)}
+                  onChange={(launcherBlocks) => setDocument({ ...document, launcherBlocks })}
+                />
+                <p className="editor-hint">
+                  <ShieldCheck size={15} />
+                  Сохраните изменения и нажмите «Опубликовать», чтобы обновить существующее сообщение.
+                </p>
+              </fieldset>
+            </section>
+            <aside className="preview-panel">
+              <div className="preview-heading">Информационное сообщение в Discord</div>
+              <div className="discord-surface">
+                <div className="discord-author">
+                  <span className="bot-avatar">OS</span>
+                  <strong>Open Space</strong>
+                  <span className="app-tag">APP</span>
+                </div>
+                <BlocksPreview blocks={infoBlocks(document)} />
+              </div>
+            </aside>
           </div>
         )}
         {mode === 'rules' && (
@@ -545,7 +654,7 @@ export function App() {
                     </label>
                   </div>
                 </details>
-                <div className="editor-card">
+                <div className="editor-card" key={selected.id}>
                   <div className="editor-card-header">
                     <span>
                       <FileText size={17} />
@@ -587,18 +696,7 @@ export function App() {
                       onChange={(event) => updatePage({ title: event.target.value })}
                     />
                   </label>
-                  <div className="body-label">
-                    <label htmlFor="rule-body">Текст правил</label>
-                    <span>Markdown</span>
-                  </div>
-                  <textarea
-                    id="rule-body"
-                    className="rule-textarea"
-                    value={selected.body}
-                    maxLength={30000}
-                    onChange={(event) => updatePage({ body: event.target.value })}
-                    spellCheck={false}
-                  />
+                  <BlockEditor blocks={pageBlocks(selected)} onChange={(blocks) => updatePage({ blocks })} />
                   <div className="editor-footer">
                     <label className="checkbox">
                       <input
@@ -608,7 +706,9 @@ export function App() {
                       />
                       Показывать страницу
                     </label>
-                    <span>{selected.body.length.toLocaleString('ru')} символов</span>
+                    <span>
+                      {pageBlocks(selected).map(blockText).join('').length.toLocaleString('ru')} символов
+                    </span>
                   </div>
                 </div>
                 <p className="editor-hint">
@@ -620,6 +720,21 @@ export function App() {
             <Preview set={current} index={previewIndex} onIndex={setPreviewIndex} />
           </div>
         )}
+        <div hidden={mode !== 'messages'}>
+          {composerOpened && (
+            <Suspense fallback={<p className="composer-loading">Открываем редактор…</p>}>
+              <Composer
+                guild={guild!}
+                onDirtyChange={setComposerDirty}
+                onError={(cause) => {
+                  setError(cause instanceof Error ? cause.message : 'Не удалось выполнить действие');
+                  if (cause instanceof ApiError && [401, 403].includes(cause.status))
+                    setLogin({ kind: 'guest', error: cause.message });
+                }}
+              />
+            </Suspense>
+          )}
+        </div>
         {mode === 'settings' && (
           <div className="settings-grid">
             <div>
@@ -640,27 +755,11 @@ export function App() {
               />
               <section className="settings-card">
                 <h2>Публичное сообщение</h2>
-                <p>Сообщение в канале, с которого участники открывают правила.</p>
-                <fieldset disabled={busy}>
-                  <label>
-                    Заголовок
-                    <input
-                      value={document.launcherTitle}
-                      maxLength={120}
-                      onChange={(event) => setDocument({ ...document, launcherTitle: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Описание
-                    <textarea
-                      rows={7}
-                      value={document.launcherBody}
-                      maxLength={1800}
-                      onChange={(event) => setDocument({ ...document, launcherBody: event.target.value })}
-                    />
-                  </label>
-                  <small>Нажмите «Сохранить», затем «Опубликовать», чтобы обновить текст в Discord.</small>
-                </fieldset>
+                <p>Настройте контейнеры, изображения и кнопки в разделе «Информация».</p>
+                <button className="button" onClick={() => setMode('info')}>
+                  <Radio size={16} />
+                  Открыть конструктор информации
+                </button>
               </section>
             </div>
             <aside className="settings-card status-card">
@@ -777,23 +876,32 @@ function SettingsForm({
   workspace: Workspace;
   guild: GuildInfo;
   busy: boolean;
-  onSave: (values: { channelId: string | null; adminRoleId: string | null }) => Promise<void>;
+  onSave: (values: {
+    channelId: string | null;
+    adminRoleId: string | null;
+    logChannelId: string | null;
+  }) => Promise<void>;
 }) {
   const [channelId, setChannelId] = useState(workspace.settings.channelId || '');
   const [adminRoleId, setAdminRoleId] = useState(workspace.settings.adminRoleId || '');
+  const [logChannelId, setLogChannelId] = useState(workspace.settings.logChannelId || '');
   return (
     <form
       className="settings-card"
       onSubmit={(event) => {
         event.preventDefault();
-        void onSave({ channelId: channelId || null, adminRoleId: adminRoleId || null });
+        void onSave({
+          channelId: channelId || null,
+          adminRoleId: adminRoleId || null,
+          logChannelId: logChannelId || null,
+        });
       }}
     >
       <h2>Канал и доступ</h2>
       <p>Бот публикует одно сообщение и обновляет его при следующих публикациях.</p>
       <fieldset disabled={busy}>
         <label>
-          Канал для правил
+          Канал информационного сообщения
           <select value={channelId} onChange={(event) => setChannelId(event.target.value)}>
             <option value="">Выберите канал</option>
             {guild.channels.map((channel) => (
@@ -814,6 +922,21 @@ function SettingsForm({
             ))}
           </select>
         </label>
+        <label>
+          Канал журнала действий
+          <select value={logChannelId} onChange={(event) => setLogChannelId(event.target.value)}>
+            <option value="">Не отправлять в Discord</option>
+            {guild.channels.map((channel) => (
+              <option key={channel.id} value={channel.id}>
+                #{channel.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="field-help">
+          Все события сохраняются в журнале панели и JSONL. В выбранный канал бот отправляет компактные записи
+          с автором и разницей по строкам. Полная разница остаётся в панели.
+        </p>
         <p className="field-help">
           Владелец сервера сохраняет доступ к панели. Проверка роли выполняется при каждом действии.
         </p>

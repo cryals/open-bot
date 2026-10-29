@@ -14,6 +14,7 @@ export const settings = sqliteTable('settings', {
   messageId: text('message_id'),
   messageChannelId: text('message_channel_id'),
   adminRoleId: text('admin_role_id'),
+  logChannelId: text('log_channel_id'),
   publishedRevision: integer('published_revision').references(() => revisions.id),
 });
 export const revisions = sqliteTable('revisions', {

@@ -1,6 +1,7 @@
 import type { Config } from '../src/server/config.js';
 import type { DiscordPort } from '../src/server/discord.js';
 import type { GuildInfo, RulesDocument } from '../src/shared/rules.js';
+import type { BotMessage } from '../src/shared/blocks.js';
 
 export const testConfig: Config = {
   token: 'test-token-never-used',
@@ -46,4 +47,14 @@ export class FakeDiscord implements DiscordPort {
     return '555555555555555555';
   }
   async retire() {}
+  sent: BotMessage[] = [];
+  failAt = -1;
+  async sendMessage(message: BotMessage) {
+    if (this.sent.length === this.failAt) throw new Error('Simulated send failure');
+    this.sent.push(message);
+    return String(777777777777777770n + BigInt(this.sent.length));
+  }
+  async editMessage(message: BotMessage) {
+    this.sent[0] = message;
+  }
 }

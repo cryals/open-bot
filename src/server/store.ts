@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { desc, eq, lt } from 'drizzle-orm';
 import { createHash, randomBytes } from 'node:crypto';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import {
   documentSchema,
@@ -27,10 +27,14 @@ export class Store {
     this.sqlite.pragma('foreign_keys = ON');
     this.sqlite.pragma('busy_timeout = 5000');
     this.sqlite.exec('CREATE TABLE IF NOT EXISTS migrations (id INTEGER PRIMARY KEY)');
-    if (!this.sqlite.prepare('SELECT id FROM migrations WHERE id = 1').get()) {
+    for (const file of readdirSync(resolve('migrations'))
+      .filter((file) => /^\d+-.*\.sql$/.test(file))
+      .sort()) {
+      const id = Number(file.split('-')[0]);
+      if (this.sqlite.prepare('SELECT id FROM migrations WHERE id = ?').get(id)) continue;
       this.sqlite.transaction(() => {
-        this.sqlite.exec(readFileSync(resolve('migrations/001-initial.sql'), 'utf8'));
-        this.sqlite.prepare('INSERT INTO migrations(id) VALUES (1)').run();
+        this.sqlite.exec(readFileSync(resolve('migrations', file), 'utf8'));
+        this.sqlite.prepare('INSERT INTO migrations(id) VALUES (?)').run(id);
       })();
     }
     this.db = drizzle(this.sqlite);

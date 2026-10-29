@@ -49,7 +49,20 @@ Implementation approved by the user on 2026-10-29. The MVP is implemented. Edito
 - [x] Add structured logs, health checks, database backup/restore guidance, and deployment documentation.
 - [x] Perform manual validation against the acceptance criteria and document known limitations.
 
-## MVP acceptance criteria
+## Subsequent approved additions
+
+- [x] Shared Components V2 model and visual editor for rules and bot messages.
+- [x] Images after individual rules, section accessories, galleries, files, link buttons and nested block editing.
+- [x] Full Information editor with containers and a built-in Read Rules button.
+- [x] Bot message drafts, templates, send history and editing persistent message IDs.
+- [x] Media storage, automatic migrations, backup of uploads and existing-data compatibility.
+- [x] Fix stale-backend Not Found error and provide retryable composer loading failures.
+- [x] Detailed admin/browser and bot-action journal with full before/after values and line diffs.
+- [x] Daily JSONL, searchable web journal, full export and optional queued Discord delivery.
+- [x] Keep ordinary Discord member messages outside the logging scope, as clarified by the user.
+- [x] Apply the owner's AL-S visual system, source fonts, monochrome controls, background and Neural Glow.
+
+## Acceptance criteria
 
 - The bot can publish and update one persistent launcher in the configured channel.
 - The launcher opens an ephemeral ruleset selector and private paginated views for each user.

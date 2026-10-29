@@ -6,6 +6,7 @@ import serveStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { z } from 'zod';
 import { documentSchema, settingsSchema } from '../shared/rules.js';
 import type { Config } from './config.js';
@@ -13,7 +14,17 @@ import type { DiscordPort } from './discord.js';
 import type { OAuthPort } from './oauth.js';
 import type { Store } from './store.js';
 import { HttpError } from './errors.js';
-import { validatePayloads } from './render.js';
+import { validatePayloads, rulesView, launcher } from './render.js';
+import { composerRoutes } from './composer-routes.js';
+import { MediaService } from './media.js';
+import { ActivityService } from './activity.js';
+import { uiEventSchema } from '../shared/activity.js';
+import { pageBlocks, paginate, infoBlocks, type RulesDocument } from '../shared/rules.js';
+declare module 'fastify' {
+  interface FastifyRequest {
+    adminSession: NonNullable<ReturnType<Store['session']>> | null;
+  }
+}
 
 const equal = (a: string, b: string) => {
   const first = Buffer.from(a);
@@ -37,13 +48,44 @@ export async function createApp(options: {
     bodyLimit: 1024 * 1024,
   });
   await app.register(cookie);
+  app.decorateRequest('adminSession', null);
+  const activity = new ActivityService(store, discord, [config.token, config.clientSecret]);
+  discord.setActivity?.(activity);
+  app.addHook('onClose', async () => {
+    activity.record(
+      { userId: config.clientId, name: 'Open Space' },
+      { kind: 'system.stop', target: 'server', summary: 'Сервис остановлен' },
+    );
+    activity.close();
+  });
+  const actor = (request: FastifyRequest) => request.adminSession!;
+  activity.record(
+    { userId: config.clientId, name: 'Open Space' },
+    { kind: 'system.start', target: 'server', summary: 'Сервис запущен' },
+  );
+  app.addHook('onResponse', async (request, reply) => {
+    const route = request.routeOptions.url || 'unknown';
+    if (!route.startsWith('/api/') || route.startsWith('/api/activity') || route === '/api/health') return;
+    activity.record(request.adminSession || { userId: 'guest', name: 'Гость' }, {
+      kind: reply.statusCode >= 400 ? 'api.error' : 'api.request',
+      target: request.method + ' ' + route,
+      summary: `Запрос ${request.method} ${route}: ${reply.statusCode}`,
+      details: {
+        status: reply.statusCode,
+        durationMs: Math.round(reply.elapsedTime),
+        params: request.params,
+      },
+    });
+  });
   await app.register(helmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:'],
+        styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        styleSrcAttr: ["'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
@@ -61,6 +103,11 @@ export async function createApp(options: {
     const session = store.session(request.cookies.os_session || '');
     if (!session) throw new HttpError(401, 'Войдите через Discord');
     if (!(await discord.authorize(session.userId, store.getSettings().adminRoleId))) {
+      activity.record(session, {
+        kind: 'auth.denied',
+        target: 'admin',
+        summary: 'Доступ к панели отклонён: недостаточно прав',
+      });
       store.deleteSession(request.cookies.os_session || '');
       throw new HttpError(403, 'У вас нет роли администратора для этой панели');
     }
@@ -71,6 +118,7 @@ export async function createApp(options: {
       reply.header('Cache-Control', 'no-store');
     if (request.url.startsWith('/api/') && request.url.split('?')[0] !== '/api/health') {
       const session = await authenticate(request);
+      request.adminSession = session;
       if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         if (
           request.headers.origin !== config.appOrigin ||
@@ -142,25 +190,85 @@ export async function createApp(options: {
       return reply.redirect(config.appOrigin + '/?error=forbidden');
     if (request.cookies.os_session) store.deleteSession(request.cookies.os_session);
     const session = store.createSession(user);
+    activity.record(
+      { userId: user.id, name: user.name },
+      { kind: 'auth.login', target: 'admin', summary: 'Вход в панель через Discord' },
+    );
     reply.setCookie('os_session', session.token, { ...cookieOptions, maxAge: 8 * 60 * 60 });
     return reply.redirect(config.appOrigin + '/');
   });
   app.get('/api/me', async (request) => {
-    const session = store.session(request.cookies.os_session || '')!;
+    const session = request.adminSession!;
     return { user: { id: session.userId, name: session.name }, csrf: session.csrf };
   });
   app.post('/api/logout', async (request, reply) => {
+    activity.record(actor(request), { kind: 'auth.logout', target: 'admin', summary: 'Выход из панели' });
     store.deleteSession(request.cookies.os_session || '');
     reply.clearCookie('os_session', cookieOptions);
     return { ok: true };
   });
   app.get('/api/workspace', async () => store.workspace());
+  const media = new MediaService(store);
+  function validateRules(document: RulesDocument) {
+    validatePayloads(document);
+    media.validate(infoBlocks(document));
+    media.prepare(launcher(document));
+    for (const set of document.rulesets) {
+      for (const page of set.pages) media.validate(pageBlocks(page));
+      for (let index = 0; index < paginate(set).length; index++)
+        media.prepare(rulesView(document, set.key, index, '111111111111111111'));
+    }
+  }
+  await composerRoutes(app, store, discord, activity);
+  app.post(
+    '/api/activity',
+    { config: { rateLimit: { max: 600, timeWindow: '1 minute' } } },
+    async (request) => {
+      const { events } = z.object({ events: z.array(uiEventSchema).min(1).max(20) }).parse(request.body);
+      for (const event of events)
+        activity.record(actor(request), {
+          ...event,
+          details: { context: event.context, occurredAt: event.occurredAt, source: 'browser' },
+        });
+      return { ok: true };
+    },
+  );
+  app.get('/api/activity', async (request) => {
+    const query = z
+      .object({
+        search: z.string().max(200).default(''),
+        before: z.coerce.number().int().positive().optional(),
+      })
+      .parse(request.query);
+    return activity.list(query.search, query.before);
+  });
+  app.get('/api/activity/export', async (request, reply) => {
+    activity.record(actor(request), {
+      kind: 'activity.export',
+      target: 'activity',
+      summary: 'Выгружен полный журнал JSONL',
+    });
+    return reply
+      .type('application/x-ndjson')
+      .header('Content-Disposition', 'attachment; filename="openspace-activity.jsonl"')
+      .send(Readable.from(activity.export()));
+  });
   app.get('/api/guild', async () => discord.info());
   app.put('/api/draft', async (request) => {
     assertNotPublishing();
     const input = versionSchema.extend({ document: documentSchema }).parse(request.body);
-    validatePayloads(input.document);
-    return store.saveDraft(input.document, input.version, store.session(request.cookies.os_session!)!.userId);
+    validateRules(input.document);
+    const before = store.getDraft().document;
+    const result = store.saveDraft(input.document, input.version, actor(request).userId);
+    activity.record(actor(request), {
+      kind: 'rules.save',
+      target: 'rules',
+      summary: 'Сохранён черновик правил и информации',
+      before,
+      after: input.document,
+      details: { version: result.version },
+    });
+    return result;
   });
   app.put('/api/settings', async (request) => {
     assertNotPublishing();
@@ -168,16 +276,26 @@ export async function createApp(options: {
     const info = await discord.info();
     if (input.channelId && !info.channels.some((channel) => channel.id === input.channelId))
       throw new HttpError(400, 'Канал не найден на этом сервере');
+    if (input.logChannelId && !info.channels.some((channel) => channel.id === input.logChannelId))
+      throw new HttpError(400, 'Канал журнала не найден на этом сервере');
     if (input.adminRoleId && !info.roles.some((role) => role.id === input.adminRoleId))
       throw new HttpError(400, 'Роль не найдена на этом сервере');
-    const actor = store.session(request.cookies.os_session!)!.userId;
+    const actor = request.adminSession!.userId;
     if (!(await discord.authorize(actor, input.adminRoleId)))
       throw new HttpError(
         400,
         'Выберите роль, к которой у вас есть доступ, чтобы не потерять доступ к панели',
       );
     assertNotPublishing();
+    const before = store.getSettings();
     store.saveSettings(input, actor);
+    activity.record(request.adminSession!, {
+      kind: 'settings.save',
+      target: 'settings',
+      summary: 'Изменены настройки',
+      before,
+      after: store.getSettings(),
+    });
     return store.workspace();
   });
   app.post('/api/publish', async (request) => {
@@ -187,13 +305,22 @@ export async function createApp(options: {
     if (draft.version !== input.version)
       throw new HttpError(409, 'Черновик изменился. Обновите страницу перед публикацией.');
     const settings = store.getSettings();
+    const previouslyPublished = store.active();
     if (!settings.channelId) throw new HttpError(400, 'Сначала выберите канал в настройках');
-    validatePayloads(draft.document);
-    const actor = store.session(request.cookies.os_session!)!.userId;
+    validateRules(draft.document);
+    const actor = request.adminSession!.userId;
     publishing = true;
     try {
       const messageId = await discord.upsert(draft.document, settings.channelId, settings);
       store.commitPublication(draft.document, actor, settings.channelId, messageId);
+      activity.record(request.adminSession!, {
+        kind: 'rules.publish',
+        target: `channel:${settings.channelId}/message:${messageId}`,
+        summary: 'Опубликованы информация и правила',
+        details: { channelId: settings.channelId, messageId, version: draft.version },
+        before: previouslyPublished,
+        after: draft.document,
+      });
       if (
         settings.messageId &&
         settings.messageChannelId &&
@@ -201,11 +328,25 @@ export async function createApp(options: {
       ) {
         try {
           await discord.retire(settings.messageChannelId, settings.messageId);
+          activity.record(request.adminSession!, {
+            kind: 'message.delete',
+            target: `channel:${settings.messageChannelId}/message:${settings.messageId}`,
+            summary: 'Удалено прежнее информационное сообщение после переноса',
+            details: { channelId: settings.messageChannelId, messageId: settings.messageId },
+          });
         } catch {
           app.log.warn('New launcher published; old launcher could not be removed');
         }
       }
       return store.workspace();
+    } catch (error) {
+      activity.record(request.adminSession!, {
+        kind: 'rules.publish_failed',
+        target: 'channel:' + settings.channelId,
+        summary: 'Публикация не завершена',
+        details: { error: error instanceof Error ? error.name : 'Error' },
+      });
+      throw error;
     } finally {
       publishing = false;
     }
@@ -214,11 +355,17 @@ export async function createApp(options: {
     assertNotPublishing();
     const input = versionSchema.parse(request.body);
     const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params);
-    return store.saveDraft(
-      store.revision(id).document,
-      input.version,
-      store.session(request.cookies.os_session!)!.userId,
-    );
+    const before = store.getDraft().document;
+    const document = store.revision(id).document;
+    const result = store.saveDraft(document, input.version, actor(request).userId);
+    activity.record(actor(request), {
+      kind: 'rules.restore',
+      target: `revision:${id}`,
+      summary: 'Версия возвращена в черновик',
+      before,
+      after: document,
+    });
+    return result;
   });
   const webRoot = resolve('dist/web');
   if (existsSync(resolve(webRoot, 'index.html'))) {

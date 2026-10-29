@@ -14,8 +14,14 @@ import type { Store } from './store.js';
 import type { Config } from './config.js';
 import { HttpError } from './errors.js';
 import { launcher, menu, notice, rulesView } from './render.js';
+import { MediaService } from './media.js';
+import { customMessage } from './blocks.js';
+import type { BotMessage } from '../shared/blocks.js';
+import { hash } from './store.js';
+import type { ActivityService } from './activity.js';
 
 export interface DiscordPort {
+  setActivity?(activity: ActivityService): void;
   isReady(): boolean;
   authorize(userId: string, roleId: string | null): Promise<boolean>;
   info(): Promise<GuildInfo>;
@@ -25,18 +31,57 @@ export interface DiscordPort {
     previous: { messageId: string | null; messageChannelId: string | null },
   ): Promise<string>;
   retire(channelId: string, messageId: string): Promise<void>;
+  sendMessage(message: BotMessage, channelId: string, nonce: string): Promise<string>;
+  editMessage(message: BotMessage, channelId: string, messageId: string): Promise<void>;
 }
 
 export class DiscordService implements DiscordPort {
+  private activity?: ActivityService;
+  setActivity(activity: ActivityService) {
+    this.activity = activity;
+  }
+  private media: MediaService;
   readonly client = new Client({ intents: [GatewayIntentBits.Guilds], allowedMentions: { parse: [] } });
   constructor(
     private config: Config,
     private store: Store,
     log: (error: unknown) => void,
   ) {
+    this.media = new MediaService(store);
     this.client.on(Events.Error, (error) => log(error));
+    const lifecycle = (kind: string, summary: string, details: Record<string, unknown> = {}) =>
+      this.activity?.record(
+        { userId: config.clientId, name: 'Open Space' },
+        { kind, target: 'discord', summary, details },
+      );
+    this.client.on(Events.ClientReady, () => lifecycle('bot.ready', 'Бот подключён к Discord'));
+    this.client.on(Events.ShardDisconnect, (event, shardId) =>
+      lifecycle('bot.disconnected', 'Соединение бота с Discord прервано', { shardId, code: event.code }),
+    );
+    this.client.on(Events.ShardReconnecting, (shardId) =>
+      lifecycle('bot.reconnecting', 'Бот переподключается к Discord', { shardId }),
+    );
+    this.client.on(Events.ShardResume, (shardId) =>
+      lifecycle('bot.resumed', 'Соединение бота с Discord восстановлено', { shardId }),
+    );
     this.client.on(Events.InteractionCreate, async (interaction) => {
       if (!interaction.isButton() || !interaction.customId.startsWith('os:')) return;
+      if (interaction.guildId === this.config.guildId)
+        this.activity?.record(
+          { userId: interaction.user.id, name: interaction.user.username },
+          {
+            kind: 'bot.button',
+            target: interaction.customId,
+            summary:
+              'Нажата кнопка бота: ' +
+              (('label' in interaction.component && interaction.component.label) || interaction.customId),
+            details: {
+              channelId: interaction.channelId,
+              messageId: interaction.message.id,
+              interactionId: interaction.id,
+            },
+          },
+        );
       try {
         if (interaction.guildId !== this.config.guildId) {
           await interaction.reply({
@@ -71,13 +116,14 @@ export class DiscordService implements DiscordPort {
         }
         const key = parts[4];
         const page = Number(parts[5]);
-        const response =
+        const base =
           action === 'page' &&
           (key === 'game' || key === 'discord') &&
           Number.isSafeInteger(page) &&
           page >= 0
             ? rulesView(document, key, page, interaction.user.id)
             : menu(document, interaction.user.id);
+        const response = this.media.prepare(base);
         if (action === 'open') {
           await interaction.reply({
             ...response,
@@ -85,9 +131,18 @@ export class DiscordService implements DiscordPort {
           });
         } else {
           await interaction.deferUpdate();
-          await interaction.editReply(response);
+          await interaction.editReply({ ...response, attachments: [] });
         }
       } catch (error) {
+        this.activity?.record(
+          { userId: interaction.user.id, name: interaction.user.username },
+          {
+            kind: 'bot.error',
+            target: interaction.customId,
+            summary: 'Ошибка обработки кнопки бота',
+            details: { error: error instanceof Error ? error.name : 'Error' },
+          },
+        );
         log(error);
         const response = notice('Не удалось открыть правила. Попробуйте ещё раз через «Читать правила».');
         try {
@@ -182,13 +237,13 @@ export class DiscordService implements DiscordPort {
     previous: { messageId: string | null; messageChannelId: string | null },
   ) {
     const channel = await this.channel(channelId);
-    const payload = launcher(document);
+    const payload = this.media.prepare(launcher(document));
     if (previous.messageId && previous.messageChannelId === channelId) {
       try {
         const message = await channel.messages.fetch(previous.messageId);
         if (message.author.id !== this.client.user!.id)
           throw new HttpError(400, 'Сохранённое сообщение принадлежит другому боту');
-        await message.edit(payload);
+        await message.edit({ ...payload, attachments: [] });
         return message.id;
       } catch (error) {
         if (!(error instanceof DiscordAPIError && error.code === 10008)) throw error;
@@ -200,5 +255,19 @@ export class DiscordService implements DiscordPort {
     const channel = await this.channel(channelId);
     const message = await channel.messages.fetch(messageId);
     if (message.author.id === this.client.user!.id) await message.delete();
+  }
+  async sendMessage(message: BotMessage, channelId: string, requestId: string) {
+    const channel = await this.channel(channelId);
+    const payload = this.media.prepare(customMessage(message));
+    return (await channel.send({ ...payload, nonce: hash(requestId).slice(0, 24), enforceNonce: true })).id;
+  }
+  async editMessage(message: BotMessage, channelId: string, messageId: string) {
+    const channel = await this.channel(channelId);
+    const target = await channel.messages.fetch(messageId);
+    if (target.author.id !== this.client.user!.id)
+      throw new HttpError(403, 'Можно редактировать только сообщения этого бота');
+    // Notification suppression is a send-time choice; keep existing flags on edits.
+    const payload = this.media.prepare(customMessage(message));
+    await target.edit({ ...payload, flags: MessageFlags.IsComponentsV2, attachments: [] });
   }
 }

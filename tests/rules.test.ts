@@ -12,7 +12,7 @@ test('seed imports logical blocks and every generated page fits Components V2', 
   const message = launcher(seed);
   assert.equal(message.flags, 32768);
   assert.equal('embeds' in message, false);
-  assert.equal(message.components[0].toJSON().type, 17);
+  assert.equal(JSON.parse(JSON.stringify(message.components[0])).type, 17);
 });
 test('long Unicode rules split without losing content and retain intro and user ownership', () => {
   const seed = loadSeed();
