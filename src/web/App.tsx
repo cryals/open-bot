@@ -41,6 +41,7 @@ import { BlockEditor } from './BlockEditor.js';
 import { blockText } from '../shared/blocks.js';
 import { BlocksPreview } from './BlockPreview.js';
 import { useActivity } from './activity.js';
+import { Logo } from './Logo.js';
 const Composer = lazy(() => import('./Composer.js').then((module) => ({ default: module.Composer })));
 const ActivityView = lazy(() =>
   import('./ActivityView.js').then((module) => ({ default: module.ActivityView })),
@@ -264,11 +265,11 @@ export function App() {
     return (
       <main className="login-screen">
         <div className="login-brand">
-          <Radio size={22} /> Open Bot
+          <Logo className="logo-small" /> Open Bot
         </div>
         <div className="login-card">
           <div className="login-icon">
-            <BookOpen size={30} />
+            <Logo className="logo-large" />
           </div>
           <h1>
             Правила начинаются
@@ -303,7 +304,7 @@ export function App() {
       <aside className={'sidebar ' + (sidebar ? 'is-open' : '')}>
         <div className="brand">
           <span className="brand-symbol">
-            <Radio size={23} />
+            <Logo />
           </span>
           <div>
             Open Bot<small>Управление сервером</small>
@@ -613,7 +614,9 @@ export function App() {
               <div className="preview-heading">Информационное сообщение в Discord</div>
               <div className="discord-surface">
                 <div className="discord-author">
-                  <span className="bot-avatar">OB</span>
+                  <span className="bot-avatar">
+                    <Logo />
+                  </span>
                   <strong>Open Bot</strong>
                   <span className="app-tag">APP</span>
                 </div>

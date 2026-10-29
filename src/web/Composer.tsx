@@ -33,6 +33,7 @@ import type { GuildInfo } from '../shared/rules.js';
 import { api } from './api.js';
 import { BlockEditor } from './BlockEditor.js';
 import { BlocksPreview } from './BlockPreview.js';
+import { Logo } from './Logo.js';
 
 export function Composer({
   guild,
@@ -429,7 +430,9 @@ export function Composer({
               ) : (
                 <div className="discord-surface">
                   <div className="discord-author">
-                    <span className="bot-avatar">OB</span>
+                    <span className="bot-avatar">
+                      <Logo />
+                    </span>
                     <strong>Open Bot</strong>
                     <span className="app-tag">APP</span>
                   </div>

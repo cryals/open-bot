@@ -2,6 +2,7 @@ import { RuleMarkdown } from './Markdown.js';
 import { ArrowLeft, ArrowRight, House, Eye } from 'lucide-react';
 import { paginate, type Ruleset } from '../shared/rules.js';
 import { BlocksPreview } from './BlockPreview.js';
+import { Logo } from './Logo.js';
 
 export function Preview({
   set,
@@ -24,7 +25,9 @@ export function Preview({
       </div>
       <div className="discord-surface">
         <div className="discord-author">
-          <span className="bot-avatar">OB</span>
+          <span className="bot-avatar">
+            <Logo />
+          </span>
           <strong>Open Bot</strong>
           <span className="app-tag">APP</span>
         </div>

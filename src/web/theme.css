@@ -1,6 +1,26 @@
 /* AL-S visual system, adapted from cryals/cryals web/src/styles/global.css.
    Source revision: 91e1ca0dc62cba0ec8947f39e30056b311816448. */
 
+.product-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 14%;
+  object-fit: contain;
+  background: #fff;
+  flex-shrink: 0;
+}
+.product-logo.logo-small {
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+}
+.product-logo.logo-large {
+  width: 48px;
+  height: 48px;
+  padding: 7px;
+}
+
 :root {
   color-scheme: dark;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
