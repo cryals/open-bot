@@ -55,7 +55,7 @@ export class ModuleManager {
           this.commands.set(command.data.name, { module: module.id, command });
         this.states.set(module.id, { id: module.id, title: module.title, state: 'running' });
         this.context.activity.record(
-          { userId: this.context.config.clientId, name: 'Open Space' },
+          { userId: this.context.config.clientId, name: 'Open Bot' },
           { kind: 'module.start', target: module.id, summary: 'Запущен модуль ' + module.title },
         );
       } catch (error) {
@@ -67,7 +67,7 @@ export class ModuleManager {
           errorId,
         });
         this.context.activity.record(
-          { userId: this.context.config.clientId, name: 'Open Space' },
+          { userId: this.context.config.clientId, name: 'Open Bot' },
           {
             kind: 'module.error',
             target: source.id,

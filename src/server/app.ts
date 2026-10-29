@@ -59,14 +59,14 @@ export async function createApp(options: {
   discord.setActivity?.(activity);
   app.addHook('onClose', async () => {
     activity.record(
-      { userId: config.clientId, name: 'Open Space' },
+      { userId: config.clientId, name: 'Open Bot' },
       { kind: 'system.stop', target: 'server', summary: 'Сервис остановлен' },
     );
     if (!options.activity) activity.close();
   });
   const actor = (request: FastifyRequest) => request.adminSession!;
   activity.record(
-    { userId: config.clientId, name: 'Open Space' },
+    { userId: config.clientId, name: 'Open Bot' },
     { kind: 'system.start', target: 'server', summary: 'Сервис запущен' },
   );
   app.addHook('onResponse', async (request, reply) => {
@@ -259,7 +259,7 @@ export async function createApp(options: {
     });
     return reply
       .type('application/x-ndjson')
-      .header('Content-Disposition', 'attachment; filename="openspace-activity.jsonl"')
+      .header('Content-Disposition', 'attachment; filename="open-bot-activity.jsonl"')
       .send(Readable.from(activity.export()));
   });
   app.get('/api/guild', async () => discord.info());
@@ -337,7 +337,7 @@ export async function createApp(options: {
       reply
         .type('text/html')
         .send(
-          '<!doctype html><html lang="ru"><meta charset="utf-8"><title>Open Space</title><p>Соберите интерфейс: npm run build. Для разработки откройте Vite на порту 5173.</p></html>',
+          '<!doctype html><html lang="ru"><meta charset="utf-8"><title>Open Bot</title><p>Соберите интерфейс: npm run build. Для разработки откройте Vite на порту 5173.</p></html>',
         ),
     );
   }

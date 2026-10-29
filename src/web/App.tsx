@@ -257,14 +257,14 @@ export function App() {
     return (
       <main className="loading-screen">
         <LoaderCircle className="spinning" />
-        <p>Открываем панель Open Space…</p>
+        <p>Открываем панель Open Bot…</p>
       </main>
     );
   if (login.kind === 'guest' || !workspace || !document || !current || !selected)
     return (
       <main className="login-screen">
         <div className="login-brand">
-          <Radio size={22} /> Open Space
+          <Radio size={22} /> Open Bot
         </div>
         <div className="login-card">
           <div className="login-icon">
@@ -275,9 +275,9 @@ export function App() {
             <br />с ясности.
           </h1>
           <p>
-            Редактируйте правила сообщества и игры.
+            Open Bot — бот для управления серверами Discord.
             <br />
-            Публикуйте одну версию для всех участников.
+            Редактируйте правила и публикуйте сообщения от имени бота.
           </p>
           {login.kind === 'guest' && login.error && (
             <div className="alert error" role="alert">
@@ -289,9 +289,9 @@ export function App() {
             Войти через Discord
             <ArrowUpRight size={18} />
           </a>
-          <small>Доступ для администрации Open Space</small>
+          <small>Доступ для администрации Discord-сервера</small>
         </div>
-        <p className="login-footer">OPEN SPACE / УПРАВЛЕНИЕ ПРАВИЛАМИ</p>
+        <p className="login-footer">OPEN BOT / УПРАВЛЕНИЕ DISCORD-СЕРВЕРОМ</p>
       </main>
     );
 
@@ -306,7 +306,7 @@ export function App() {
             <Radio size={23} />
           </span>
           <div>
-            Open Space<small>Управление правилами</small>
+            Open Bot<small>Управление сервером</small>
           </div>
         </div>
         <div className="nav-label">РАЗДЕЛЫ</div>
@@ -613,8 +613,8 @@ export function App() {
               <div className="preview-heading">Информационное сообщение в Discord</div>
               <div className="discord-surface">
                 <div className="discord-author">
-                  <span className="bot-avatar">OS</span>
-                  <strong>Open Space</strong>
+                  <span className="bot-avatar">OB</span>
+                  <strong>Open Bot</strong>
                   <span className="app-tag">APP</span>
                 </div>
                 <BlocksPreview blocks={infoBlocks(document)} />
@@ -858,7 +858,7 @@ export function App() {
           </section>
         )}
         <footer className="main-footer">
-          <span>Open Space · Правила сообщества</span>
+          <span>Open Bot · Управление сервером Discord</span>
           <span>Черновик v{workspace.version}</span>
         </footer>
       </main>

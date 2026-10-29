@@ -39,7 +39,7 @@ export class DiscordService extends DiscordRest {
     this.client.on(Events.ShardError, (error, shard) => onError(error, 'gateway.shard.' + shard));
     const lifecycle = (kind: string, summary: string, details: Record<string, unknown> = {}) =>
       this.activity?.record(
-        { userId: config.clientId, name: 'Open Space' },
+        { userId: config.clientId, name: 'Open Bot' },
         { kind, target: 'discord', summary, details },
       );
     this.client.on(Events.ClientReady, () => lifecycle('bot.ready', 'Бот подключён к Discord'));

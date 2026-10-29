@@ -215,7 +215,7 @@ export class ActivityService {
       const message: BotMessage = {
         id: 'audit',
         blocks: [
-          { id: 'audit-title', type: 'text', content: '## Журнал Open Space' },
+          { id: 'audit-title', type: 'text', content: '## Журнал Open Bot' },
           ...texts.map((content, index) => ({ id: 'audit-' + index, type: 'text' as const, content })),
         ],
         silent: true,

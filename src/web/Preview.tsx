@@ -24,8 +24,8 @@ export function Preview({
       </div>
       <div className="discord-surface">
         <div className="discord-author">
-          <span className="bot-avatar">OS</span>
-          <strong>Open Space</strong>
+          <span className="bot-avatar">OB</span>
+          <strong>Open Bot</strong>
           <span className="app-tag">APP</span>
         </div>
         <div className="discord-card">

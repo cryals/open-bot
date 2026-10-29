@@ -124,7 +124,7 @@ export class ErrorReporter {
   }
   private payload(report: ErrorReport) {
     const serialized = JSON.stringify(report, null, 2);
-    const description = `## ${report.fatal ? 'Критическая ошибка' : 'Ошибка'} Open Space\n**ID:** \`${report.id}\`\n**Модуль:** ${report.scope}\n**Процесс:** ${report.process} · PID ${report.pid}\n**Время:** <t:${Math.floor(report.time / 1000)}:F>\n**${report.error.name}**\n${report.error.message}\n\`\`\`text\n${(report.error.stack || '').replace(/```/g, '``\u200b`')}\n\`\`\`\nПолный отчёт — во вложении.`;
+    const description = `## ${report.fatal ? 'Критическая ошибка' : 'Ошибка'} Open Bot\n**ID:** \`${report.id}\`\n**Модуль:** ${report.scope}\n**Процесс:** ${report.process} · PID ${report.pid}\n**Время:** <t:${Math.floor(report.time / 1000)}:F>\n**${report.error.name}**\n${report.error.message}\n\`\`\`text\n${(report.error.stack || '').replace(/```/g, '``\u200b`')}\n\`\`\`\nПолный отчёт — во вложении.`;
     let content = description.slice(0, 2800);
     while (Buffer.byteLength(JSON.stringify(content)) > 6500) content = content.slice(0, -100);
     const filename = 'error-' + report.id + '.json';

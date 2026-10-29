@@ -48,7 +48,7 @@ export async function supervise(config: Config) {
       if ((error as NodeJS.ErrnoException).code === 'ESRCH') alive = false;
       else throw error;
     }
-    if (alive) throw new Error('Another Open Space supervisor is running (PID ' + old.pid + ')');
+    if (alive) throw new Error('Another Open Bot supervisor is running (PID ' + old.pid + ')');
     unlinkSync(lock);
   }
   const lockFile = openSync(lock, 'wx');

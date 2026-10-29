@@ -1,5 +1,5 @@
 [Unit]
-Description=Open Space Discord Rules Bot
+Description=Open Bot Discord Server Management
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=0

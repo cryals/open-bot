@@ -43,7 +43,7 @@ const module: BotModule = {
           `Память Core: **${Math.round(process.memoryUsage().rss / 1024 / 1024)} МБ**`,
           `Процесс Core: **${process.pid}** · Web: **${status.web.pid || 'не запущен'}**`,
         );
-        await interaction.editReply(notice('## Состояние Open Space\n' + rows.join('\n')));
+        await interaction.editReply(notice('## Состояние Open Bot\n' + rows.join('\n')));
       },
     },
   ],

@@ -43,7 +43,7 @@ async function help(context: BotContext, userId: string, filter: string, page: n
   }
   const index = Math.max(0, Math.min(page, pages.length - 1));
   const card = new ContainerBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder().setContent('# Справка Open Space'),
+    new TextDisplayBuilder().setContent('# Справка Open Bot'),
     new TextDisplayBuilder().setContent(
       'Команды добавляются модулями автоматически.\n`/help module:info` — справка по отдельному модулю.',
     ),
