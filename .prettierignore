@@ -1,0 +1,7 @@
+node_modules
+dist
+data
+output
+package-lock.json
+rules
+docs/superpowers

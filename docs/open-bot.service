@@ -1,0 +1,23 @@
+[Unit]
+Description=Open Space Discord Rules Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=open-bot
+Group=open-bot
+WorkingDirectory=/opt/open-bot
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/open-bot/dist/server/src/server/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/open-bot/data
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
