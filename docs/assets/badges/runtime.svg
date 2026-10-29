@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="112" height="28" viewBox="0 0 112 28" role="img" aria-label="NODE: 24.18+">
+  <title>NODE: 24.18+</title>
+  <rect x=".5" y=".5" width="111" height="27" fill="#080808" stroke="#444442"/>
+  <path d="M48 1v26" stroke="#444442"/>
+  <path d="M.5 7V.5H7 M105 27.5h6.5V21" fill="none" stroke="#f4f4f2"/>
+  <g font-family="'DejaVu Sans Mono',monospace" font-size="11" letter-spacing=".2">
+    <text x="10" y="18" fill="#969694">NODE</text>
+    <text x="59" y="18" fill="#f4f4f2">24.18+</text>
+  </g>
+</svg>

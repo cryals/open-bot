@@ -1,0 +1,282 @@
+=======================================================================
+OPEN BOT PROJECT LICENSE — VERSION 1.0
+Copyright (c) 2026 cryals and the respective contributors
+License reference: LicenseRef-Open-Bot-Project-1.0
+=======================================================================
+
+ENGLISH
+
+1. Parties, acceptance and scope
+
+The Licensor is cryals, maintainer of Open Bot at
+https://github.com/cryals/open-bot. Permission and licensing requests may
+be sent through that repository or to support@stopco.ru.
+
+The Project means Open Bot: its original source and object code,
+development tools, documentation, original interface design and other
+original materials supplied by the Licensor. It is software for managing
+Discord servers; it is not the Open Space game community or Discord itself.
+The Licensee is any person or entity exercising rights under this License.
+
+By exercising the permissions granted here, you accept this License.
+The grant is royalty-free and non-exclusive, subject to the conditions
+below. Rights not expressly granted are reserved. Merely receiving or
+viewing a copy does not transfer ownership of any intellectual property.
+
+2. Permitted private use
+
+You may obtain, copy, study, run and modify the Project for your own
+private, non-commercial use, evaluation, learning and improvement.
+You may make necessary backups and run an installation locally or on
+a server under your control for those purposes. A private Discord test
+guild accessible only to you and your invited testing collaborators is
+permitted. Keep copyright, authorship and license notices in your copies.
+
+Private modifications need not be published. If you intentionally submit
+them to the Licensor, section 4 applies to that submission.
+
+3. Uses requiring separate permission
+
+Prior express written permission from the Licensor is required to:
+
+(a) deploy or offer the Project, including a modified version, for use by
+    a public Discord guild, a community or other third parties outside
+    the private evaluation described in section 2;
+(b) operate a hosted service based on the Project, sell access to it,
+    redistribute the Project or a derivative work, or publicly release
+    a derivative project, except for platform rights preserved below;
+(c) use the Project commercially, including paid hosting, paid access,
+    resale or providing the Project as part of a paid service.
+
+Owning a server, limiting access to its administration panel, charging
+no fee, or renaming the Project does not by itself authorize public or
+community deployment. Written permission may be given in an identifiable
+message by the Licensor through the official repository or contact above.
+Any additional permission applies within the scope stated in that message.
+
+4. Contributions
+
+A Contribution is an original work intentionally submitted for inclusion
+in Open Bot through a pull request, commit or another official project
+channel. Unrelated correspondence, materials marked "Not a contribution",
+and third-party materials identified with their own terms are not a
+Contribution under this section.
+
+By submitting a Contribution, you represent that you have the authority
+to grant the following rights. You grant the Licensor a worldwide,
+royalty-free, non-exclusive, irrevocable license for the duration of your
+applicable rights to use, reproduce, modify, distribute and sublicense
+that Contribution as part of Open Bot and its versions, including under
+commercial permissions granted by the Licensor. This is a license, not
+a transfer of ownership. You retain your rights in your original
+Contribution and may use it independently, including commercially;
+this does not grant rights in other contributors' work or the rest of
+the Project. No unrelated patents, trademarks or personal data rights
+are transferred by this section.
+
+5. Third-party materials and user content
+
+Dependencies, fonts, assets, code and other materials with their own
+licenses remain subject to those licenses. This License does not replace
+their terms or claim rights that the Licensor does not hold. Preserve
+their required notices. See THIRD_PARTY_NOTICES.md and the applicable
+component files for source and license information.
+
+Rules, messages, uploads and other content entered by an operator or a
+user remain the responsibility and property of their respective rights
+holders. Hosting that content in Open Bot does not automatically license
+it under this License. No blanket Creative Commons license is granted
+to Project assets. For original Licensor-owned materials without a
+separate license notice, this License applies to the extent of rights held.
+
+6. Name, logo and endorsement
+
+This License grants no trademark rights and no right to imply official
+affiliation or endorsement. The Open Bot name and supplied branding may
+be displayed as included in an authorized installation and for truthful
+attribution. Other branding uses require separate permission where the
+Licensor holds the relevant rights.
+
+7. Platform rights and mandatory law
+
+Nothing in this License restricts rights granted independently by an
+applicable third-party license, mandatory law or the terms governing
+the repository platform. In particular, viewing or forking a repository
+where the platform permits it does not by itself authorize an otherwise
+restricted deployment, commercial use or public derivative release.
+
+8. Termination and remedies
+
+The permissions granted to a Licensee under sections 2 and 3 terminate
+automatically if that Licensee violates this License. After termination,
+cease the use, distribution and deployment that depended on those
+permissions. Separate third-party rights and the Contribution license
+already granted to the Licensor are not revoked by this termination.
+Permission may be restored by express written agreement with the Licensor.
+
+The Licensor may pursue remedies available under applicable law, including
+requests to hosting providers or other intermediaries concerning actual
+infringements. This section creates no enforcement power beyond the law.
+
+9. Warranty and liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE PROJECT IS PROVIDED
+"AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+THE LICENSOR AND CONTRIBUTORS ARE NOT LIABLE FOR CLAIMS OR LOSSES ARISING
+FROM THE PROJECT OR ITS USE, INCLUDING DATA LOSS, SERVICE INTERRUPTION OR
+LOST PROFITS. THIS EXCLUSION DOES NOT LIMIT LIABILITY THAT CANNOT LAWFULLY
+BE EXCLUDED.
+
+10. Languages and subject matter
+
+The English and Russian texts describe the same terms. If their meanings
+conflict, the Russian text prevails to the extent permitted by applicable
+law. This License governs intellectual property permissions; it is not
+a privacy policy, data-processing agreement or a grant of Discord rights.
+
+=======================================================================
+ЛИЦЕНЗИЯ ПРОЕКТА OPEN BOT — ВЕРСИЯ 1.0
+Copyright (c) 2026 cryals и соответствующие участники проекта
+Идентификатор: LicenseRef-Open-Bot-Project-1.0
+=======================================================================
+
+РУССКИЙ
+
+1. Стороны, принятие и предмет лицензии
+
+Лицензиар — cryals, разработчик Open Bot, репозиторий проекта:
+https://github.com/cryals/open-bot. Запросы разрешений и вопросы
+лицензирования принимаются через этот репозиторий или support@stopco.ru.
+
+Проект — Open Bot: оригинальные исходный и объектный код, инструменты
+разработки, документация, оригинальный дизайн интерфейса и другие
+оригинальные материалы, предоставленные Лицензиаром. Это программа
+для управления серверами Discord, а не игровое сообщество Open Space
+и не сам Discord. Лицензиат — лицо или организация, использующие права,
+предоставленные настоящей Лицензией.
+
+Используя предоставленные здесь разрешения, вы принимаете эту Лицензию.
+Лицензия безвозмездная и неисключительная при соблюдении указанных ниже
+условий. Не предоставленные прямо права сохраняются за правообладателями.
+Само получение или просмотр копии не передаёт исключительные права.
+
+2. Разрешённое частное использование
+
+Разрешается получать, копировать, изучать, запускать и изменять Проект
+для собственного частного некоммерческого использования, ознакомления,
+обучения и совершенствования. Допускаются необходимые резервные копии
+и запуск локально либо на подконтрольном вам сервере для этих целей.
+Разрешён частный тестовый Discord-сервер, доступный только вам и
+приглашённым участникам тестирования. В копиях необходимо сохранять
+уведомления об авторских правах, авторстве и лицензировании.
+
+Частные изменения не требуется публиковать. Если вы намеренно передаёте
+их Лицензиару как вклад в Проект, применяется раздел 4.
+
+3. Использование по отдельному разрешению
+
+Предварительное явное письменное разрешение Лицензиара требуется для:
+
+(а) размещения или предоставления Проекта, включая изменённую версию,
+    для публичного Discord-сервера, сообщества или иных третьих лиц
+    за пределами частного ознакомления, описанного в разделе 2;
+(б) предоставления сервиса на основе Проекта, продажи доступа к нему,
+    распространения Проекта или производной работы и публичного выпуска
+    производного проекта, кроме сохранённых ниже прав платформы;
+(в) коммерческого использования, включая платный хостинг, платный доступ,
+    перепродажу и включение Проекта в состав платной услуги.
+
+Владение сервером, закрытый доступ к панели, отсутствие платы или
+переименование Проекта сами по себе не разрешают публичное размещение
+либо использование сообществом. Письменным разрешением может быть
+сообщение, авторство Лицензиара которого установлено, в официальном
+репозитории или по указанному выше контакту. Дополнительное разрешение
+действует в пределах прямо указанных в нём условий.
+
+4. Вклады участников
+
+Вклад — оригинальная работа, намеренно переданная для включения в Open Bot
+через pull request, коммит или другой официальный канал проекта.
+Посторонняя переписка, материалы с пометкой «Не является вкладом» и
+сторонние материалы с отдельно указанными условиями не считаются
+Вкладом по этому разделу.
+
+Передавая Вклад, участник подтверждает наличие прав для выдачи следующей
+лицензии. Он предоставляет Лицензиару всемирную, безвозмездную,
+неисключительную, безотзывную лицензию на весь срок действия своих
+соответствующих прав: использовать, воспроизводить, изменять,
+распространять и сублицензировать Вклад в составе Open Bot и его версий,
+в том числе по коммерческим разрешениям Лицензиара. Это лицензия,
+а не отчуждение исключительных прав. Участник сохраняет права на свой
+оригинальный Вклад и может использовать его самостоятельно, включая
+коммерческое использование; это не предоставляет прав на чужие работы
+или остальную часть Проекта. Этот раздел не передаёт посторонних
+патентных прав, прав на товарные знаки и прав на персональные данные.
+
+5. Сторонние материалы и пользовательский контент
+
+Зависимости, шрифты, ресурсы, код и другие материалы с собственными
+лицензиями сохраняют эти лицензии. Настоящая Лицензия не заменяет их
+условия и не предоставляет прав, которых нет у Лицензиара. Необходимо
+сохранять предусмотренные ими уведомления. Источники и сведения об
+условиях приведены в THIRD_PARTY_NOTICES.md и файлах компонентов.
+
+Правила, сообщения, вложения и другой контент, внесённый оператором
+или пользователем, остаются в ведении и собственности соответствующих
+правообладателей. Размещение в Open Bot не переводит такой контент
+автоматически под настоящую Лицензию. Общая лицензия Creative Commons
+на ресурсы Проекта не предоставляется. Для оригинальных материалов
+Лицензиара без отдельного указания лицензии действует настоящая
+Лицензия в пределах принадлежащих ему прав.
+
+6. Название, логотип и связь с автором
+
+Лицензия не передаёт прав на товарные знаки и не разрешает создавать
+видимость официального партнёрства или одобрения. Название Open Bot
+и поставляемое оформление можно показывать в составе разрешённой
+установки и для достоверного указания авторства. Другие способы
+использования оформления требуют отдельного разрешения в той мере,
+в какой соответствующие права принадлежат Лицензиару.
+
+7. Права платформы и обязательные нормы
+
+Лицензия не ограничивает права, независимо предоставленные применимой
+сторонней лицензией, обязательными нормами закона или условиями
+платформы репозитория. В частности, просмотр и создание форка, если
+это разрешено платформой, сами по себе не разрешают ограниченное
+настоящей Лицензией размещение, коммерческое использование или
+публичный выпуск производного проекта.
+
+8. Прекращение разрешений и защита прав
+
+Разрешения Лицензиату по разделам 2 и 3 автоматически прекращаются
+при нарушении им настоящей Лицензии. После этого необходимо прекратить
+использование, распространение и размещение, зависевшие от этих
+разрешений. Независимые права третьих лиц и уже предоставленная
+Лицензиару лицензия на Вклад этим не отзываются. Разрешение может
+быть восстановлено по явному письменному соглашению с Лицензиаром.
+
+Лицензиар вправе использовать предусмотренные применимым законом
+способы защиты, включая обращения к хостинг-провайдерам и другим
+посредникам по поводу действительных нарушений прав. Этот раздел
+не создаёт полномочий, выходящих за пределы закона.
+
+9. Гарантии и ответственность
+
+В МАКСИМАЛЬНО ДОПУСТИМОЙ ЗАКОНОМ СТЕПЕНИ ПРОЕКТ ПРЕДОСТАВЛЯЕТСЯ
+«КАК ЕСТЬ», БЕЗ ЯВНЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ ГАРАНТИЙ, ВКЛЮЧАЯ
+ПРИГОДНОСТЬ ДЛЯ КОНКРЕТНЫХ ЦЕЛЕЙ, ТОВАРНУЮ ПРИГОДНОСТЬ И ОТСУТСТВИЕ
+НАРУШЕНИЙ ПРАВ ТРЕТЬИХ ЛИЦ. ЛИЦЕНЗИАР И УЧАСТНИКИ НЕ ОТВЕЧАЮТ
+ЗА ПРЕТЕНЗИИ И УБЫТКИ, ВЫЗВАННЫЕ ПРОЕКТОМ И ЕГО ИСПОЛЬЗОВАНИЕМ,
+ВКЛЮЧАЯ ПОТЕРЮ ДАННЫХ, ПЕРЕРЫВЫ В РАБОТЕ И УПУЩЕННУЮ ВЫГОДУ.
+ЭТО УСЛОВИЕ НЕ ИСКЛЮЧАЕТ ОТВЕТСТВЕННОСТЬ, КОТОРУЮ НЕЛЬЗЯ ИСКЛЮЧИТЬ
+ПО ЗАКОНУ.
+
+10. Языки и предмет регулирования
+
+Английский и русский тексты описывают одинаковые условия. При расхождении
+смысла преимущество имеет русский текст в пределах, допускаемых законом.
+Лицензия регулирует разрешения на использование интеллектуальных прав;
+она не является политикой конфиденциальности, соглашением об обработке
+данных или предоставлением прав со стороны Discord.

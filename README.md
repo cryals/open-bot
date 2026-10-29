@@ -1,164 +1,165 @@
-# Open Bot
+<p align="center">
+  <img src="docs/assets/open-bot-cover.png" alt="Open Bot — Discord server management" width="1000">
+</p>
 
-Open Bot — бот для управления серверами Discord с веб-панелью, модульными командами, редактором правил и сообщений.
+<p align="center">
+  <sub><code>LANGUAGE</code></sub><br>
+  <b>English</b> · <a href="README_RU.md">Русский</a>
+</p>
 
-Open Bot — название продукта, интерфейса, справки и служебных логов. Open Space — название сообщества в поставляемых правилах и примерах сообщений. Содержимое сообщений редактируется отдельно от брендинга бота. Текущая установка обслуживает один Discord-сервер, заданный в GUILD_ID.
+<p align="center">
+  <b>Your Discord server. One control panel.</b><br>
+  Write the rules. Build the message. Keep a record of every change.
+</p>
 
-Логотип панели и favicon используют [stopco.png](https://github.com/cryals/cryals/blob/main/web/public/logo/stopco.png) с белой подложкой. Исходник хранится локально в public/stopco.png; favicon содержит тот же PNG внутри SVG, поэтому не зависит от доступности GitHub.
+<p align="center">
+  <img src="docs/assets/badges/status.svg" alt="Status: in development">
+  <a href="https://nodejs.org/en/download"><img src="docs/assets/badges/runtime.svg" alt="Node.js 24.18 or newer"></a>
+  <a href="docs/MODULES.md"><img src="docs/assets/badges/discord.svg" alt="Discord Components V2"></a>
+  <a href="docs/OPERATIONS.md"><img src="docs/assets/badges/hosting.svg" alt="Self-hosted"></a>
+  <a href="https://github.com/cryals/open-bot/actions/workflows/check.yml"><img src="docs/assets/badges/checks.svg" alt="CI: view actual workflow runs"></a>
+  <a href="LICENSE"><img src="docs/assets/badges/license.svg" alt="Custom project license"></a>
+</p>
 
-Бот публикует в выбранном канале одно сообщение с кнопкой «Читать правила». Кнопка открывает личное меню Discord / Игра. Участник листает логические разделы, видит вступление на каждой странице и не переключает страницы другим игрокам. Все сообщения правил и кнопки собраны на Discord Components V2.
+<p align="center">
+  <a href="#quick-start">Quick start</a> · <a href="docs/OPERATIONS.md">Deployment</a> · <a href="docs/MODULES.md">Modules</a> · <a href="LICENSE">License</a>
+</p>
 
-Веб-панель позволяет редактировать оба набора правил, менять порядок страниц, отключать страницы, смотреть предпросмотр и публиковать сохранённую версию. Предыдущую публикацию можно вернуть в черновик. Бот не модерирует разговоры и не выдаёт наказания.
+---
 
-## Модули и команды
+**Open Bot** is a self-hosted Discord management bot with a web panel, a visual message editor, and modular slash commands. Publish community information, maintain Discord and game rules, and let each member browse their own copy of the rules without changing anyone else's page.
 
-Core управляет запуском и диагностикой, Help строит справку из реестра команд, Info отвечает за информационное сообщение и правила, Web — за панель. Bot и Web работают в отдельных процессах под супервизором с heartbeat, watchdog и перезапуском. Структура и инструкция по добавлению модулей: [docs/MODULES.md](docs/MODULES.md).
+Open Bot is the product name. **Open Space** is the community used in the supplied rule content. Each installation currently manages **one Discord guild**.
 
-Доступны `/help [module]`, `/ping` (Pong и задержка), `/info`; для администрации — `/status` и `/send-info [channel]`. `/send-info` использует последний опубликованный снимок и сохраняет ID сообщения. Команды регистрируются автоматически в GUILD_ID. Административные права проверяются дополнительно при каждом вызове.
+## Features
 
-Для ошибок добавлены необязательные LOG_ID и LOG_WEBHOOK: сначала отправка ботом в канал, при сбое — независимый вебхук. Полные отчёты со stack trace и причинами сохраняются в data/errors и прикладываются JSON-файлом к тихому сообщению Components V2. При недоступности обоих способов очередь остаётся на диске. LOG_ID не заменяет канал обычного журнала из веб-панели. В production используйте внешний менеджер службы для перезапуска самого супервизора; пример systemd включён в проект.
+- **Rules that members can browse.** One public entry message, private navigation, logical pages, and an introduction that stays visible on every page.
+- **A visual Components V2 editor.** Text, containers, sections, images, galleries, files, dividers, and link buttons. Reorder, duplicate, or move blocks between containers.
+- **Messages sent as the bot.** Drafts, templates, up to ten messages per dispatch, notification settings, and edits to previously sent messages using saved IDs.
+- **Drafts and publication history.** Save without publishing, review the preview, publish deliberately, or restore an older version to the draft.
+- **An administration panel.** Discord OAuth sign-in, current guild-role checks, and configurable administrator access.
+- **Detailed activity records.** UI actions, field edits, before/after values, line diffs, and bot operations in SQLite and JSONL.
+- **A modular runtime.** Core, Web, Help, and Info; separate Bot and Web processes; supervised recovery; persistent error delivery with a webhook fallback.
 
-## Визуальный редактор и сообщения бота
+## How it works
 
-Панель использует конструктор Components V2: текст с панелью Markdown, контейнеры с цветной полосой, разделители, секции с миниатюрой или кнопкой справа, галереи, кнопки-ссылки и файлы. Блоки можно сворачивать, дублировать, удалять, менять стрелками и перетаскивать, в том числе в контейнер и обратно. Контейнеры друг в друга не вкладываются.
+1. Open the panel and sign in with Discord.
+2. Choose the destination channel and administrator role.
+3. Build the information message and edit the rule pages.
+4. Save the draft, then publish it when ready.
+5. Members press **Read rules** and browse Discord or game rules privately.
 
-В правилах каждый прежний пункт становится отдельным текстовым блоком. Кнопка «Изображение под этим пунктом» добавляет галерею непосредственно после выбранного текста. Указывайте HTTPS-ссылку либо загружайте PNG, JPEG, GIF или WebP с компьютера. Старые правила и опубликованные версии продолжают работать без ручного преобразования.
+The information editor can also hold wiki, launcher, support, and document links. A subsequent publication updates the stored message instead of posting another copy. If the message was deleted, the next publication creates a replacement and stores its ID.
 
-В разделе «Сообщения бота» можно собрать до 10 сообщений за одну отправку, выбрать канал, настроить тихое уведомление и разрешённые типы упоминаний. Отправка начинается после нажатия кнопки и подтверждения в панели. При частичной ошибке повторный запрос без изменения текста продолжает оставшиеся сообщения. Шаблоны и черновик сохраняются в SQLite. Во вкладке «Отправленные» доступны ссылки на сообщения и редактирование по сохранённому ID. Настройка тихой отправки не меняет уже доставленные уведомления при редактировании.
+## Quick start
 
-Импорт и экспорт JSON относятся к формату проекта Open Bot; это не универсальный импорт сторонних редакторов. Загруженные файлы остаются на сервере, поэтому при переносе JSON в другую установку перенесите и каталог uploads либо загрузите изображения заново.
-
-Вложения хранятся рядом с базой, в каталоге uploads (по умолчанию data/uploads), и исключены из Git. Предпросмотр защищён той же авторизацией. Discord получает настоящие вложения через attachment://. Ограничение — 8 МБ суммарно на сообщение и до 10 файлов. Для файлов поддерживаются изображения, PDF, TXT, MD, CSV, JSON, ZIP и DOCX. Боту требуется право Attach Files в целевом канале.
-
-Миграция 002 добавляет таблицы вложений, сообщений и шаблонов, сохраняя прежние правила, сессии, ID и версии. Резервная копия теперь создаёт папку с open-bot.sqlite и uploads: восстанавливайте оба объекта вместе при остановленном сервисе. Отдельные старые резервные копии .sqlite содержат только базу, без вложений.
-
-Раздел «Информация» управляет публичным сообщением бота. Здесь можно свободно собирать контейнеры, добавлять изображения, текст и строки кнопок для вики, лаунчера, поддержки и документов. В строке кнопок есть отдельное действие «Читать правила», открывающее личное меню правил. Кнопку можно переименовать и разместить в нужном контейнере. Для обычных ссылок используйте «Добавить ссылку». После сохранения и публикации обновляется прежнее сообщение с тем же ID.
-
-## Стек
-
-Node.js 24.18+, TypeScript strict, discord.js v14, Fastify, React + Vite, SQLite через better-sqlite3 и Drizzle. Один процесс обслуживает бота, API и собранную веб-панель.
-
-## Запуск
-
-1. Установите Node.js 24 LTS и выполните в папке проекта:
-
-   ```sh
-   npm ci
-   ```
-
-2. Создайте .env по образцу .env.example и заполните:
-
-   ```dotenv
-   BOT_TOKEN=токен_бота
-   GUILD_ID=id_вашего_сервера
-   CLIENT_ID=id_приложения_Discord
-   CLIENT_SECRET=секрет_OAuth_приложения
-   PORT=3001
-   REDIRECT=http://localhost:3001/auth/discord/callback
-   ```
-
-   При локальной работе загрузчик также умеет читать .env из родительской папки. Значения локального .env имеют приоритет. Файл .env, база и сессии исключены из Git.
-
-3. В [Discord Developer Portal](https://discord.com/developers/applications) добавьте точный адрес REDIRECT в OAuth2 → Redirects. Пригласите бота на сервер с доступом к выбранному текстовому каналу и правами View Channel, Send Messages, Read Message History. Боту достаточно Gateway intent Guilds; Message Content и Server Members не требуются.
-4. Соберите и запустите:
-
-   ```sh
-   npm run build
-   npm start
-   ```
-
-5. Откройте http://localhost:3001 (или адрес с вашим PORT), войдите через Discord. В разделе «Настройки» выберите канал и при необходимости роль администратора. Сохраните настройки, проверьте тексты и нажмите «Опубликовать».
-
-Информационное сообщение с правилами появляется после публикации. Служебные ответы команд и отчёты об ошибках работают независимо. Если существующее сообщение было удалено, следующая публикация создаст новое и сохранит его ID. Если выбран другой канал, после успешной публикации бот попытается убрать старое сообщение.
-
-## Доступ к панели
-
-Вход использует Discord OAuth scope identify. OAuth-токен применяется один раз для получения профиля и не сохраняется. Каждое обращение к API проверяет актуальные роли пользователя через REST API бота.
-
-Пока роль не настроена, войти могут владелец сервера и участники с правом Administrator. После настройки — выбранная роль и владелец сервера. Владелец сохраняет доступ, чтобы исправить ошибку настройки. Начальную роль можно задать переменной ADMIN_ROLE_ID до первого запуска базы.
-
-Сессия живёт 8 часов и хранится на сервере. Cookie HttpOnly, SameSite=Lax; при HTTPS используется Secure. Изменения требуют CSRF-токен и правильный Origin. Не размещайте панель без HTTPS за пределами локального компьютера.
-
-## Данные и публикации
-
-- rules/game.md — копия исходного rule.md. Текст сохранён, включая отмеченные в дизайн-документе редакционные несостыковки.
-- rules/discord.md — исходные правила Discord с предлагаемой группировкой.
-- Эти файлы импортируются только при создании базы. Последующие правки файлов не перезаписывают отредактированные в панели данные.
-- Черновик, опубликованные снимки, история действий, настройки и хеши сессий хранятся в data/open-bot.sqlite. В production путь можно изменить через DATABASE_PATH.
-- Сохранение черновика проверяет его версию. Одновременная правка из другой вкладки вызывает конфликт вместо молчаливой потери чужих изменений.
-- При ошибке Discord старая опубликованная версия остаётся активной. Возврат версии в черновик сам по себе ничего не публикует.
-- Общий алгоритм переноса длинного текста используется в панели и в боте. Текст разделяется по абзацам или словам без обрезания содержания; повторяется вступление и добавляется пометка продолжения.
-- Текст перед отправкой проходит проверку схемы, Components V2 и безопасного размера JSON до 10 000 байт. Упоминания из текстов не отправляют уведомлений.
-
-## Команды разработки
-
-### Визуальный конструктор
-
-«Информация» редактирует публичное сообщение целиком: контейнеры, текст, изображения, разделители и ряды кнопок. В ряд можно добавить обычную ссылку на вики, лаунчер или поддержку либо встроенную кнопку «Читать правила». Сохранение меняет черновик; «Опубликовать» обновляет сохранённое сообщение в Discord.
-
-В редакторе правил текст разделён на блоки: после каждого пункта можно добавить изображение. Блоки можно перемещать, дублировать, сворачивать и удалять. Контейнеры поддерживают дочерние блоки, цвет и спойлер; секции — миниатюру или кнопку. Галереи, файлы и ссылки используют тот же формат в правилах и сообщениях.
-
-«Сообщения бота» позволяет собрать до десяти сообщений, выбрать канал и отправить их от имени бота. Есть черновик, шаблоны, история отправок и редактирование ранее отправленного сообщения по сохранённому ID. Повтор прерванной отправки без изменения содержимого продолжает её с последнего сохранённого сообщения. Импорт/экспорт JSON использует формат проекта (коллекция с title/messages), а не сырой Discord payload.
-
-Загрузка ограничена 8 МБ на файл и на сообщение суммарно; максимум десять файлов на сообщение. Изображения проверяются по содержимому. Файлы хранятся рядом с SQLite в uploads и доступны в панели только после авторизации; при отправке бот прикрепляет их непосредственно к сообщению Discord. Для этого ему дополнительно нужно право Attach Files.
-
-### Оформление AL-S
-
-Оформление перенесено из сайта владельца als.stopco.ru: монохромные поверхности, квадратные рамки и кнопки, белые уголки, Unbounded / IBM Plex Mono / Inter, исходный фон и WebGL Neural Glow. Источник и ревизия указаны в docs/superpowers/specs/2026-10-30-als-theme-and-activity.md. Цвета и шрифты собраны в src/web/theme.css; геометрия редактора сохраняется в style.css и builder.css. Фон хранится локально, Google Fonts загружает шрифты. Уменьшение движения в настройках системы останавливает анимацию фона.
-
-### Журнал действий
-
-Раздел «Журнал действий» показывает автора, время, объект и тип события. Запись раскрывается в полные значения до/после и построчную разницу. Доступны поиск, автообновление, загрузка ранних записей и выгрузка всего журнала в JSONL.
-
-Записываются:
-
-- нажатия кнопок и переходы в панели, перетаскивания блоков;
-- изменения полей, переключателей и списков, включая несохранённый текст;
-- сохранения правил и сообщений, настройки, восстановление версий, публикации;
-- создание/удаление шаблонов, загрузка файлов, отправка и редактирование сообщений с ID канала и сообщения;
-- вход/выход, отказы доступа, результаты API-запросов и ошибки;
-- нажатия кнопок правил в Discord и ошибки их обработки.
-
-Изменения текста в браузере объединяются до паузы 900 мс и фиксируются также при потере фокуса или следующем нажатии. Это журнал изменений полей, а не запись отдельных клавиш. События ui.* отмечены как наблюдения браузера; сохранения и отправки подтверждаются отдельными серверными записями с полным содержимым. Если связь пропала, открытая вкладка повторяет отправку и показывает предупреждение. Закрытие вкладки до доставки может потерять ещё не доставленные события браузера; уже подтверждённые сервером действия остаются в SQLite.
-
-Полный журнал хранится в таблице activity_log и ежедневных файлах logs/YYYY-MM-DD-PID.jsonl рядом с базой. Автоматического удаления нет. Ошибка записи файла показывается в панели; копия в SQLite остаётся доступна для выгрузки. Пароли, токены бота/клиентский секрет, cookie, OAuth-коды и содержимое файлов не записываются. Сообщения участников Discord не отслеживаются; дополнительные Gateway intents не нужны.
-
-Для отправки в Discord выберите «Настройки → Канал журнала действий». До выбора канала события сохраняются локально. Новые события получают выбранный канал и отправляются тихими сообщениями Components V2 без пингов. Записи группируются, длинная разница сокращается только в Discord. Очередь хранится в SQLite и переживает перезапуск; при ошибке отправки повторяется через 30 секунд. Полная разница доступна в панели и JSONL. Уже поставленные в очередь записи сохраняют исходный канал назначения.
-
-### Скрипты
+Requires **Node.js 24.18+** and a Discord application with a bot account.
 
 ```sh
-npm run typecheck
-npm test
-npm run format:check
+git clone https://github.com/cryals/open-bot.git
+cd open-bot
+npm ci
+cp .env.example .env
+```
+
+On PowerShell, use `Copy-Item .env.example .env` for the last command. Access to the repository is required if it is private.
+
+Fill in `.env`:
+
+```dotenv
+BOT_TOKEN=your_bot_token
+GUILD_ID=your_discord_server_id
+CLIENT_ID=your_application_id
+CLIENT_SECRET=your_oauth_client_secret
+PORT=3000
+REDIRECT=http://localhost:3000/auth/discord/callback
+```
+
+In the [Discord Developer Portal](https://discord.com/developers/applications), add the exact `REDIRECT` URL under **OAuth2 → Redirects**. Install the application into the guild with the `bot` and `applications.commands` scopes. Give the bot **View Channel**, **Send Messages**, **Read Message History**, and **Attach Files** in the channels it will use. Only the **Guilds** Gateway intent is used.
+
+```sh
 npm run build
+npm start
+```
+
+Open [localhost:3000](http://localhost:3000), sign in, select a channel in **Settings**, and publish your first information message. The configured `PORT` determines the actual address.
+
+See the [operations guide (Russian)](docs/OPERATIONS.md) for environment variables, access rules, HTTPS, backups, and recovery.
+
+## Commands
+
+| Command                | Module | Purpose                                                                 |
+| ---------------------- | ------ | ----------------------------------------------------------------------- |
+| `/help [module]`       | Help   | Browse commands grouped by module.                                      |
+| `/ping`                | Core   | Pong, interaction acknowledgement time, Gateway latency, and uptime.    |
+| `/info`                | Info   | Open the published Discord / game rules menu.                           |
+| `/status`              | Core   | Administrator diagnostics for processes and modules.                    |
+| `/send-info [channel]` | Info   | Administrator publication of the latest published information snapshot. |
+
+Commands register automatically in the configured guild. `/send-info` uses the **published snapshot**; it does not publish unfinished web-panel drafts.
+
+## Modular by design
+
+<p align="center">
+  <img src="docs/assets/open-bot-modules.png" alt="Concept illustration of a modular control system" width="1000">
+</p>
+
+Core starts the services. Help reads command definitions from the module registry. Info handles published information and rule navigation. Web provides the panel and OAuth flow in a separate process.
+
+The supervisor monitors both workers and restarts a failed worker with backoff. Optional module failures are isolated during initialization. An external service manager restarts the supervisor itself in production. See [modules and recovery](docs/MODULES.md) for the lifecycle and how to add a module.
+
+## Activity and errors
+
+**Activity** records administrator and bot actions, including text changes and line diffs. Browse and export the full record in the panel. Choose an activity channel in **Settings** to deliver new events to Discord. Ordinary members' messages are not monitored.
+
+**Error reports** use separate configuration:
+
+```dotenv
+LOG_ID=error_channel_id
+LOG_WEBHOOK=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
+```
+
+Reports are written to disk first. Delivery uses the bot channel when available, then an independent webhook if needed. If both fail, the persistent queue retries later. Reports include an error ID, process, scope, stack, and a JSON attachment. The activity channel and `LOG_ID` serve different purposes.
+
+## Deployment and data
+
+Run the built application with `npm start`. A [systemd service example](docs/open-bot.service) is included; configure HTTPS and a reverse proxy for an externally reachable panel.
+
+```sh
 npm run backup
 ```
 
-Для разработки интерфейса добавьте APP_ORIGIN=http://localhost:5173 в .env и запустите npm run dev. Открывайте интерфейс именно на этом адресе; OAuth callback остаётся на серверном PORT. APP_ORIGIN и REDIRECT должны использовать одинаковые hostname и протокол. После разработки уберите APP_ORIGIN или замените его на production origin. Vite проксирует /api и /auth на серверный порт.
-
-Тесты проверяют OAuth state, доступ и CSRF, отзыв роли, конфликты черновиков, ошибку публикации, откат, конкурирующие публикации, Unicode-пагинацию и сохранение базы после перезапуска. Они используют FakeDiscord и не отправляют сообщений на настоящий сервер. Для ручной проверки интерфейса есть отдельный tests/ui-harness.ts; production entrypoint его не импортирует.
-
-## Развёртывание
-
-На VPS задайте REDIRECT=https://ваш-домен/auth/discord/callback и настройте обратный прокси на HOST:PORT. HOST по умолчанию 127.0.0.1. Для контейнера задайте HOST=0.0.0.0, а каталог data вынесите на постоянный том. TRUST_PROXY=true используйте только за доверенным прокси, который заменяет заголовки X-Forwarded-*.
-
-Пример запуска через systemd: docs/open-bot.service. После установки зависимостей и сборки скопируйте проект в /opt/open-bot, создайте отдельного пользователя open-bot, дайте ему запись в каталог data и укажите .env в корне проекта. Для обновления остановите сервис, сделайте резервную копию, обновите код, выполните npm ci и npm run build, затем запустите сервис.
-
-Проверка готовности: GET /api/health возвращает 200, когда бот подключён, и 503 при потере соединения. Публикация и доступ к панели при недоступном Discord завершаются ошибкой; обхода авторизации нет.
-
-Резервная копия выполняется через SQLite online backup: npm run backup. Каждая папка в data/backups содержит open-bot.sqlite, загруженные файлы uploads и журналы logs/errors. Для восстановления остановите сервис, сохраните прежние данные и восстановите базу, uploads, logs и errors из одной копии. При остановленном сервисе удалите оставшиеся -wal/-shm файлы восстанавливаемой базы. Затем запустите сервис. Миграции применяются автоматически при старте и сохраняют предыдущие черновики, сессии и ID публикаций.
-
-## Структура
+Backups contain the SQLite database, uploads, and activity/error logs. Restore them together while the service is stopped. A [step-by-step guide](docs/OPERATIONS.md#резервные-копии-и-восстановление) covers deployment and recovery.
 
 ```text
-src/server/      API, OAuth, Discord, SQLite и публикации
-src/shared/      Схемы данных и общий алгоритм пагинации
-src/web/         Редактор, настройки, история и предпросмотр
-migrations/     Версионированные SQL-миграции
-rules/          Начальные тексты правил
-tests/          Проверки с изолированным Discord-адаптером
-docs/           Дизайн и пример сервиса
+src/server/     Discord, OAuth, API, publishing, runtime and modules
+src/shared/     Shared schemas, block model and pagination
+src/web/        Administration panel and visual editor
+rules/          Initial Discord and game rule content
+migrations/     Versioned SQLite migrations
+docs/           Operations, module guide and README artwork
+data/           Local database, uploads, logs and backups; ignored by Git
 ```
 
-Документация API: [Discord Components V2](https://discord.com/developers/docs/components/reference), [OAuth2](https://discord.com/developers/docs/topics/oauth2), [discord.js](https://discord.js.org/docs/packages/discord.js/main), [Fastify](https://fastify.dev/docs/latest/), [Drizzle SQLite](https://orm.drizzle.team/docs/get-started-sqlite).
+## Development
+
+```sh
+npm run dev
+npm run typecheck
+npm run format:check
+npm run build
+```
+
+For the Vite interface, set `APP_ORIGIN=http://localhost:5173` in `.env`; keep the OAuth callback on the backend port. Existing automated checks run with `npm test`. The [Checks workflow](https://github.com/cryals/open-bot/actions/workflows/check.yml) runs formatting, build, and tests on pushes and pull requests. The CI badge above links to its actual runs.
+
+**Stack:** Node.js 24 · TypeScript · discord.js 14 · Fastify 5 · React 19 · Vite · SQLite · Drizzle ORM.
+
+## License
+
+[Open Bot Project License 1.0](LICENSE) — a custom source-available license. Private non-commercial use is permitted. Public or community deployment, redistribution, and commercial use require prior written permission from cryals. The full terms are in `LICENSE`, in English and Russian; licensing contact: `support@stopco.ru`.
+
+Third-party components retain their own licenses; see [notices](THIRD_PARTY_NOTICES.md).
+
+<p align="center">
+  <sub>Open Bot · by <a href="https://github.com/cryals">cryals</a> · <a href="docs/ARTWORK.md">Artwork and badge sources</a></sub>
+</p>
