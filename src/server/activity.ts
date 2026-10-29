@@ -30,26 +30,30 @@ type Row = {
   log_channel_id: string | null;
 };
 export class ActivityService {
-  private timer: ReturnType<typeof setInterval>;
+  private timer?: ReturnType<typeof setInterval>;
   private sending = false;
   private closed = false;
   private retryAt = 0;
   deliveryError: string | null = null;
   fileError: string | null = null;
+  private databaseError: string | null = null;
   readonly root: string;
   constructor(
     private store: Store,
     private discord: DiscordPort,
     private secrets: string[] = [],
+    private options: { deliver?: boolean; onError?: (error: unknown, scope: string) => void } = {},
   ) {
     this.root =
       store.sqlite.name === ':memory:'
         ? resolve('output/testlogs')
         : resolve(dirname(store.sqlite.name), 'logs');
-    this.timer = setInterval(() => {
-      void this.flush();
-    }, 3000);
-    this.timer.unref();
+    if (options.deliver !== false) {
+      this.timer = setInterval(() => {
+        void this.flush().catch((error) => options.onError?.(error, 'activity.flush'));
+      }, 3000);
+      this.timer.unref();
+    }
   }
   private redact(value: string) {
     let result = value;
@@ -94,27 +98,47 @@ export class ActivityService {
         : null;
     const now = Date.now();
     const details = this.redact(JSON.stringify(input.details || {}));
-    const channel = this.store.getSettings().logChannelId;
-    const result = this.store.sqlite
-      .prepare(
-        'INSERT INTO activity_log(created_at,actor,actor_name,kind,target,summary,details,before_text,after_text,diff,log_channel_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-      )
-      .run(
-        now,
-        actor.userId,
-        this.redact(actor.name),
-        input.kind,
-        this.redact(input.target),
-        this.redact(input.summary),
-        details,
-        before,
-        after,
-        diff,
-        channel,
-      );
-    const row = this.store.sqlite
-      .prepare('SELECT * FROM activity_log WHERE id=?')
-      .get(Number(result.lastInsertRowid)) as Row;
+    let row: Row = {
+      id: 0,
+      created_at: now,
+      actor: actor.userId,
+      actor_name: this.redact(actor.name),
+      kind: input.kind,
+      target: this.redact(input.target),
+      summary: this.redact(input.summary),
+      details,
+      before_text: before,
+      after_text: after,
+      diff,
+      log_channel_id: null,
+    };
+    try {
+      const channel = this.store.getSettings().logChannelId;
+      const result = this.store.sqlite
+        .prepare(
+          'INSERT INTO activity_log(created_at,actor,actor_name,kind,target,summary,details,before_text,after_text,diff,log_channel_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+        )
+        .run(
+          now,
+          actor.userId,
+          this.redact(actor.name),
+          input.kind,
+          this.redact(input.target),
+          this.redact(input.summary),
+          details,
+          before,
+          after,
+          diff,
+          channel,
+        );
+      row = this.store.sqlite
+        .prepare('SELECT * FROM activity_log WHERE id=?')
+        .get(Number(result.lastInsertRowid)) as Row;
+      this.databaseError = null;
+    } catch (error) {
+      this.databaseError = 'Не удалось записать журнал в SQLite; подробности сохраняются в JSONL';
+      this.options.onError?.(error, 'activity.database');
+    }
     try {
       mkdirSync(this.root, { recursive: true });
       const day = new Intl.DateTimeFormat('en-CA', {
@@ -123,12 +147,16 @@ export class ActivityService {
         month: '2-digit',
         day: '2-digit',
       }).format(now);
-      appendFileSync(resolve(this.root, day + '.jsonl'), JSON.stringify(this.entry(row)) + '\n');
+      appendFileSync(
+        resolve(this.root, day + '-' + process.pid + '.jsonl'),
+        JSON.stringify(this.entry(row)) + '\n',
+      );
       this.fileError = null;
-    } catch {
+    } catch (error) {
       this.fileError = 'Не удалось записать файл журнала; события сохранены в SQLite';
+      this.options.onError?.(error, 'activity.file');
     }
-    return Number(result.lastInsertRowid);
+    return row.id;
   }
   list(search = '', before = Number.MAX_SAFE_INTEGER): ActivityPage {
     const query = '%' + search + '%';
@@ -144,7 +172,7 @@ export class ActivityService {
       entries: rows.map((row) => this.entry(row)),
       pending: pending.total,
       deliveryError: this.deliveryError,
-      fileError: this.fileError,
+      fileError: this.fileError || this.databaseError,
     };
   }
   *export() {
@@ -204,10 +232,11 @@ export class ActivityService {
         for (const row of group) update.run(row.id);
       })();
       this.deliveryError = null;
-    } catch {
+    } catch (error) {
       this.deliveryError =
         'Не удалось отправить журнал в Discord. Проверьте канал и права бота. События сохранены.';
       this.retryAt = Date.now() + 30000;
+      this.options.onError?.(error, 'activity.delivery');
     } finally {
       this.sending = false;
     }

@@ -17,6 +17,8 @@ export type Config = {
   databasePath: string;
   adminRoleId: string | null;
   trustProxy: boolean;
+  logChannelId?: string | null;
+  logWebhook?: string | null;
 };
 
 export function loadConfig(): Config {
@@ -33,6 +35,26 @@ export function loadConfig(): Config {
     ADMIN_ROLE_ID: z.union([snowflake, z.literal('')]).optional(),
     TRUST_PROXY: z.enum(['true', 'false']).default('false'),
     APP_ORIGIN: z.url().optional(),
+    LOG_ID: z.union([snowflake, z.literal('')]).optional(),
+    LOG_WEBHOOK: z
+      .union([
+        z.url().refine((value) => {
+          const url = new URL(value);
+          return (
+            url.protocol === 'https:' &&
+            ['discord.com', 'discordapp.com', 'canary.discord.com', 'ptb.discord.com'].includes(
+              url.hostname,
+            ) &&
+            /^\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w.-]+$/.test(url.pathname) &&
+            !url.username &&
+            !url.password &&
+            !url.hash &&
+            !url.search
+          );
+        }, 'Use a Discord webhook URL'),
+        z.literal(''),
+      ])
+      .optional(),
   });
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {
@@ -75,5 +97,7 @@ export function loadConfig(): Config {
     databasePath: resolve(env.DATABASE_PATH),
     adminRoleId: env.ADMIN_ROLE_ID || null,
     trustProxy: env.TRUST_PROXY === 'true',
+    logChannelId: env.LOG_ID || null,
+    logWebhook: env.LOG_WEBHOOK || null,
   };
 }

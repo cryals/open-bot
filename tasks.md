@@ -62,7 +62,16 @@ Implementation approved by the user on 2026-10-29. The MVP is implemented. Edito
 - [x] Keep ordinary Discord member messages outside the logging scope, as clarified by the user.
 - [x] Apply the owner's AL-S visual system, source fonts, monochrome controls, background and Neural Glow.
 
-## Acceptance criteria
+## Modular runtime additions
+
+- [x] Core supervisor and independent Bot/Web processes, heartbeat, watchdog and bounded restarts.
+- [x] Common module lifecycle, dependencies, command registry and automatic help.
+- [x] Core /ping and /status; Help /help; Info /info and administrative /send-info.
+- [x] Full redacted error reports, persistent disk outbox, LOG_ID and fallback LOG_WEBHOOK.
+- [x] Shared REST transport, cross-process publication locking and persistent publication nonce.
+- [x] Graceful shutdown, orphan cleanup, service-manager configuration and module documentation.
+
+## Original acceptance criteria
 
 - The bot can publish and update one persistent launcher in the configured channel.
 - The launcher opens an ephemeral ruleset selector and private paginated views for each user.

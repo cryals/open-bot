@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "concurrently -k -n server,web \"tsx watch src/server/index.ts\" \"vite --host 127.0.0.1\"",
     "build": "npm run typecheck && vite build && tsc -p tsconfig.server.json",
-    "start": "node dist/server/src/server/index.js",
+    "start": "node --enable-source-maps dist/server/src/server/index.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm test",

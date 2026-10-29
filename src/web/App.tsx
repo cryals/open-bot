@@ -446,7 +446,7 @@ export function App() {
             <span className="connection-dot" />
             <div>
               {guild?.name}
-              <small>Бот подключён</small>
+              <small>{guild?.ready ? 'Бот подключён' : 'Бот переподключается'}</small>
             </div>
           </div>
           <button

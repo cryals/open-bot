@@ -141,6 +141,7 @@ export async function composerRoutes(
       throw new HttpError(
         502,
         `Отправлено ${next} из ${input.document.messages.length}. ${error instanceof HttpError ? error.message + '. ' : ''}Повторите отправку без изменения текста, чтобы продолжить.`,
+        { cause: error },
       );
     } finally {
       sending.delete(input.requestId);

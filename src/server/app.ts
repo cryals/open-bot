@@ -14,12 +14,11 @@ import type { DiscordPort } from './discord.js';
 import type { OAuthPort } from './oauth.js';
 import type { Store } from './store.js';
 import { HttpError } from './errors.js';
-import { validatePayloads, rulesView, launcher } from './render.js';
 import { composerRoutes } from './composer-routes.js';
-import { MediaService } from './media.js';
 import { ActivityService } from './activity.js';
+import { Publisher } from './publisher.js';
+import type { ErrorReporter } from './runtime/error-reporter.js';
 import { uiEventSchema } from '../shared/activity.js';
-import { pageBlocks, paginate, infoBlocks, type RulesDocument } from '../shared/rules.js';
 declare module 'fastify' {
   interface FastifyRequest {
     adminSession: NonNullable<ReturnType<Store['session']>> | null;
@@ -39,6 +38,10 @@ export async function createApp(options: {
   discord: DiscordPort;
   oauth: OAuthPort;
   logger?: boolean;
+  activity?: ActivityService;
+  errors?: ErrorReporter;
+  runtime?: () => unknown;
+  activityDeliveryError?: () => string | null;
 }) {
   const { config, store, discord, oauth } = options;
   const app = Fastify({
@@ -49,14 +52,17 @@ export async function createApp(options: {
   });
   await app.register(cookie);
   app.decorateRequest('adminSession', null);
-  const activity = new ActivityService(store, discord, [config.token, config.clientSecret]);
+  const activity =
+    options.activity ||
+    new ActivityService(store, discord, [config.token, config.clientSecret, config.logWebhook || '']);
+  const publisher = new Publisher(store, discord, activity, options.errors);
   discord.setActivity?.(activity);
   app.addHook('onClose', async () => {
     activity.record(
       { userId: config.clientId, name: 'Open Space' },
       { kind: 'system.stop', target: 'server', summary: 'Сервис остановлен' },
     );
-    activity.close();
+    if (!options.activity) activity.close();
   });
   const actor = (request: FastifyRequest) => request.adminSession!;
   activity.record(
@@ -95,10 +101,7 @@ export async function createApp(options: {
   });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
   const cookieOptions = { httpOnly: true, sameSite: 'lax' as const, secure: config.secureCookies, path: '/' };
-  let publishing = false;
-  const assertNotPublishing = () => {
-    if (publishing) throw new HttpError(409, 'Публикация уже выполняется. Дождитесь завершения.');
-  };
+  const assertNotPublishing = () => publisher.assertIdle();
   async function authenticate(request: FastifyRequest) {
     const session = store.session(request.cookies.os_session || '');
     if (!session) throw new HttpError(401, 'Войдите через Discord');
@@ -130,23 +133,39 @@ export async function createApp(options: {
       }
     }
   });
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error, request, reply) => {
     if (error instanceof z.ZodError) {
       return reply
         .code(400)
         .send({ error: error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('\n') });
     }
-    if (error instanceof HttpError) return reply.code(error.statusCode).send({ error: error.message });
+    if (error instanceof HttpError) {
+      if (error.statusCode >= 500)
+        options.errors?.report(error, 'web.request', {
+          method: request.method,
+          route: request.routeOptions.url,
+          actor: request.adminSession?.userId,
+        });
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
     const known = error instanceof Error ? error : new Error('Unknown error');
     const code = 'code' in known ? String(known.code) : undefined;
     const statusCode = 'statusCode' in known ? Number(known.statusCode) : 500;
     const status = statusCode >= 400 && statusCode < 500 ? statusCode : 500;
     // Deliberately omit request URLs, headers, bodies and OAuth query parameters.
     app.log.error({ name: known.name, code }, 'Request failed');
+    const errorId =
+      status === 500
+        ? options.errors?.report(known, 'web.request', {
+            method: request.method,
+            route: request.routeOptions.url,
+            actor: request.adminSession?.userId,
+          })
+        : undefined;
     return reply.code(status).send({
       error:
         status === 500
-          ? 'Не удалось выполнить действие. Проверьте соединение бота и журнал сервера.'
+          ? 'Не удалось выполнить действие. Проверьте журнал сервера.' + (errorId ? ' ID: ' + errorId : '')
           : 'Некорректный запрос',
     });
   });
@@ -208,17 +227,6 @@ export async function createApp(options: {
     return { ok: true };
   });
   app.get('/api/workspace', async () => store.workspace());
-  const media = new MediaService(store);
-  function validateRules(document: RulesDocument) {
-    validatePayloads(document);
-    media.validate(infoBlocks(document));
-    media.prepare(launcher(document));
-    for (const set of document.rulesets) {
-      for (const page of set.pages) media.validate(pageBlocks(page));
-      for (let index = 0; index < paginate(set).length; index++)
-        media.prepare(rulesView(document, set.key, index, '111111111111111111'));
-    }
-  }
   await composerRoutes(app, store, discord, activity);
   app.post(
     '/api/activity',
@@ -240,7 +248,8 @@ export async function createApp(options: {
         before: z.coerce.number().int().positive().optional(),
       })
       .parse(request.query);
-    return activity.list(query.search, query.before);
+    const page = activity.list(query.search, query.before);
+    return { ...page, deliveryError: options.activityDeliveryError?.() || page.deliveryError };
   });
   app.get('/api/activity/export', async (request, reply) => {
     activity.record(actor(request), {
@@ -254,10 +263,11 @@ export async function createApp(options: {
       .send(Readable.from(activity.export()));
   });
   app.get('/api/guild', async () => discord.info());
+  app.get('/api/runtime', async () => options.runtime?.() || { mode: 'standalone' });
   app.put('/api/draft', async (request) => {
     assertNotPublishing();
     const input = versionSchema.extend({ document: documentSchema }).parse(request.body);
-    validateRules(input.document);
+    publisher.validate(input.document);
     const before = store.getDraft().document;
     const result = store.saveDraft(input.document, input.version, actor(request).userId);
     activity.record(actor(request), {
@@ -299,57 +309,9 @@ export async function createApp(options: {
     return store.workspace();
   });
   app.post('/api/publish', async (request) => {
-    assertNotPublishing();
     const input = versionSchema.parse(request.body);
-    const draft = store.getDraft();
-    if (draft.version !== input.version)
-      throw new HttpError(409, 'Черновик изменился. Обновите страницу перед публикацией.');
-    const settings = store.getSettings();
-    const previouslyPublished = store.active();
-    if (!settings.channelId) throw new HttpError(400, 'Сначала выберите канал в настройках');
-    validateRules(draft.document);
-    const actor = request.adminSession!.userId;
-    publishing = true;
-    try {
-      const messageId = await discord.upsert(draft.document, settings.channelId, settings);
-      store.commitPublication(draft.document, actor, settings.channelId, messageId);
-      activity.record(request.adminSession!, {
-        kind: 'rules.publish',
-        target: `channel:${settings.channelId}/message:${messageId}`,
-        summary: 'Опубликованы информация и правила',
-        details: { channelId: settings.channelId, messageId, version: draft.version },
-        before: previouslyPublished,
-        after: draft.document,
-      });
-      if (
-        settings.messageId &&
-        settings.messageChannelId &&
-        settings.messageChannelId !== settings.channelId
-      ) {
-        try {
-          await discord.retire(settings.messageChannelId, settings.messageId);
-          activity.record(request.adminSession!, {
-            kind: 'message.delete',
-            target: `channel:${settings.messageChannelId}/message:${settings.messageId}`,
-            summary: 'Удалено прежнее информационное сообщение после переноса',
-            details: { channelId: settings.messageChannelId, messageId: settings.messageId },
-          });
-        } catch {
-          app.log.warn('New launcher published; old launcher could not be removed');
-        }
-      }
-      return store.workspace();
-    } catch (error) {
-      activity.record(request.adminSession!, {
-        kind: 'rules.publish_failed',
-        target: 'channel:' + settings.channelId,
-        summary: 'Публикация не завершена',
-        details: { error: error instanceof Error ? error.name : 'Error' },
-      });
-      throw error;
-    } finally {
-      publishing = false;
-    }
+    await publisher.publish(request.adminSession!, input);
+    return store.workspace();
   });
   app.post('/api/restore/:id', async (request) => {
     assertNotPublishing();

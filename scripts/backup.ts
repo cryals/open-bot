@@ -15,6 +15,8 @@ try {
   if (existsSync(uploads)) await cp(uploads, resolve(destination, 'uploads'), { recursive: true });
   const logs = resolve(dirname(config.databasePath), 'logs');
   if (existsSync(logs)) await cp(logs, resolve(destination, 'logs'), { recursive: true });
+  const errors = resolve(dirname(config.databasePath), 'errors');
+  if (existsSync(errors)) await cp(errors, resolve(destination, 'errors'), { recursive: true });
   console.log('Backup saved: ' + destination);
 } finally {
   db.close();

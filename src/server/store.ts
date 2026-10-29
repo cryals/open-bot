@@ -76,22 +76,37 @@ export class Store {
     };
   }
   saveDraft(document: RulesDocument, version: number, actor: string) {
-    this.db.transaction((tx) => {
-      if (this.getDraft().version !== version)
-        throw new HttpError(409, 'Черновик изменён в другой вкладке. Обновите страницу перед сохранением.');
-      tx.update(schema.draft)
-        .set({ document, version: version + 1, updatedAt: Date.now() })
-        .where(eq(schema.draft.id, 1))
-        .run();
-      tx.insert(schema.audit).values({ actor, action: 'draft.save', createdAt: Date.now() }).run();
-    });
+    this.db.transaction(
+      (tx) => {
+        this.assertEditable();
+        if (this.getDraft().version !== version)
+          throw new HttpError(409, 'Черновик изменён в другой вкладке. Обновите страницу перед сохранением.');
+        tx.update(schema.draft)
+          .set({ document, version: version + 1, updatedAt: Date.now() })
+          .where(eq(schema.draft.id, 1))
+          .run();
+        tx.insert(schema.audit).values({ actor, action: 'draft.save', createdAt: Date.now() }).run();
+      },
+      { behavior: 'immediate' },
+    );
     return this.workspace();
   }
   saveSettings(input: SettingsInput, actor: string) {
-    this.db.transaction((tx) => {
-      tx.update(schema.settings).set(input).where(eq(schema.settings.id, 1)).run();
-      tx.insert(schema.audit).values({ actor, action: 'settings.save', createdAt: Date.now() }).run();
-    });
+    this.db.transaction(
+      (tx) => {
+        this.assertEditable();
+        tx.update(schema.settings).set(input).where(eq(schema.settings.id, 1)).run();
+        tx.insert(schema.audit).values({ actor, action: 'settings.save', createdAt: Date.now() }).run();
+      },
+      { behavior: 'immediate' },
+    );
+  }
+  assertEditable() {
+    const lock = this.sqlite
+      .prepare('SELECT expires_at FROM runtime_locks WHERE name=?')
+      .get('publication') as { expires_at: number } | undefined;
+    if (lock && lock.expires_at > Date.now())
+      throw new HttpError(409, 'Публикация уже выполняется. Дождитесь завершения.');
   }
   revision(id: number) {
     const row = this.db.select().from(schema.revisions).where(eq(schema.revisions.id, id)).get();
@@ -117,6 +132,15 @@ export class Store {
         .values({ actor, action: 'publish.' + revision.id, createdAt: Date.now() })
         .run();
       return revision.id;
+    });
+  }
+  updateLauncher(channelId: string, messageId: string, actor: string) {
+    this.db.transaction((tx) => {
+      tx.update(schema.settings)
+        .set({ channelId, messageId, messageChannelId: channelId })
+        .where(eq(schema.settings.id, 1))
+        .run();
+      tx.insert(schema.audit).values({ actor, action: 'info.send', createdAt: Date.now() }).run();
     });
   }
   createSession(user: SessionUser) {

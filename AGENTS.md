@@ -11,8 +11,9 @@
 - Build a rules publisher for one Discord guild initially: a bot that publishes a persistent Components V2 launcher and private, paginated rules views, plus a web admin panel.
 - The panel edits Discord community rules and Open Space game rules, supports ordering and previews, and publishes the active version.
 - The user additionally approved a visual Components V2 block editor, image/file uploads, and sending/editing messages as the bot. Reuse the shared block model for rules and messages. Preserve compatibility with earlier text-only rules and published revisions.
-- Actual message sending or updating is initiated by an authenticated administrator in the panel. Tests and browser QA use FakeDiscord, not the live guild.
+- Content sending/updating is initiated by an authenticated administrator in the panel or /send-info. The user authorized error notifications to the configured LOG_ID / LOG_WEBHOOK. Tests and browser QA use FakeDiscord, not the live guild.
 - The user approved detailed admin UI and bot-action logging, including before/after text and line diffs. Persist the full audit in SQLite and daily JSONL; optional Discord delivery is enabled by an administrator selecting a log channel. Do not collect credentials or observe ordinary guild-member messages. Browser observations must remain distinguishable from authoritative server events.
+- The user approved a modular runtime (Core, Web, Help, Info and future modules), slash commands, supervised process recovery, and error delivery via LOG_ID with LOG_WEBHOOK fallback. An authorized administrator invoking /send-info initiates a real public update. Use the published snapshot, shared Publisher and persisted publication lock. Register modules in the catalog; derive help and command registration from their definitions.
 - The app publishes and navigates rules. It does not scan chat, automatically detect violations, or issue punishments.
 - Follow Discord Components V2 for all bot-rendered rules and navigation. Do not use classic embeds for this experience.
 - Navigation should be ephemeral and scoped to the interacting user. The public launcher remains in the configured channel.
@@ -25,7 +26,7 @@
 - Fastify for the API and Discord OAuth callback.
 - React and Vite for the admin interface.
 - SQLite with better-sqlite3 and Drizzle ORM for persistence and migrations.
-- A modular monolith is the MVP deployment shape: one Node.js service, one SQLite database, and a separately built admin frontend served by the service or a reverse proxy.
+- The runtime has a Node.js supervisor and isolated Bot/Web processes sharing one SQLite WAL database. Only Bot owns Gateway and activity delivery; only the supervisor delivers the error outbox. Keep independent services under an external OS service manager in production.
 
 ## Engineering requirements after approval
 
