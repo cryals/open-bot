@@ -1,0 +1,46 @@
+name: open-bot
+
+services:
+  open-bot:
+    image: open-bot:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 20s
+    environment:
+      NODE_ENV: production
+      BOT_TOKEN: ${BOT_TOKEN:?Set BOT_TOKEN in .env}
+      GUILD_ID: ${GUILD_ID:?Set GUILD_ID in .env}
+      CLIENT_ID: ${CLIENT_ID:?Set CLIENT_ID in .env}
+      CLIENT_SECRET: ${CLIENT_SECRET:?Set CLIENT_SECRET in .env}
+      REDIRECT: ${REDIRECT:?Set REDIRECT in .env}
+      HOST: 0.0.0.0
+      PORT: '3000'
+      DATABASE_PATH: /app/data/open-bot.sqlite
+      ADMIN_ROLE_ID: ${ADMIN_ROLE_ID:-}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      LOG_ID: ${LOG_ID:-}
+      LOG_WEBHOOK: ${LOG_WEBHOOK:-}
+    ports:
+      - '${BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000'
+    volumes:
+      - open-bot-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: ${MEMORY_LIMIT:-1g}
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+volumes:
+  open-bot-data:

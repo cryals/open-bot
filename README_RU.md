@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="#быстрый-запуск">Быстрый запуск</a> · <a href="docs/OPERATIONS.md">Развёртывание</a> · <a href="docs/MODULES.md">Модули</a> · <a href="LICENSE">Лицензия</a>
+  <a href="#docker">Docker</a> · <a href="#быстрый-запуск">Node.js</a> · <a href="docs/OPERATIONS.md">Развёртывание</a> · <a href="docs/MODULES.md">Модули</a> · <a href="LICENSE">Лицензия</a>
 </p>
 
 ---
@@ -50,6 +50,30 @@ Open Bot — название продукта. **Open Space** — назван�
 5. Участники нажимают **«Читать правила»** и выбирают правила Discord или игры.
 
 В информационное сообщение можно добавить ссылки на вики, лаунчер, поддержку и документы. Повторная публикация обновляет сообщение по сохранённому ID. Если его удалили, следующая публикация создаст новое и запомнит его ID.
+
+## Docker
+
+Нужны Docker Engine с Compose или Docker Desktop в режиме Linux containers. В клонированном репозитории:
+
+```sh
+cp .env.example .env
+```
+
+Заполните данные Discord и OAuth callback в `.env`, затем запустите:
+
+```sh
+docker compose up -d --build
+```
+
+По умолчанию панель доступна на [localhost:3000](http://localhost:3000). SQLite, вложения, логи и резервные копии сохраняются в именованном томе. Устанавливать Node.js на хост не нужно. В PowerShell вместо `cp` используйте `Copy-Item`.
+
+Для публичного домена с автоматическим HTTPS задайте `DOMAIN` и `REDIRECT`, затем:
+
+```sh
+docker compose -f compose.yaml -f compose.https.yaml up -d --build
+```
+
+Настройка Discord, существующий `.env` в родительской папке, копии, перенос данных и HTTPS описаны в [инструкции Docker](docs/DOCKER.md).
 
 ## Быстрый запуск
 
@@ -123,7 +147,7 @@ LOG_WEBHOOK=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
 
 ## Развёртывание и данные
 
-Собранное приложение запускается через `npm start`. В проекте есть [пример systemd-службы](docs/open-bot.service). Для панели, доступной извне, настройте HTTPS и обратный прокси.
+Используйте [Docker Compose](docs/DOCKER.md) или запускайте собранное приложение через `npm start`. Для обычной установки есть [пример systemd-службы](docs/open-bot.service). В Docker предусмотрена дополнительная конфигурация Caddy для HTTPS; при запуске без Docker настройте свой обратный прокси.
 
 ```sh
 npm run backup

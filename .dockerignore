@@ -1,0 +1,32 @@
+# Allow only build inputs. Never send .env, local data or Windows modules.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.server.json
+!vite.config.ts
+!index.html
+!src/
+!src/**
+!public/
+!public/**
+!rules/
+!rules/**
+!migrations/
+!migrations/**
+!tests/
+!tests/**
+!scripts/
+!scripts/backup.ts
+!docker/
+!docker/**
+!LICENSE
+!THIRD_PARTY_NOTICES.md
+
+# Keep secrets and generated data out even inside an allowed directory.
+**/.env
+**/.env.*
+**/node_modules
+**/*.sqlite
+**/*.sqlite-*
+**/*.log

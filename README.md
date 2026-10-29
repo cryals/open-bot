@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> · <a href="docs/OPERATIONS.md">Deployment</a> · <a href="docs/MODULES.md">Modules</a> · <a href="LICENSE">License</a>
+  <a href="#docker">Docker</a> · <a href="#quick-start">Node.js</a> · <a href="docs/OPERATIONS.md">Deployment</a> · <a href="docs/MODULES.md">Modules</a> · <a href="LICENSE">License</a>
 </p>
 
 ---
@@ -50,6 +50,30 @@ Open Bot is the product name. **Open Space** is the community used in the suppli
 5. Members press **Read rules** and browse Discord or game rules privately.
 
 The information editor can also hold wiki, launcher, support, and document links. A subsequent publication updates the stored message instead of posting another copy. If the message was deleted, the next publication creates a replacement and stores its ID.
+
+## Docker
+
+Requires Docker Engine with Compose or Docker Desktop using Linux containers. From a clone of this repository:
+
+```sh
+cp .env.example .env
+```
+
+Fill in the Discord credentials and OAuth callback in `.env`, then start:
+
+```sh
+docker compose up -d --build
+```
+
+The default panel address is [localhost:3000](http://localhost:3000). SQLite, uploads, logs and backups persist in a named volume. Node.js is installed inside the image. On PowerShell, use `Copy-Item` instead of `cp`.
+
+For a public domain with automatic HTTPS, configure `DOMAIN` and `REDIRECT`, then run:
+
+```sh
+docker compose -f compose.yaml -f compose.https.yaml up -d --build
+```
+
+See the [Docker guide (Russian)](docs/DOCKER.md) for Discord setup, an existing parent `.env`, backups, migration, ports, and HTTPS.
 
 ## Quick start
 
@@ -123,7 +147,7 @@ Reports are written to disk first. Delivery uses the bot channel when available,
 
 ## Deployment and data
 
-Run the built application with `npm start`. A [systemd service example](docs/open-bot.service) is included; configure HTTPS and a reverse proxy for an externally reachable panel.
+Use [Docker Compose](docs/DOCKER.md) or run the built application with `npm start`. For a native installation, a [systemd service example](docs/open-bot.service) is included. Docker has an optional Caddy configuration for HTTPS; a native installation needs its own reverse proxy.
 
 ```sh
 npm run backup

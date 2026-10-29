@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "outDir": "dist/server", "rootDir": ".", "sourceMap": true },
-  "include": ["src/server", "src/shared"]
+  "include": ["src/server", "src/shared", "scripts/backup.ts"]
 }
