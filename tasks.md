@@ -1,4 +1,4 @@
-# Open Space Rules Bot — tasks
+# Open Bot — tasks
 
 Implementation approved by the user on 2026-10-29. The MVP is implemented. Editorial questions about the supplied rule text remain for the administrator to review before publishing.
 
@@ -71,7 +71,27 @@ Implementation approved by the user on 2026-10-29. The MVP is implemented. Edito
 - [x] Shared REST transport, cross-process publication locking and persistent publication nonce.
 - [x] Graceful shutdown, orphan cleanup, service-manager configuration and module documentation.
 
-## Original acceptance criteria
+## Ticket and Metrics — design prepared on 2026-10-30
+
+Specification: [Ticket and Metrics design](docs/superpowers/specs/2026-10-30-ticket-and-metrics-design.md). The following work is planned; it is not implemented by this documentation change.
+
+- [x] Study the Flow Bot reference and current module, OAuth and interaction architecture.
+- [x] Confirm private ticket channels, both role IDs, staff discussions and full transcript scope.
+- [x] Confirm close permissions, deletion after successful archiving, 180-day expiry including staff threads, and existing Prometheus/Grafana.
+- [ ] Implement scoped Web permissions and a restricted Ticket-only entry path.
+- [ ] Add Ticket storage, migrations and persistent operation/recovery jobs.
+- [ ] Add category/panel configuration, support roles and shared Components V2 ticket actions.
+- [ ] Add select-menu/modal routing and Discord ticket lifecycle handlers.
+- [ ] Add bot-owned private staff threads with membership checks excluding the ticket author.
+- [ ] Persist ticket/staff messages, edits, deletions and attachment copies with scoped file access.
+- [ ] Build interactive transcript pages, list filters, events and role-based controls.
+- [ ] Implement closing/archive/delete ordering and 180-day purge with retries.
+- [ ] Add a common telemetry interface and an optional isolated Metrics exporter.
+- [ ] Add cross-module instrumentation, a protected scrape endpoint and Grafana dashboard JSON.
+- [ ] Update Docker configuration, backup/restore, environment examples and operator documentation.
+- [ ] Run build/type/format and Compose configuration checks; report runtime validation separately. Add or run automated tests only if requested.
+
+## Original acceptance criteria (MVP)
 
 - The bot can publish and update one persistent launcher in the configured channel.
 - The launcher opens an ephemeral ruleset selector and private paginated views for each user.
