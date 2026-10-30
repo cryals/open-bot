@@ -19,6 +19,7 @@ import {
   Radio,
   Save,
   Send,
+  Server,
   Settings,
   ShieldCheck,
   Trash2,
@@ -446,7 +447,7 @@ export function App() {
           <div className="guild">
             <span className="connection-dot" />
             <div>
-              {guild?.name}
+              Discord
               <small>{guild?.ready ? 'Бот подключён' : 'Бот переподключается'}</small>
             </div>
           </div>
@@ -741,6 +742,24 @@ export function App() {
         {mode === 'settings' && (
           <div className="settings-grid">
             <div>
+              {guild && (
+                <section className="settings-card guild-profile" aria-label="Подключённый Discord-сервер">
+                  {guild.iconUrl ? (
+                    <img className="guild-profile-icon" src={guild.iconUrl} alt="" width={56} height={56} />
+                  ) : (
+                    <span className="guild-profile-icon">
+                      <Server size={24} aria-hidden="true" />
+                    </span>
+                  )}
+                  <div>
+                    <small>Discord-сервер</small>
+                    <h2>{guild.name}</h2>
+                    <p>
+                      ID: <code>{guild.id}</code>
+                    </p>
+                  </div>
+                </section>
+              )}
               <SettingsForm
                 workspace={workspace}
                 guild={guild!}

@@ -73,6 +73,7 @@ export class DiscordRest implements DiscordPort {
     return {
       id: guild.id,
       name: guild.name,
+      iconUrl: guild.icon ? this.rest.cdn.icon(guild.id, guild.icon, { size: 128, extension: 'webp' }) : null,
       ready: this.isReady(),
       channels: channels
         .filter((channel) => [ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type))

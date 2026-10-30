@@ -9,6 +9,7 @@
 ## Product scope
 
 - Product branding is Open Bot: a bot for managing Discord servers. Open Space is the community name in the supplied rules and message content, not the bot or admin panel name. Preserve this distinction in UI, help, logs, and future modules.
+- Do not hardcode Open Space in UI chrome, navigation, generated export filenames or system menus. Keep community names in editable content; settings display the actual guild name and icon fetched with the configured GUILD_ID.
 - Build a rules publisher for one Discord guild initially: a bot that publishes a persistent Components V2 launcher and private, paginated rules views, plus a web admin panel.
 - The panel edits Discord community rules and Open Space game rules, supports ordering and previews, and publishes the active version.
 - The user additionally approved a visual Components V2 block editor, image/file uploads, and sending/editing messages as the bot. Reuse the shared block model for rules and messages. Preserve compatibility with earlier text-only rules and published revisions.

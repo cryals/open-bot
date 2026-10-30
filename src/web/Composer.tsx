@@ -216,7 +216,7 @@ export function Composer({
               );
               const link = window.document.createElement('a');
               link.href = url;
-              link.download = 'open-space-message.json';
+              link.download = 'open-bot-message.json';
               link.click();
               URL.revokeObjectURL(url);
             }}

@@ -175,6 +175,7 @@ export type SessionUser = { id: string; name: string };
 export type GuildInfo = {
   id: string;
   name: string;
+  iconUrl: string | null;
   ready: boolean;
   channels: { id: string; name: string }[];
   roles: { id: string; name: string }[];

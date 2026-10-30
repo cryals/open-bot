@@ -1,6 +1,35 @@
 /* AL-S visual system, adapted from cryals/cryals web/src/styles/global.css.
    Source revision: 91e1ca0dc62cba0ec8947f39e30056b311816448. */
 
+.guild-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.guild-profile-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: var(--hover);
+  border: 1px solid var(--line);
+}
+.guild-profile > div {
+  min-width: 0;
+}
+.guild-profile h2 {
+  margin: 4px 0 8px;
+  overflow-wrap: anywhere;
+}
+.guild-profile p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
 .product-logo {
   display: block;
   width: 100%;

@@ -50,7 +50,7 @@ export function launcher(document: RulesDocument) {
 }
 export function menu(document: RulesDocument, userId: string) {
   const card = container().addTextDisplayComponents(
-    text('# Правила Open Space'),
+    text('# Правила сообщества'),
     text('Выберите правила, которые хотите прочитать.'),
   );
   card.addActionRowComponents(

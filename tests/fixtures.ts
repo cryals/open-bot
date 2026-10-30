@@ -34,6 +34,7 @@ export class FakeDiscord implements DiscordPort {
     return {
       id: testConfig.guildId,
       name: 'Open Space',
+      iconUrl: null,
       ready: true,
       channels: [{ id: '333333333333333333', name: 'правила' }],
       roles: [{ id: '444444444444444444', name: 'Администратор' }],
