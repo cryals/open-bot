@@ -1,6 +1,6 @@
 # Open Bot в Docker
 
-[README](../README.md) · [На русском](../README_RU.md) · [Эксплуатация](OPERATIONS.md)
+[README](https://github.com/cryals/open-bot/blob/main/README.md) · [На русском](https://github.com/cryals/open-bot/blob/main/README_RU.md) · [Эксплуатация](OPERATIONS.md)
 
 ## Быстрый запуск
 
@@ -44,15 +44,15 @@ docker compose --env-file ../.env up -d --build
 
 ## Что входит
 
-| Файл                                                | Назначение                                                                                  |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [Dockerfile](../Dockerfile)                         | Сборка Node.js 24, TypeScript и Vite; отдельный runtime без компилятора и dev-зависимостей. |
-| [compose.yaml](../compose.yaml)                     | Бот, веб-панель, постоянный том, ограничения ресурсов и политика перезапуска.               |
-| [compose.https.yaml](../compose.https.yaml)         | Дополнительный Caddy для публичного домена и HTTPS.                                         |
-| [docker/Caddyfile](../docker/Caddyfile)             | HTTPS-прокси к веб-панели.                                                                  |
-| [docker/start.sh](../docker/start.sh)               | Блокировка тома и запуск существующего супервизора.                                         |
-| [docker/healthcheck.mjs](../docker/healthcheck.mjs) | Проверка готовности через `/api/health`.                                                    |
-| [.dockerignore](../.dockerignore)                   | В контекст сборки попадают только необходимые исходники.                                    |
+| Файл                                                                                          | Назначение                                                                                  |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [Dockerfile](https://github.com/cryals/open-bot/blob/main/Dockerfile)                         | Сборка Node.js 24, TypeScript и Vite; отдельный runtime без компилятора и dev-зависимостей. |
+| [compose.yaml](https://github.com/cryals/open-bot/blob/main/compose.yaml)                     | Бот, веб-панель, постоянный том, ограничения ресурсов и политика перезапуска.               |
+| [compose.https.yaml](https://github.com/cryals/open-bot/blob/main/compose.https.yaml)         | Дополнительный Caddy для публичного домена и HTTPS.                                         |
+| [docker/Caddyfile](https://github.com/cryals/open-bot/blob/main/docker/Caddyfile)             | HTTPS-прокси к веб-панели.                                                                  |
+| [docker/start.sh](https://github.com/cryals/open-bot/blob/main/docker/start.sh)               | Блокировка тома и запуск существующего супервизора.                                         |
+| [docker/healthcheck.mjs](https://github.com/cryals/open-bot/blob/main/docker/healthcheck.mjs) | Проверка готовности через `/api/health`.                                                    |
+| [.dockerignore](https://github.com/cryals/open-bot/blob/main/.dockerignore)                   | В контекст сборки попадают только необходимые исходники.                                    |
 
 Образ использует Debian Bookworm и официальный `node:24-bookworm-slim`. `better-sqlite3` устанавливается внутри Linux; при отсутствии подходящего готового бинарного файла он собирается на стадии build. Windows-каталог `node_modules` не переносится в контейнер.
 
@@ -189,3 +189,13 @@ docker compose config --quiet
 ## Справочные источники
 
 [Многостадийная сборка Docker](https://docs.docker.com/build/building/multi-stage/), [переменные Compose](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/), [постоянные тома](https://docs.docker.com/engine/storage/volumes/), [политика перезапуска](https://docs.docker.com/engine/containers/start-containers-automatically/), [Caddy в Compose](https://caddyserver.com/docs/running#docker-compose).
+
+## Ticket и мониторинг
+
+Ticket включается через `TICKETS_ENABLED=true` и Message Content Intent в Developer Portal. Подготовьте отдельный закрытый служебный канал и права управления каналами/ветками по [руководству](user/tickets.md). `ticket-files/` сохраняется в томе вместе с SQLite и входит в backup.
+
+Для SS14 задайте `GAME_SERVER_HOSTS`, для Watchdog — `WATCHDOG_HOSTS` и `WATCHDOG_TOKEN_MAIN`. Дополнительные `WATCHDOG_TOKEN_*` явно добавляйте в `services.open-bot.environment` своего override-файла; произвольные переменные хоста контейнер не получает.
+
+При `METRICS_ENABLED=true` нужен `METRICS_TOKEN` от 32 символов. Внутри контейнера exporter слушает `0.0.0.0:9091`, на хосте Compose публикует `${METRICS_BIND_ADDRESS:-127.0.0.1}:${METRICS_PORT:-9091}`. Подключите существующий Prometheus; Grafana и Prometheus не добавляются в Compose. Пример scrape и dashboard описаны в [метриках](user/metrics.md).
+
+Документация MkDocs Material собирается отдельно и не включается в образ приложения. Python требуется только для сборки вики.

@@ -1,3 +1,4 @@
+import { documentation } from './documentation.js';
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowDown,
@@ -43,12 +44,21 @@ import { blockText } from '../shared/blocks.js';
 import { BlocksPreview } from './BlockPreview.js';
 import { useActivity } from './activity.js';
 import { Logo } from './Logo.js';
+import type { Access } from '../shared/modules.js';
+import type { ModuleKind } from './Modules.js';
+const Modules = lazy(() => import('./Modules.js').then((module) => ({ default: module.Modules })));
+const moduleTitles: Record<ModuleKind, string> = {
+  tickets: 'Тикеты',
+  servers: 'Игровые серверы',
+  watchdog: 'SS14 Watchdog',
+  metrics: 'Метрики',
+};
 const Composer = lazy(() => import('./Composer.js').then((module) => ({ default: module.Composer })));
 const ActivityView = lazy(() =>
   import('./ActivityView.js').then((module) => ({ default: module.ActivityView })),
 );
 
-type Mode = 'rules' | 'settings' | 'history' | 'messages' | 'info' | 'activity';
+type Mode = 'rules' | 'settings' | 'history' | 'messages' | 'info' | 'activity' | ModuleKind;
 type LoginState =
   { kind: 'loading' } | { kind: 'guest'; error?: string } | { kind: 'member'; user: SessionUser };
 type ModalProps = {
@@ -95,7 +105,11 @@ const date = (value: number) =>
 
 export function App() {
   const [login, setLogin] = useState<LoginState>({ kind: 'loading' });
-  const activityError = useActivity(login.kind === 'member');
+  const [access, setAccess] = useState<Access | null>(null);
+  const activityError = useActivity(
+    login.kind === 'member',
+    access?.admin ? '/activity' : '/tickets/activity',
+  );
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [document, setDocument] = useState<RulesDocument | null>(null);
   const [guild, setGuild] = useState<GuildInfo | null>(null);
@@ -110,6 +124,8 @@ export function App() {
   const [modal, setModal] = useState<ModalProps | null>(null);
   const [composerDirty, setComposerDirty] = useState(false);
   const [composerOpened, setComposerOpened] = useState(false);
+  const [modulesOpened, setModulesOpened] = useState(false);
+  const isModule = mode in moduleTitles;
   const dirty = Boolean(
     workspace && document && JSON.stringify(workspace.document) !== JSON.stringify(document),
   );
@@ -125,8 +141,14 @@ export function App() {
     let alive = true;
     async function load() {
       try {
-        const me = await api<{ user: SessionUser; csrf: string }>('/me');
+        const me = await api<{ user: SessionUser; csrf: string; permissions: Access }>('/me');
         setCsrf(me.csrf);
+        if (!alive) return;
+        setAccess(me.permissions);
+        if (!me.permissions.admin) {
+          setLogin({ kind: 'member', user: me.user });
+          return;
+        }
         const [loaded, info] = await Promise.all([api<Workspace>('/workspace'), api<GuildInfo>('/guild')]);
         if (!alive) return;
         setWorkspace(loaded);
@@ -275,6 +297,33 @@ export function App() {
         <p>Открываем панель Open Bot…</p>
       </main>
     );
+  if (login.kind === 'member' && access && !access.admin)
+    return (
+      <main className="ticket-only">
+        <header>
+          <h1>Open Bot · Тикеты</h1>
+          <div>
+            <a className="button" href={documentation('user/tickets')} target="_blank" rel="noreferrer">
+              Руководство
+            </a>
+            <button
+              className="button"
+              onClick={() =>
+                void run(async () => {
+                  await api('/logout', 'POST');
+                  setLogin({ kind: 'guest' });
+                })
+              }
+            >
+              Выйти
+            </button>
+          </div>
+        </header>
+        <Suspense fallback={<p>Открываем тикеты…</p>}>
+          <Modules kind="tickets" access={access} />
+        </Suspense>
+      </main>
+    );
   if (login.kind === 'guest' || !workspace || !document || !current || !selected)
     return (
       <main className="login-screen">
@@ -305,7 +354,7 @@ export function App() {
             <ArrowUpRight size={18} />
           </a>
           <small>Доступ для администрации Discord-сервера</small>
-          <a className="text-link" href="/docs/">
+          <a className="text-link" href={documentation()} target="_blank" rel="noreferrer">
             Документация
           </a>
         </div>
@@ -368,6 +417,21 @@ export function App() {
             Сообщения бота
             <ChevronRight size={15} />
           </button>
+          {(Object.entries(moduleTitles) as [ModuleKind, string][]).map(([id, title]) => (
+            <button
+              key={id}
+              className={mode === id ? 'active' : ''}
+              onClick={() => {
+                setModulesOpened(true);
+                setMode(id);
+                setSidebar(false);
+              }}
+            >
+              <Server size={18} />
+              {title}
+              <ChevronRight size={15} />
+            </button>
+          ))}
         </nav>
         {mode === 'rules' && (
           <div className="page-nav">
@@ -497,19 +561,21 @@ export function App() {
             <span>Правила</span>
             <ChevronRight size={14} />
             <strong>
-              {mode === 'rules'
-                ? key === 'game'
-                  ? 'Игра'
-                  : 'Discord'
-                : mode === 'settings'
-                  ? 'Настройки'
-                  : mode === 'messages'
-                    ? 'Сообщения бота'
-                    : mode === 'info'
-                      ? 'Информация'
-                      : mode === 'activity'
-                        ? 'Журнал действий'
-                        : 'История'}
+              {isModule
+                ? moduleTitles[mode as ModuleKind]
+                : mode === 'rules'
+                  ? key === 'game'
+                    ? 'Игра'
+                    : 'Discord'
+                  : mode === 'settings'
+                    ? 'Настройки'
+                    : mode === 'messages'
+                      ? 'Сообщения бота'
+                      : mode === 'info'
+                        ? 'Информация'
+                        : mode === 'activity'
+                          ? 'Журнал действий'
+                          : 'История'}
             </strong>
           </div>
           <div className="user">
@@ -522,30 +588,34 @@ export function App() {
         <section className="page-heading">
           <div>
             <h1>
-              {mode === 'rules'
-                ? 'Редактор правил'
-                : mode === 'settings'
-                  ? 'Настройки'
-                  : mode === 'messages'
-                    ? 'Сообщения бота'
-                    : mode === 'info'
-                      ? 'Информация'
-                      : mode === 'activity'
-                        ? 'Журнал действий'
-                        : 'История публикаций'}
+              {isModule
+                ? moduleTitles[mode as ModuleKind]
+                : mode === 'rules'
+                  ? 'Редактор правил'
+                  : mode === 'settings'
+                    ? 'Настройки'
+                    : mode === 'messages'
+                      ? 'Сообщения бота'
+                      : mode === 'info'
+                        ? 'Информация'
+                        : mode === 'activity'
+                          ? 'Журнал действий'
+                          : 'История публикаций'}
             </h1>
             <p>
-              {mode === 'rules'
-                ? 'Понятные правила. Одна актуальная версия.'
-                : mode === 'settings'
-                  ? 'Канал публикации и доступ к панели.'
-                  : mode === 'messages'
-                    ? 'Создавайте сообщения из блоков и отправляйте от имени бота.'
-                    : mode === 'info'
-                      ? 'Главное сообщение: правила, полезные ссылки и информация о проекте.'
-                      : mode === 'activity'
-                        ? 'Нажатия, изменения текста, публикации и действия бота.'
-                        : 'Опубликованные версии можно вернуть в черновик.'}
+              {isModule
+                ? 'Управление модулем Open Bot.'
+                : mode === 'rules'
+                  ? 'Понятные правила. Одна актуальная версия.'
+                  : mode === 'settings'
+                    ? 'Канал публикации и доступ к панели.'
+                    : mode === 'messages'
+                      ? 'Создавайте сообщения из блоков и отправляйте от имени бота.'
+                      : mode === 'info'
+                        ? 'Главное сообщение: правила, полезные ссылки и информация о проекте.'
+                        : mode === 'activity'
+                          ? 'Нажатия, изменения текста, публикации и действия бота.'
+                          : 'Опубликованные версии можно вернуть в черновик.'}
             </p>
           </div>
           <div className="heading-actions" hidden={mode !== 'rules' && mode !== 'info'}>
@@ -593,6 +663,13 @@ export function App() {
         {activityError && (
           <div className="alert error" role="alert">
             {activityError}
+          </div>
+        )}
+        {modulesOpened && access && (
+          <div hidden={!isModule}>
+            <Suspense fallback={<p>Загрузка модуля…</p>}>
+              <Modules kind={isModule ? (mode as ModuleKind) : 'servers'} access={access} guild={guild} />
+            </Suspense>
           </div>
         )}
         {mode === 'activity' && (
@@ -899,7 +976,10 @@ export function App() {
         )}
         <footer className="main-footer">
           <span>
-            Open Bot · Релиз 1.0 · <a href="/docs/">Документация</a>
+            Open Bot · Релиз 1.0 ·{' '}
+            <a href={documentation()} target="_blank" rel="noreferrer">
+              Вики
+            </a>
           </span>
           <span>Черновик v{workspace.version}</span>
         </footer>

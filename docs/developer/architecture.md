@@ -6,8 +6,9 @@
 Менеджер службы
     └── Supervisor
         ├── Bot worker ── Discord Gateway + REST
-        │   └── Core / Help / Info / consumer журнала
-        └── Web worker ── Fastify + OAuth + REST + React
+        │   └── Core / Help / Info / Ticket / Status / Watchdog / consumer
+        ├── Web worker ── Fastify + OAuth + REST + React
+        └── Metrics worker (optional) ── защищённый Prometheus HTTP
 
 Bot + Web ── SQLite WAL / uploads / activity-outbox
 Bot       ── Redis Stream (необязательно) ── пакетная запись SQLite + JSONL
@@ -44,4 +45,4 @@ SQLite работает в WAL с foreign keys и busy timeout. Миграции
 
 Критические изменения правил, сессий, ID сообщений и публикаций фиксируются сразу. Только журнал активности допускает отложенную пакетную запись. `uploads/` и очереди расположены рядом с базой; резервная копия должна сохранять эти данные вместе.
 
-Подробности среды, восстановления и Redis: [эксплуатация](../OPERATIONS.md).
+Ticket history, lifecycle/access jobs, статусные наблюдения и Watchdog confirmations фиксируются сразу. Копии Ticket лежат в `ticket-files/` рядом с базой. Metrics пишет снимки раз в 10 секунд; exporter агрегирует процессы. Подробнее: [интеграции](integrations.md), [телеметрия](telemetry.md), [эксплуатация](../OPERATIONS.md).

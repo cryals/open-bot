@@ -22,6 +22,8 @@
 !docker/**
 !LICENSE
 !THIRD_PARTY_NOTICES.md
+!licenses/
+!licenses/**
 
 # Keep secrets and generated data out even inside an allowed directory.
 **/.env

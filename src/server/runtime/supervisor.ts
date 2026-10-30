@@ -64,8 +64,12 @@ export async function supervise(config: Config) {
     stderr: '',
     state: { pid: null, state: 'starting', ready: false, restarts: 0, lastBeat: 0, modules: [] },
   });
-  const slots = { bot: empty(), web: empty() };
-  const snapshot = (): RuntimeStatus => ({ bot: { ...slots.bot.state }, web: { ...slots.web.state } });
+  const slots = { bot: empty(), web: empty(), metrics: empty() };
+  const snapshot = (): RuntimeStatus => ({
+    bot: { ...slots.bot.state },
+    web: { ...slots.web.state },
+    ...(config.metricsEnabled ? { metrics: { ...slots.metrics.state } } : {}),
+  });
   function send(child: ChildProcess, message: Parameters<ChildProcess['send']>[0]) {
     if (child.connected)
       child.send(message, (error) => {
@@ -114,7 +118,7 @@ export async function supervise(config: Config) {
   };
   process.on('uncaughtException', (error) => fatal(error, 'supervisor.uncaughtException'));
   process.on('unhandledRejection', (error) => fatal(error, 'supervisor.unhandledRejection'));
-  function start(role: 'bot' | 'web') {
+  function start(role: 'bot' | 'web' | 'metrics') {
     if (stopping) return;
     const slot = slots[role];
     slot.started = Date.now();
@@ -200,6 +204,7 @@ export async function supervise(config: Config) {
     store.close();
     start('bot');
     start('web');
+    if (config.metricsEnabled) start('metrics');
     monitor = setInterval(() => {
       for (const [role, slot] of Object.entries(slots)) {
         const timeout =
@@ -222,7 +227,13 @@ export async function supervise(config: Config) {
         }
       }
     }, 5000);
-    console.info(JSON.stringify({ kind: 'supervisor.ready', pid: process.pid, workers: ['bot', 'web'] }));
+    console.info(
+      JSON.stringify({
+        kind: 'supervisor.ready',
+        pid: process.pid,
+        workers: config.metricsEnabled ? ['bot', 'web', 'metrics'] : ['bot', 'web'],
+      }),
+    );
   } catch (error) {
     errors.report(error, 'supervisor.bootstrap', {}, true);
     await errors.flush(false);

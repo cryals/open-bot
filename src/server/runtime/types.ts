@@ -3,6 +3,9 @@ import type {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
+  StringSelectMenuInteraction,
+  ModalSubmitInteraction,
 } from 'discord.js';
 import type { Config } from '../config.js';
 import type { Store } from '../store.js';
@@ -21,7 +24,7 @@ export type ProcessState = {
   lastBeat: number;
   modules: ModuleState[];
 };
-export type RuntimeStatus = { bot: ProcessState; web: ProcessState };
+export type RuntimeStatus = { bot: ProcessState; web: ProcessState; metrics?: ProcessState };
 export type ModuleState = {
   id: string;
   title: string;
@@ -30,8 +33,9 @@ export type ModuleState = {
 };
 export type CommandContext = { interaction: ChatInputCommandInteraction; ackMs: number; signal: AbortSignal };
 export type BotCommand = {
-  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
+  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder;
   admin?: boolean;
+  permission?: 'ticketManage';
   execute: (context: CommandContext, runtime: BotContext) => Promise<void>;
 };
 export type ModuleLifecycle<Context> = {
@@ -47,6 +51,13 @@ export type BotModule = ModuleLifecycle<BotContext> & {
   buttons?: {
     prefix: string;
     execute: (interaction: ButtonInteraction, runtime: BotContext) => Promise<void>;
+  }[];
+  interactions?: {
+    prefix: string;
+    execute: (
+      interaction: ButtonInteraction | StringSelectMenuInteraction | ModalSubmitInteraction,
+      runtime: BotContext,
+    ) => Promise<void>;
   }[];
 };
 export type ModuleSource = { id: string; load: () => Promise<{ default: BotModule }> };

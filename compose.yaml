@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_DOCS_URL: ${VITE_DOCS_URL:-}
     init: true
     restart: unless-stopped
     stop_grace_period: 20s
@@ -25,8 +27,17 @@ services:
       LOG_WEBHOOK: ${LOG_WEBHOOK:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-open-bot}
+      TICKETS_ENABLED: ${TICKETS_ENABLED:-false}
+      GAME_SERVER_HOSTS: ${GAME_SERVER_HOSTS:-}
+      WATCHDOG_HOSTS: ${WATCHDOG_HOSTS:-}
+      WATCHDOG_TOKEN_MAIN: ${WATCHDOG_TOKEN_MAIN:-}
+      METRICS_ENABLED: ${METRICS_ENABLED:-false}
+      METRICS_HOST: 0.0.0.0
+      METRICS_PORT: '9091'
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
     ports:
       - '${BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000'
+      - '${METRICS_BIND_ADDRESS:-127.0.0.1}:${METRICS_PORT:-9091}:9091'
     volumes:
       - open-bot-data:/app/data
     read_only: true

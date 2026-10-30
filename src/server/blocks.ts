@@ -41,7 +41,10 @@ export function renderBlock(block: Block): APIMessageTopLevelComponent {
                 type: 2 as const,
                 style: 1 as const,
                 label: button.label,
-                custom_id: 'os:v1:open:' + block.id.slice(0, 60) + ':' + index,
+                custom_id:
+                  button.action === 'ticket'
+                    ? 'ob:ticket:menu'
+                    : 'os:v1:open:' + block.id.slice(0, 60) + ':' + index,
               }
             : {
                 type: 2,

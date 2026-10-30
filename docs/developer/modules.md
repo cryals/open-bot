@@ -57,4 +57,4 @@ Web — отдельный lifecycle-модуль, а не BotModule в ката
 
 Обновите `/help`, пользовательское руководство, env-пример и резервное копирование, если изменились публичные команды или данные. Проверяйте с FakeDiscord; настоящий сервер не должен получать тестовые публикации или команды питания.
 
-Точные runtime-контракты: [MODULES.md](../MODULES.md). Навык сопровождения: [open-bot-modules](../../skills/open-bot-modules/SKILL.md).
+Точные runtime-контракты: [MODULES.md](../MODULES.md). Навык сопровождения: [open-bot-modules](https://github.com/cryals/open-bot/blob/main/skills/open-bot-modules/SKILL.md).

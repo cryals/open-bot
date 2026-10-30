@@ -27,6 +27,12 @@ The following identifiers come from the installed direct dependency manifests co
 
 ## Visual identity and assets
 
+### SS14 integrations and documentation tooling
+
+Game Server Status and Watchdog behavior is adapted from [space-wizards/wizard-cogs](https://github.com/space-wizards/wizard-cogs), revision `d49d19b5cf3eddf8e7fc0d944ce42f74142e3ab2`, specifically `gameserverstatus` and `poweractions`. Copyright (c) 2024 Space Wizards Federation. The full MIT grant is in [licenses/wizard-cogs-MIT.txt](licenses/wizard-cogs-MIT.txt); the custom project license does not replace it for upstream-derived material.
+
+`@prometheus-io/client` is Apache-2.0. The independent wiki uses MkDocs (BSD-2-Clause) and Material for MkDocs (MIT). Dependency licenses remain applicable. Python wiki tooling is not part of the bot runtime.
+
 - **Stopco symbol:** supplied by the project owner from [cryals/cryals — stopco.png](https://github.com/cryals/cryals/blob/main/web/public/logo/stopco.png). The source is `public/stopco.png`; `public/favicon.svg` includes the same raster on a white backing. No separate public-domain or Creative Commons grant is asserted here.
 - **AL-S interface styling and background:** adapted at the owner's request from [cryals/cryals](https://github.com/cryals/cryals), source revision `91e1ca0dc62cba0ec8947f39e30056b311816448`. See the [theme provenance document](docs/superpowers/specs/2026-10-30-als-theme-and-activity.md). Supplying or adapting these files does not remove any independently applicable third-party rights.
 - **Fonts:** Inter, IBM Plex Mono and Unbounded are requested from Google Fonts by `index.html`. Their upstream font files and licenses remain applicable; no ownership of those fonts is claimed by Open Bot.

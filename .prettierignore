@@ -5,3 +5,6 @@ output
 package-lock.json
 rules
 docs/superpowers
+.venv-docs
+site
+.playwright-cli

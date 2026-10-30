@@ -1,4 +1,6 @@
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Partials } from 'discord.js';
+import type { Access } from '../shared/modules.js';
+import type { RestPort } from './module-http.js';
 import type { GuildInfo, RulesDocument } from '../shared/rules.js';
 import type { BotMessage } from '../shared/blocks.js';
 import type { Store } from './store.js';
@@ -7,6 +9,8 @@ import type { ActivityService } from './activity.js';
 import { DiscordRest } from './discord-rest.js';
 
 export interface DiscordPort {
+  rest?: RestPort;
+  access?(userId: string, roleId: string | null, fullRole: string, viewRole: string): Promise<Access>;
   setActivity?(activity: ActivityService): void;
   isReady(): boolean;
   authorize(userId: string, roleId: string | null): Promise<boolean>;
@@ -24,17 +28,25 @@ export interface DiscordPort {
 
 /** Gateway ownership only. Commands and button handlers belong to registered modules. */
 export class DiscordService extends DiscordRest {
-  readonly client = new Client({
-    intents: [GatewayIntentBits.Guilds],
-    allowedMentions: { parse: [] },
-    rest: { timeout: 10000, retries: 2 },
-  });
+  readonly client: Client;
+  private makeClient(config: Config) {
+    return new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        ...(config.ticketEnabled ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] : []),
+      ],
+      partials: [Partials.Message, Partials.Channel],
+      allowedMentions: { parse: [] },
+      rest: { timeout: 10000, retries: 2 },
+    });
+  }
   private activity?: ActivityService;
   setActivity(activity: ActivityService) {
     this.activity = activity;
   }
   constructor(config: Config, store: Store, onError: (error: unknown, scope?: string) => void) {
     super(config, store);
+    this.client = this.makeClient(config);
     this.client.on(Events.Error, (error) => onError(error, 'gateway'));
     this.client.on(Events.ShardError, (error, shard) => onError(error, 'gateway.shard.' + shard));
     const lifecycle = (kind: string, summary: string, details: Record<string, unknown> = {}) =>

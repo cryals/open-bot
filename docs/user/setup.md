@@ -7,7 +7,7 @@
 1. Установите приложение на свой сервер со scopes `bot` и `applications.commands`.
 2. Дайте боту **View Channel**, **Send Messages**, **Read Message History**, **Attach Files** в используемых каналах.
 3. В **OAuth2 → Redirects** добавьте точный callback, например `http://localhost:3000/auth/discord/callback`.
-4. Для этого выпуска достаточно Gateway intent **Guilds**. Чтение обычной переписки участников не используется.
+4. Базовые функции используют intent **Guilds**. Для [Ticket](tickets.md) дополнительно включите Message Content Intent и `TICKETS_ENABLED=true`: только этот модуль сохраняет переписку обращений.
 
 ## Запуск через Node.js
 

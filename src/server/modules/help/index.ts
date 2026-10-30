@@ -9,16 +9,20 @@ import {
 } from 'discord.js';
 import type { BotContext, BotModule } from '../../runtime/types.js';
 import { HttpError } from '../../errors.js';
+import { permissions } from '../../access.js';
 
 async function help(context: BotContext, userId: string, filter: string, page: number) {
-  const admin = await context.discord.authorize(userId, context.store.getSettings().adminRoleId);
+  const access = await permissions(context.discord, context.store, context.config, userId);
+  const admin = access.admin;
   const modules = context.manager.definitions();
   if (filter !== 'all' && !modules.some((module) => module.id === filter) && filter !== 'web')
     throw new HttpError(400, 'Модуль не найден. Используйте /help для списка.');
   const rows = modules
     .filter((module) => filter === 'all' || module.id === filter)
     .flatMap((module) => {
-      const commands = (module.commands || []).filter((command) => !command.admin || admin);
+      const commands = (module.commands || []).filter(
+        (command) => (!command.admin || admin) && (!command.permission || access[command.permission]),
+      );
       return [
         `### ${module.title}\n${module.description}`,
         ...commands.map(

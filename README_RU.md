@@ -29,7 +29,7 @@
 
 **Open Bot** — бот для управления серверами Discord с веб-панелью, визуальным редактором сообщений и модульными slash-командами. Публикуйте информацию сообщества, ведите правила Discord и игры, добавляйте ссылки на вики и поддержку. Каждый участник листает правила в сообщении, видимом только ему, не переключая страницы другим.
 
-**Релиз 1.0.** [Портал пользователя](docs/user/README.md) · [Портал разработчика](docs/developer/README.md). После установки оба портала доступны по **`/docs/`** на адресе панели: пошаговые инструкции, скриншоты интерфейса и справочники.
+**Релиз 1.0.** [Руководство пользователя](docs/user/README.md) · [Руководство разработчика](docs/developer/README.md). Документация — отдельная **вики MkDocs Material** с поиском, независимой сборкой и Pages-публикацией в workflow Documentation. Панель не обслуживает вики.
 
 Open Bot — название продукта. **Open Space** — название сообщества в начальных текстах правил. Сейчас одна установка обслуживает **один Discord-сервер**.
 
@@ -101,7 +101,7 @@ PORT=3000
 REDIRECT=http://localhost:3000/auth/discord/callback
 ```
 
-В [Discord Developer Portal](https://discord.com/developers/applications) добавьте точный адрес `REDIRECT` в **OAuth2 → Redirects**. Установите приложение на сервер со scopes `bot` и `applications.commands`. Выдайте боту права **View Channel**, **Send Messages**, **Read Message History** и **Attach Files** в нужных каналах. Из Gateway intents используется только **Guilds**.
+В [Discord Developer Portal](https://discord.com/developers/applications) добавьте точный `REDIRECT` в **OAuth2 → Redirects**. Установите приложение со scopes `bot` и `applications.commands`, выдайте права нужных каналов. Базовые функции используют **Guilds**. Для Ticket дополнительно нужны **Message Content Intent**, `TICKETS_ENABLED=true`, управление каналами/ветками и закрытый служебный канал. [Настройка Ticket](docs/user/tickets.md).
 
 ```sh
 npm run build
@@ -125,6 +125,8 @@ npm start
 Команды регистрируются автоматически на сервере из `GUILD_ID`. `/send-info` использует **опубликованный снимок** и не публикует незавершённые правки из веб-панели.
 
 ## Модули и восстановление
+
+Добавлены **Ticket** (закрытые каналы, служебные ветки, транскрипты и хранение 180 дней), **Game Server Status** (SS14 status и постоянные карточки), **Watchdog** (подтверждаемые restart/update/stop/revert) и **Metrics** (защищённый Prometheus endpoint и dashboard Grafana). Есть веб-управление и slash-команды. [Контракты интеграций](docs/developer/integrations.md).
 
 <p align="center">
   <img src="docs/assets/open-bot-modules.png" alt="Концептуальная иллюстрация модульной системы управления" width="1000">

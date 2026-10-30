@@ -21,6 +21,13 @@ export type Config = {
   logWebhook?: string | null;
   redisUrl?: string;
   redisKey?: string;
+  ticketEnabled?: boolean;
+  metricsEnabled?: boolean;
+  metricsHost?: string;
+  metricsPort?: number;
+  metricsToken?: string;
+  gameServerHosts?: string[];
+  watchdogHosts?: string[];
 };
 
 export function loadConfig(): Config {
@@ -53,6 +60,13 @@ export function loadConfig(): Config {
       .regex(/^[a-zA-Z0-9:_-]{1,100}$/)
       .default('open-bot'),
     LOG_ID: z.union([snowflake, z.literal('')]).optional(),
+    TICKETS_ENABLED: z.enum(['true', 'false']).default('false'),
+    METRICS_ENABLED: z.enum(['true', 'false']).default('false'),
+    METRICS_HOST: z.string().default('127.0.0.1'),
+    METRICS_PORT: z.coerce.number().int().min(1024).max(65535).default(9091),
+    METRICS_TOKEN: z.string().default(''),
+    GAME_SERVER_HOSTS: z.string().default(''),
+    WATCHDOG_HOSTS: z.string().default(''),
     LOG_WEBHOOK: z
       .union([
         z.url().refine((value) => {
@@ -79,6 +93,8 @@ export function loadConfig(): Config {
     throw new Error('Проверьте .env: ' + parsed.error.issues.map((issue) => issue.path.join('.')).join(', '));
   }
   const env = parsed.data;
+  if (env.METRICS_ENABLED === 'true' && env.METRICS_TOKEN.length < 32)
+    throw new Error('METRICS_TOKEN должен содержать минимум 32 символа');
   const redirect = new URL(env.REDIRECT);
   if (
     !['http:', 'https:'].includes(redirect.protocol) ||
@@ -118,5 +134,16 @@ export function loadConfig(): Config {
     logWebhook: env.LOG_WEBHOOK || null,
     redisUrl: env.REDIS_URL || undefined,
     redisKey: `${env.REDIS_KEY_PREFIX}:${env.GUILD_ID}:activity`,
+    ticketEnabled: env.TICKETS_ENABLED === 'true',
+    metricsEnabled: env.METRICS_ENABLED === 'true',
+    metricsHost: env.METRICS_HOST,
+    metricsPort: env.METRICS_PORT,
+    metricsToken: env.METRICS_TOKEN,
+    gameServerHosts: env.GAME_SERVER_HOSTS.split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+    watchdogHosts: env.WATCHDOG_HOSTS.split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
   };
 }

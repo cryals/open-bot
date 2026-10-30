@@ -41,26 +41,35 @@ export class DiscordRest implements DiscordPort {
     return signal ? AbortSignal.any([signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000);
   }
   async authorize(userId: string, roleId: string | null) {
+    return (await this.access(userId, roleId, '', '')).admin;
+  }
+  async access(userId: string, roleId: string | null, fullRole: string, viewRole: string) {
     const guild = (await this.rest.get(Routes.guild(this.config.guildId), {
       signal: this.signal(),
     })) as APIGuild;
-    if (userId === guild.owner_id) return true;
+    if (userId === guild.owner_id) return { admin: true, ticketManage: true, ticketView: true };
     let member: APIGuildMember;
     try {
       member = (await this.rest.get(Routes.guildMember(guild.id, userId), {
         signal: this.signal(),
       })) as APIGuildMember;
     } catch (error) {
-      if (error instanceof DiscordAPIError && error.code === 10007) return false;
+      if (error instanceof DiscordAPIError && error.code === 10007)
+        return { admin: false, ticketManage: false, ticketView: false };
       throw error;
     }
-    if (roleId) return member.roles.includes(roleId);
-    const roles = (await this.rest.get(Routes.guildRoles(guild.id), { signal: this.signal() })) as APIRole[];
-    return roles.some(
-      (role) =>
-        (role.id === guild.id || member.roles.includes(role.id)) &&
-        (BigInt(role.permissions) & PermissionFlagsBits.Administrator) !== 0n,
-    );
+    const roles = roleId
+      ? []
+      : ((await this.rest.get(Routes.guildRoles(guild.id), { signal: this.signal() })) as APIRole[]);
+    const admin = roleId
+      ? member.roles.includes(roleId)
+      : roles.some(
+          (role) =>
+            (role.id === guild.id || member.roles.includes(role.id)) &&
+            (BigInt(role.permissions) & PermissionFlagsBits.Administrator) !== 0n,
+        );
+    const ticketManage = admin || member.roles.includes(fullRole);
+    return { admin, ticketManage, ticketView: ticketManage || member.roles.includes(viewRole) };
   }
   async info(): Promise<GuildInfo> {
     const [guild, channels, roles] = await Promise.all([

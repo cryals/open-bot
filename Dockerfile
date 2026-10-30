@@ -2,6 +2,8 @@
 ARG NODE_IMAGE=node:24-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
+ARG VITE_DOCS_URL=
+ENV VITE_DOCS_URL=${VITE_DOCS_URL}
 WORKDIR /app
 
 # better-sqlite3 can compile here if no prebuilt binary matches the platform.
@@ -35,6 +37,7 @@ COPY --from=build /app/rules ./rules
 COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/LICENSE /app/THIRD_PARTY_NOTICES.md ./
+COPY --from=build /app/licenses ./licenses
 COPY --chmod=0555 docker/start.sh /usr/local/bin/open-bot-start
 COPY --chmod=0444 docker/healthcheck.mjs ./docker/healthcheck.mjs
 
@@ -44,7 +47,7 @@ LABEL org.opencontainers.image.title="Open Bot" \
       org.opencontainers.image.licenses="LicenseRef-Open-Bot-Project-1.0"
 
 USER node:node
-EXPOSE 3000
+EXPOSE 3000 9091
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=7s --start-period=60s --retries=3 \
     CMD ["node", "docker/healthcheck.mjs"]

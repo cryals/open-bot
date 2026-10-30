@@ -11,6 +11,8 @@ import { dirname, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { REST, Routes, MessageFlags } from 'discord.js';
 import type { Config } from '../config.js';
+import { secretValues } from '../module-http.js';
+import { telemetry } from '../telemetry.js';
 
 export type ErrorReport = {
   id: string;
@@ -40,10 +42,7 @@ export class ErrorReporter {
     this.root = resolve(dirname(config.databasePath), 'errors');
     this.rest = new REST({ version: '10', timeout: 8000, retries: 0 }).setToken(config.token);
     this.secrets = [
-      config.token,
-      config.clientSecret,
-      config.logWebhook || '',
-      config.redisUrl || '',
+      ...secretValues(config),
       config.redisUrl ? decodeURIComponent(new URL(config.redisUrl).password) : '',
     ].filter(Boolean);
   }
@@ -69,6 +68,7 @@ export class ErrorReporter {
     };
   }
   report(error: unknown, scope: string, context: Record<string, unknown> = {}, fatal = false) {
+    telemetry.errors.inc({ process: this.role });
     const seen = new WeakSet<object>();
     const safeContext = JSON.stringify(context, (key, value: unknown) => {
       if (/token|secret|password|cookie|authorization|csrf|webhook/i.test(key)) return '[REDACTED]';

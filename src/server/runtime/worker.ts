@@ -2,10 +2,13 @@ import { loadConfig } from '../config.js';
 import { ErrorReporter } from './error-reporter.js';
 import type { ModuleState, ProcessState, RuntimeStatus } from './types.js';
 import type { Interaction } from 'discord.js';
+import { telemetry } from '../telemetry.js';
+import { secretValues } from '../module-http.js';
 
 const config = loadConfig();
 const role = process.env.OS_WORKER_ROLE;
-if (role !== 'bot' && role !== 'web') throw new Error('Worker must be started by the Core supervisor');
+if (role !== 'bot' && role !== 'web' && role !== 'metrics')
+  throw new Error('Worker must be started by the Core supervisor');
 const errors = new ErrorReporter(config, role);
 const empty = (): ProcessState => ({
   pid: null,
@@ -23,6 +26,10 @@ let modules = (): ModuleState[] => [];
 let cleanup = async () => {};
 let stopping = false;
 function sendHeartbeat() {
+  for (const module of modules())
+    telemetry.moduleUp.set({ module: module.id }, module.state === 'running' ? 1 : 0);
+  const own = Object.entries(status).find(([worker]) => worker === role)?.[1];
+  telemetry.restarts.set({ worker: role! }, own?.restarts || 0);
   if (process.connected)
     process.send?.(
       {
@@ -47,6 +54,7 @@ async function shutdown(code: number) {
   if (stopping) return;
   stopping = true;
   clearInterval(heartbeat);
+  telemetry.stop();
   const deadline = setTimeout(() => process.exit(code), 8000);
   deadline.unref();
   try {
@@ -82,7 +90,8 @@ try {
   const logError = (error: unknown, scope: string) => {
     errors.report(error, scope);
   };
-  const secrets = [config.token, config.clientSecret, config.logWebhook || '', config.redisUrl || ''];
+  const secrets = secretValues(config);
+  if (config.metricsEnabled) telemetry.start(store, role, (error) => logError(error, 'metrics.snapshot'));
   if (role === 'bot') {
     const [{ DiscordService }, { ModuleManager }, { Publisher }, { botModules }, { Events }] =
       await Promise.all([
@@ -156,7 +165,7 @@ try {
     state = 'running';
     sendHeartbeat();
     await repair();
-  } else {
+  } else if (role === 'web') {
     const [{ DiscordRest }, { WebModule }] = await Promise.all([
       import('../discord-rest.js'),
       import('../modules/web/index.js'),
@@ -175,6 +184,18 @@ try {
       store.close();
     };
     await web.start();
+    ready = () => true;
+    state = 'running';
+    sendHeartbeat();
+  } else {
+    const { MetricsExporter } = await import('../modules/metrics/exporter.js');
+    const exporter = new MetricsExporter(config, store, (error) => errors.report(error, 'metrics.scrape'));
+    cleanup = async () => {
+      await exporter.stop();
+      store.close();
+    };
+    await exporter.start();
+    modules = () => [{ id: 'metrics', title: 'Metrics', state: 'running' }];
     ready = () => true;
     state = 'running';
     sendHeartbeat();

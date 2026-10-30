@@ -18,6 +18,10 @@ Read `src/server/runtime/types.ts`, `module-manager.ts`, `modules/catalog.ts` an
 
 ## Lifecycle and side effects
 
+Ticket handles buttons/selects/modals through `interactions` and `permission: 'ticketManage'`; Help must use the same permission contract. Gateway message collection is opt-in with TICKETS_ENABLED/Message Content and only covers ticket channels/threads. Preserve the separate full/view roles and author exclusion from staff scope.
+
+Use module_config optimistic versions for shared settings. Ticket lifecycle/access changes and server watches are persisted Bot jobs, not Web timers. Watchdog confirmations pin actor/config and never auto-retry POST; unknown results block even old pending confirmations until manual resolution. Tokens are ENV references and endpoint hosts come from deployment allowlists. See docs/developer/integrations.md.
+
 Honor the supplied AbortSignal in external I/O. `stop` must clear subscriptions/timers even after partial initialization; failed optional starts can be retried by the manager. Avoid a second retry loop around the same operation.
 
 Reuse Publisher for rules/info publication and its SQLite lock, version checks and persisted attempts. Keep critical settings, publication results and message IDs synchronous in SQLite; only activity events are deferred. Add a new numbered migration rather than changing applied history.

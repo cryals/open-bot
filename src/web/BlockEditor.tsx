@@ -679,7 +679,7 @@ export function BlockEditor({
                       <div key={value.id} className="link-item">
                         {'action' in value ? (
                           <label className="builtin-button-editor">
-                            Кнопка открытия правил
+                            {value.action === 'ticket' ? 'Кнопка создания тикета' : 'Кнопка открытия правил'}
                             <input
                               value={value.label}
                               maxLength={80}
@@ -692,7 +692,11 @@ export function BlockEditor({
                                 })
                               }
                             />
-                            <small>Открывает личное меню Discord / Игра</small>
+                            <small>
+                              {value.action === 'ticket'
+                                ? 'Открывает выбор категории обращения'
+                                : 'Открывает личное меню Discord / Игра'}
+                            </small>
                           </label>
                         ) : (
                           <LinkEditor
@@ -747,6 +751,22 @@ export function BlockEditor({
                     >
                       <Plus size={16} />
                       Кнопка «Читать правила»
+                    </button>
+                    <button
+                      className="upload-button"
+                      disabled={block.buttons.length >= 5}
+                      onClick={() =>
+                        update(index, {
+                          ...block,
+                          buttons: [
+                            ...block.buttons,
+                            { id: crypto.randomUUID(), label: 'Создать тикет', action: 'ticket' },
+                          ],
+                        })
+                      }
+                    >
+                      <Plus size={16} />
+                      Кнопка «Создать тикет»
                     </button>
                   </>
                 )}

@@ -8,6 +8,7 @@ const field = (target: EventTarget | null): target is Field =>
   target instanceof HTMLTextAreaElement ||
   target instanceof HTMLSelectElement;
 const excluded = (target: Field) =>
+  Boolean(target.closest('[data-no-audit]')) ||
   (target instanceof HTMLInputElement && ['password', 'file', 'hidden'].includes(target.type)) ||
   /token|secret|password|csrf|cookie|authorization/i.test(target.name + ' ' + target.id);
 const context = () =>
@@ -44,7 +45,7 @@ const value = (target: Field) =>
     : target.value;
 
 /** Browser observations are separate from authoritative server events. No credentials are collected. */
-export function useActivity(enabled: boolean) {
+export function useActivity(enabled: boolean, endpoint = '/activity') {
   const [error, setError] = useState('');
   useEffect(() => {
     if (!enabled) return;
@@ -89,7 +90,7 @@ export function useActivity(enabled: boolean) {
       const events = queue.slice(0, 5);
       sending = true;
       try {
-        await api('/activity', 'POST', { events });
+        await api(endpoint, 'POST', { events });
         queue.splice(0, events.length);
         if (!closed) setError('');
       } catch {
@@ -170,6 +171,6 @@ export function useActivity(enabled: boolean) {
       document.removeEventListener('drop', drop, true);
       window.removeEventListener('pagehide', hide);
     };
-  }, [enabled]);
+  }, [enabled, endpoint]);
   return error;
 }

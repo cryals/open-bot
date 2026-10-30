@@ -10,3 +10,5 @@ output/
 .playwright-cli/
 .DS_Store
 coverage/
+site/
+.venv-docs/

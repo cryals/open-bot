@@ -1,0 +1,75 @@
+site_name: Open Bot
+site_description: Руководства пользователя и разработчика Open Bot
+site_url: https://cryals.github.io/open-bot/
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/cryals/open-bot
+      name: Репозиторий Open Bot
+docs_dir: docs
+site_dir: site
+use_directory_urls: true
+theme:
+  name: material
+  language: ru
+  font: false
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
+  palette:
+    scheme: slate
+    primary: black
+    accent: grey
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+plugins:
+  - search:
+      lang: [ru, en]
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.superfences
+  - pymdownx.details
+exclude_docs: |
+  superpowers/
+  REVIEW-*.md
+  ARTWORK.md
+  open-bot.service
+nav:
+  - Главная: README.md
+  - Пользователю:
+      - Обзор: user/README.md
+      - Установка: user/setup.md
+      - Правила и информация: user/rules.md
+      - Сообщения бота: user/messages.md
+      - Тикеты: user/tickets.md
+      - Игровые серверы: user/game-servers.md
+      - Watchdog: user/watchdog.md
+      - Метрики и Grafana: user/metrics.md
+      - Журнал и восстановление: user/logs.md
+      - Команды: user/commands.md
+      - Решение проблем: user/troubleshooting.md
+      - Эксплуатация: OPERATIONS.md
+      - Docker Compose: DOCKER.md
+  - Разработчику:
+      - Обзор: developer/README.md
+      - Архитектура: developer/architecture.md
+      - Модули: developer/modules.md
+      - Тикеты и внешние сервисы: developer/integrations.md
+      - Телеметрия: developer/telemetry.md
+      - Разработка и выпуск: developer/workflow.md
+      - Навыки Codex: developer/skills.md
+      - Runtime: MODULES.md
+      - Производительность: PERFORMANCE.md
+  - Релиз 1.0: RELEASE-1.0.md

@@ -29,7 +29,7 @@
 
 **Open Bot** is a self-hosted Discord management bot with a web panel, a visual message editor, and modular slash commands. Publish community information, maintain Discord and game rules, and let each member browse their own copy of the rules without changing anyone else's page.
 
-**Release 1.0.** [User portal](docs/user/README.md) · [Developer portal](docs/developer/README.md). After installation, both portals are available at **`/docs/`** on the panel's address, with UI screenshots and task-based guides.
+**Release 1.0.** [User guide](docs/user/README.md) · [Developer guide](docs/developer/README.md). Documentation is a standalone **MkDocs Material wiki**, with independent build and Pages deployment in the Documentation workflow. The panel does not host the wiki.
 
 Open Bot is the product name. **Open Space** is the community used in the supplied rule content. Each installation currently manages **one Discord guild**.
 
@@ -101,7 +101,7 @@ PORT=3000
 REDIRECT=http://localhost:3000/auth/discord/callback
 ```
 
-In the [Discord Developer Portal](https://discord.com/developers/applications), add the exact `REDIRECT` URL under **OAuth2 → Redirects**. Install the application into the guild with the `bot` and `applications.commands` scopes. Give the bot **View Channel**, **Send Messages**, **Read Message History**, and **Attach Files** in the channels it will use. Only the **Guilds** Gateway intent is used.
+In the [Discord Developer Portal](https://discord.com/developers/applications), add the exact `REDIRECT` URL under **OAuth2 → Redirects**. Install with `bot` and `applications.commands` scopes and appropriate channel permissions. Base features use **Guilds**. Ticket additionally requires **Message Content Intent**, `TICKETS_ENABLED=true`, channel/thread management permissions and a closed staff channel. See the [Ticket guide](docs/user/tickets.md).
 
 ```sh
 npm run build
@@ -125,6 +125,8 @@ See the [operations guide (Russian)](docs/OPERATIONS.md) for environment variabl
 Commands register automatically in the configured guild. `/send-info` uses the **published snapshot**; it does not publish unfinished web-panel drafts.
 
 ## Modular by design
+
+Independent modules include **Ticket** (private channels, staff threads, transcripts, 180-day retention), **Game Server Status** (SS14 status and persistent cards), **Watchdog** (confirmed restart/update/stop/revert) and **Metrics** (protected Prometheus endpoint and Grafana dashboard). They have web controls and slash commands. [Integration guide](docs/developer/integrations.md).
 
 <p align="center">
   <img src="docs/assets/open-bot-modules.png" alt="Concept illustration of a modular control system" width="1000">

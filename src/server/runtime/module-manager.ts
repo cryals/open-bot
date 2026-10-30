@@ -3,6 +3,8 @@ import type { BotCommand, BotContext, BotModule, ModuleSource, ModuleState } fro
 import { notice } from '../render.js';
 import { HttpError } from '../errors.js';
 import { within } from './deadline.js';
+import { telemetry } from '../telemetry.js';
+import { permissions } from '../access.js';
 
 const loggedOptions = (options: readonly CommandInteractionOption[]): unknown[] =>
   options.map((option) => ({
@@ -95,12 +97,20 @@ export class ModuleManager {
     );
   }
   async dispatch(interaction: Interaction) {
-    if (!interaction.isChatInputCommand() && !interaction.isButton()) return;
+    if (
+      !interaction.isChatInputCommand() &&
+      !interaction.isButton() &&
+      !interaction.isStringSelectMenu() &&
+      !interaction.isModalSubmit()
+    )
+      return;
     if (this.stopping) return;
     if (interaction.guildId !== this.context.config.guildId) return;
     const actor = { userId: interaction.user.id, name: interaction.user.username };
     const target = interaction.isChatInputCommand() ? '/' + interaction.commandName : interaction.customId;
     let scope = 'interaction';
+    const received = Date.now();
+    let success = false;
     try {
       if (interaction.isChatInputCommand()) {
         const started = Date.now();
@@ -120,6 +130,13 @@ export class ModuleManager {
           for (const [key, until] of this.cooldowns) if (until < Date.now()) this.cooldowns.delete(key);
         this.running.add(key);
         try {
+          if (
+            entry.command.permission &&
+            !(await permissions(this.context.discord, this.context.store, this.context.config, actor.userId))[
+              entry.command.permission
+            ]
+          )
+            throw new HttpError(403, 'Нет доступа к команде этого модуля');
           if (
             entry.command.admin &&
             !(await this.context.discord.authorize(
@@ -141,10 +158,28 @@ export class ModuleManager {
           await within(45000, (signal) =>
             entry.command.execute({ interaction, ackMs, signal }, this.runtime),
           );
+          success = true;
         } finally {
           this.running.delete(key);
         }
       } else {
+        const common = this.definitions()
+          .flatMap((module) =>
+            (module.interactions || []).map((handler) => ({ module: module.id, ...handler })),
+          )
+          .find((handler) => interaction.customId.startsWith(handler.prefix));
+        if (common) {
+          scope = common.module + '.interaction';
+          this.context.activity.record(actor, {
+            kind: 'bot.interaction',
+            target,
+            summary: 'Взаимодействие с модулем ' + common.module,
+          });
+          await common.execute(interaction, this.runtime);
+          success = true;
+          return;
+        }
+        if (!interaction.isButton()) return;
         const handler = this.definitions()
           .flatMap((module) => (module.buttons || []).map((button) => ({ module: module.id, ...button })))
           .find((button) => interaction.customId.startsWith(button.prefix));
@@ -153,6 +188,7 @@ export class ModuleManager {
         const receivedAt = Date.now();
         try {
           await handler.execute(interaction, this.runtime);
+          success = true;
         } finally {
           this.context.activity.record(actor, {
             kind: 'bot.button',
@@ -197,6 +233,14 @@ export class ModuleManager {
       } catch (replyError) {
         this.context.errors.report(replyError, scope + '.reply', { interactionId: interaction.id, errorId });
       }
+    } finally {
+      if (scope !== 'interaction')
+        telemetry.observe(
+          scope.split('.')[0],
+          interaction.isChatInputCommand() ? interaction.commandName : 'interaction',
+          success ? 'success' : 'error',
+          received,
+        );
     }
   }
   async stop() {

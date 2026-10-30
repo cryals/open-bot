@@ -1,6 +1,6 @@
 ---
 name: open-bot-observability
-description: 'Maintain Open Bot activity/error logging and Redis batching, diagnose telemetry failures, or implement its Metrics integration. Distinguish shipped logging from planned Prometheus features; use only in cryals/open-bot.'
+description: 'Maintain Open Bot audit/error logging, Redis batching and the isolated Prometheus exporter; diagnose worker snapshots, ticket aggregates and Grafana queries in cryals/open-bot.'
 ---
 
 # Open Bot observability
@@ -11,7 +11,7 @@ Locate the checkout and read `AGENTS.md` plus `docs/developer/telemetry.md`. Ins
 
 - Administrative changes: `ActivityService.record(actor, input)` with kind, target, summary and safe before/after/details. UI clicks are observations, not proof of server success.
 - Failures: ErrorReporter with a bounded scope/context and a user-visible report ID. Avoid duplicate reports when the common command/API handler already reports the same exception.
-- Aggregates: metrics only when implemented/requested. Logs and health checks are not a Prometheus exporter.
+- Aggregates: shared telemetry.ts registry, per-worker SQLite snapshots and a dedicated Metrics worker/port. Do not scrape by calling Discord. Health checks are not successful Prometheus scrapes.
 
 ## Persistence invariants
 
@@ -23,9 +23,9 @@ Only supervisor delivers error outbox, preferring LOG_ID with LOG_WEBHOOK fallba
 
 ## Secrets and cardinality
 
-Pass public projections, not raw config/request objects. Add any new credential to redaction before persistence and Discord delivery. Do not log OAuth codes, cookie/Authorization headers or secret-bearing URLs. Do not observe ordinary member messages unless a specifically authorized feature changes that scope.
+Pass public projections, not raw config/request objects. Add new credentials to redaction before persistence/delivery, including WATCHDOG_TOKEN_* and METRICS_TOKEN. Do not log OAuth codes, cookie/Authorization headers or secret-bearing URLs. Message history is restricted to explicitly enabled Ticket channels/threads and expires after 180 days. Keep transcript UI under data-no-audit so its content does not leak into permanent activity logs.
 
-For a requested metrics implementation, use bounded labels (module/operation/outcome), correct units and explicit Bot/Web aggregation. User/ticket/channel IDs, content and URLs belong outside metric labels. Plan collector cleanup, endpoint access control and dashboard queries matching real exported names.
+Use bounded labels (module/operation/outcome), correct units and explicit Bot/Web/Metrics aggregation. Snapshots update every 10 seconds; exclude stale data after 30 seconds. Ticket totals persist independently of archive deletion; worker counters reset on restart. IDs/content/URLs are not labels. Preserve bearer authentication, dedicated listener and dashboard queries matching exported names.
 
 ## Verification
 

@@ -19,9 +19,17 @@ import { ActivityService } from './activity.js';
 import { Publisher } from './publisher.js';
 import type { ErrorReporter } from './runtime/error-reporter.js';
 import { uiEventSchema } from '../shared/activity.js';
+import type { Access } from '../shared/modules.js';
+import { initialTicketConfig, ticketConfigSchema } from '../shared/modules.js';
+import { permissions } from './access.js';
+import { ModuleStore } from './module-store.js';
+import { moduleRoutes } from './module-routes.js';
+import { secretValues } from './module-http.js';
+import { telemetry } from './telemetry.js';
 declare module 'fastify' {
   interface FastifyRequest {
     adminSession: NonNullable<ReturnType<Store['session']>> | null;
+    adminAccess: Access;
   }
 }
 
@@ -52,14 +60,13 @@ export async function createApp(options: {
   });
   await app.register(cookie);
   app.decorateRequest('adminSession', null);
+  app.decorateRequest('adminAccess');
   const activity =
     options.activity ||
-    new ActivityService(
-      store,
-      discord,
-      [config.token, config.clientSecret, config.logWebhook || '', config.redisUrl || ''],
-      { redisUrl: config.redisUrl, redisKey: config.redisKey },
-    );
+    new ActivityService(store, discord, secretValues(config), {
+      redisUrl: config.redisUrl,
+      redisKey: config.redisKey,
+    });
   const publisher = new Publisher(store, discord, activity, options.errors);
   discord.setActivity?.(activity);
   app.addHook('onClose', async () => {
@@ -76,6 +83,8 @@ export async function createApp(options: {
   );
   app.addHook('onResponse', async (request, reply) => {
     const route = request.routeOptions.url || 'unknown';
+    telemetry.http.inc({ method: request.method, route, status: String(reply.statusCode) });
+    telemetry.httpDuration.observe({ method: request.method, route }, reply.elapsedTime / 1000);
     if (!route.startsWith('/api/') || route.startsWith('/api/activity') || route === '/api/health') return;
     activity.record(request.adminSession || { userId: 'guest', name: 'Гость' }, {
       kind: reply.statusCode >= 400 ? 'api.error' : 'api.request',
@@ -110,7 +119,8 @@ export async function createApp(options: {
   async function authenticate(request: FastifyRequest) {
     const session = store.session(request.cookies.os_session || '');
     if (!session) throw new HttpError(401, 'Войдите через Discord');
-    if (!(await discord.authorize(session.userId, store.getSettings().adminRoleId))) {
+    const access = await permissions(discord, store, config, session.userId);
+    if (!access.admin && !access.ticketView) {
       activity.record(session, {
         kind: 'auth.denied',
         target: 'admin',
@@ -119,6 +129,7 @@ export async function createApp(options: {
       store.deleteSession(request.cookies.os_session || '');
       throw new HttpError(403, 'У вас нет роли администратора для этой панели');
     }
+    request.adminAccess = access;
     return session;
   }
   app.addHook('onRequest', async (request, reply) => {
@@ -127,6 +138,31 @@ export async function createApp(options: {
     if (request.url.startsWith('/api/') && request.url.split('?')[0] !== '/api/health') {
       const session = await authenticate(request);
       request.adminSession = session;
+      const path = request.url.split('?')[0];
+      const ticket = path === '/api/tickets' || path.startsWith('/api/tickets/');
+      const common = ['/api/me', '/api/logout'].includes(path);
+      const media = path === '/api/media' || path.startsWith('/api/media/');
+      if (
+        !common &&
+        !(ticket
+          ? request.adminAccess.ticketView
+          : media
+            ? request.adminAccess.ticketManage
+            : request.adminAccess.admin)
+      )
+        throw new HttpError(403, 'Нет доступа к этому разделу');
+      if (media && !request.adminAccess.admin && request.method === 'GET') {
+        const id = path.split('/').at(-1)!;
+        const record = store.sqlite.prepare('SELECT actor FROM media WHERE id=?').get(id) as
+          { actor: string } | undefined;
+        const ticketConfig = new ModuleStore(store).get(
+          'tickets',
+          ticketConfigSchema,
+          initialTicketConfig,
+        ).document;
+        if (record?.actor !== session.userId && !JSON.stringify(ticketConfig).includes('/api/media/' + id))
+          throw new HttpError(403, 'Нет доступа к файлу');
+      }
       if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         if (
           request.headers.origin !== config.appOrigin ||
@@ -210,8 +246,8 @@ export async function createApp(options: {
       throw new HttpError(400, 'Вход устарел. Вернитесь на главную страницу и повторите вход.');
     if (query.error || !query.code) return reply.redirect(config.appOrigin + '/?error=cancelled');
     const user = await oauth.exchange(query.code);
-    if (!(await discord.authorize(user.id, store.getSettings().adminRoleId)))
-      return reply.redirect(config.appOrigin + '/?error=forbidden');
+    const access = await permissions(discord, store, config, user.id);
+    if (!access.admin && !access.ticketView) return reply.redirect(config.appOrigin + '/?error=forbidden');
     if (request.cookies.os_session) store.deleteSession(request.cookies.os_session);
     const session = store.createSession(user);
     activity.record(
@@ -223,7 +259,11 @@ export async function createApp(options: {
   });
   app.get('/api/me', async (request) => {
     const session = request.adminSession!;
-    return { user: { id: session.userId, name: session.name }, csrf: session.csrf };
+    return {
+      user: { id: session.userId, name: session.name },
+      csrf: session.csrf,
+      permissions: request.adminAccess,
+    };
   });
   app.post('/api/logout', async (request, reply) => {
     activity.record(actor(request), { kind: 'auth.logout', target: 'admin', summary: 'Выход из панели' });
@@ -233,6 +273,7 @@ export async function createApp(options: {
   });
   app.get('/api/workspace', async () => store.workspace());
   await composerRoutes(app, store, discord, activity);
+  await moduleRoutes(app, config, store, discord, activity, options.errors);
   app.post(
     '/api/activity',
     { config: { rateLimit: { max: 600, timeWindow: '1 minute' } } },

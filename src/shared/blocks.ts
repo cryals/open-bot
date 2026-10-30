@@ -40,7 +40,7 @@ const section = z.object({
 });
 const actionButton = z.union([
   link,
-  z.object({ id, label: z.string().trim().min(1).max(80), action: z.literal('rules') }),
+  z.object({ id, label: z.string().trim().min(1).max(80), action: z.enum(['rules', 'ticket']) }),
 ]);
 const actions = z.object({ id, type: z.literal('actions'), buttons: z.array(actionButton).min(1).max(5) });
 const file = z.object({

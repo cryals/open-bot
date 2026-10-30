@@ -14,7 +14,10 @@
 - The panel edits Discord community rules and Open Space game rules, supports ordering and previews, and publishes the active version.
 - The user additionally approved a visual Components V2 block editor, image/file uploads, and sending/editing messages as the bot. Reuse the shared block model for rules and messages. Preserve compatibility with earlier text-only rules and published revisions.
 - Content sending/updating is initiated by an authenticated administrator in the panel or /send-info. The user authorized error notifications to the configured LOG_ID / LOG_WEBHOOK. Tests and browser QA use FakeDiscord, not the live guild.
-- The user approved detailed admin UI and bot-action logging, including before/after text and line diffs. Persist the full audit in SQLite and daily JSONL; optional Discord delivery is enabled by an administrator selecting a log channel. Do not collect credentials or observe ordinary guild-member messages. Browser observations must remain distinguishable from authoritative server events.
+- The user approved detailed admin UI and bot-action logging, including before/after text and line diffs. Persist the audit in SQLite/JSONL. Do not collect credentials or ordinary messages outside the explicitly enabled Ticket scope. Ticket transcripts, edits/deletes and copied attachments expire after 180 days; do not duplicate them into permanent browser activity logs. Browser observations remain distinguishable from authoritative events.
+- Ticket full role defaults to 1565440922336886876; viewer role to 1565620276916658276. Ticket-only access must not grant general web administration. The author cannot view staff scope through the app. Document Discord's inherent Administrator limitation.
+- Status and Watchdog are separate modules adapted from upstream space-wizards/wizard-cogs. Use exact deployment host allowlists. Store Watchdog ENV references, never tokens. Power requests require actor-bound single-use confirmation, config version checks and no automatic POST retry; unknown outcomes block the target until manual resolution.
+- Metrics runs on a dedicated optional worker/port with bearer authentication. Aggregate bounded-label snapshots across workers; retain anonymous Ticket totals across archive deletion. Never use IDs, content or URLs as metric labels.
 - The user approved a modular runtime (Core, Web, Help, Info and future modules), slash commands, supervised process recovery, and error delivery via LOG_ID with LOG_WEBHOOK fallback. An authorized administrator invoking /send-info initiates a real public update. Use the published snapshot, shared Publisher and persisted publication lock. Register modules in the catalog; derive help and command registration from their definitions.
 - The app publishes and navigates rules. It does not scan chat, automatically detect violations, or issue punishments.
 - Activity events use UUIDs, a shared durable disk outbox, Redis Streams and a single Bot consumer writing batches to SQLite/JSONL. ACK only after persistence. Preserve local batching when Redis is unavailable. Never cache authorization or defer rules/publication/message-ID commits to the activity queue. Keep tests on FakeDiscord.
@@ -29,7 +32,7 @@
 - Fastify for the API and Discord OAuth callback.
 - React and Vite for the admin interface.
 - SQLite with better-sqlite3 and Drizzle ORM for persistence and migrations.
-- The runtime has a Node.js supervisor and isolated Bot/Web processes sharing one SQLite WAL database. Only Bot owns Gateway and activity delivery; only the supervisor delivers the error outbox. Keep independent services under an external OS service manager in production.
+- The runtime has a Node.js supervisor and isolated Bot/Web plus optional Metrics processes sharing SQLite WAL. Only Bot owns Gateway and activity consumption; only supervisor delivers the error outbox. Use an external OS service manager in production.
 
 ## Engineering requirements after approval
 
@@ -53,8 +56,8 @@
 ## Release and documentation
 
 - Product status is Release 1.0. This is product metadata, not a claim of uninterrupted availability or passing CI. Keep the draft version indicator: it describes editable content.
-- Maintain two distinct documentation portals: `docs/user/` for administration and use; `docs/developer/` for code, modules, telemetry and operations. Entry point: `docs/README.md`; served URL: `/docs/` after build.
-- The explicit manifest in `scripts/build-docs.tsx` defines public documentation. Do not expose internal specs, review reports, credentials or the whole source tree through static serving.
+- Maintain user/developer sections in a standalone MkDocs Material wiki (`mkdocs.yml`, `requirements-docs.txt`, `docs/`). The web panel is only the administration application: do not reintroduce a custom /docs renderer or bundle the wiki in its build.
+- MkDocs nav/exclude_docs defines public documentation. Exclude internal specs, review reports and local data. Documentation CI builds an independent artifact and CD publishes through GitHub Pages; account/plan failures are not passing deployments. Do not change repository visibility or billing to work around them.
 - Include changed workflows and screenshots when updating user-visible behavior. Capture with FakeDiscord, preserve clean originals, and store selected illustrations under `docs/assets/screenshots/`. Authentication state and traces stay in ignored `output/playwright/`.
 - Project skills are versioned in `skills/`: open-bot-modules, open-bot-observability and open-bot-release. Read the relevant skill when changing its area; sync installed local copies after editing. Do not assume planned modules are implemented.
 - Keep release completion separate from future feature plans in tasks.md. Do not keep routine run/check reminders as unfinished feature tasks or silently mark blocked checks as passed.

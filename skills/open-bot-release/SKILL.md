@@ -11,13 +11,13 @@ Locate the checkout, read `AGENTS.md`, `tasks.md` and `docs/developer/workflow.m
 
 Product name is Open Bot. Community names stay in editable content or actual guild metadata. Update both README files and `scripts/readme-badges.mjs` when the product status changes; regenerate SVGs. A release badge is editorial, CI status must reflect real runs.
 
-User and developer portals live in `docs/user/` and `docs/developer/`; their shared entry is `docs/README.md`. `scripts/build-docs.tsx` publishes an explicit manifest into `dist/web/docs`. Add pages there deliberately; do not expose all specs, local reports or files by recursively copying the repository.
+User/developer guides live in `docs/user/` and `docs/developer/`, entry `docs/README.md`. The wiki is a separate MkDocs Material site (`mkdocs.yml`, `requirements-docs.txt`), output `site/`. Maintain nav/exclude_docs and keep internal specs/review reports excluded. Do not bundle docs in the admin panel or restore its removed custom /docs renderer.
 
 Capture actual UI with FakeDiscord (`npm run ui:harness`, optionally UI_PORT). Store temporary browser state/traces in ignored `output/playwright/`. Copy only selected clean screenshots into `docs/assets/screenshots/`. For annotations retain the unmodified source and check buttons, labels and states against it. Generated artwork is not evidence of application behavior.
 
 ## Validation and rollout
 
-Run checks requested by the user and document exact outcomes. Common commands are `npm run check`, `npm run format:check`, `npm run build`. Build includes the portal generator. Test `/docs/`, both portal navigation paths, assets and relevant UI changes. Keep Docker-dependent results explicitly unrun on a host where virtualization is unavailable; static config checks are separate.
+Run checks requested by the user and document exact outcomes. Application gates: `npm run check`, `npm run format:check`, `npm run build`. The wiki uses a separate Python environment and `python -m mkdocs build --strict`. Documentation workflow builds the Pages artifact and deploys main. Check actual account/Pages eligibility; do not change privacy/billing to bypass a failure. Docker runtime remains explicitly unrun on the owner's constrained machine.
 
 Before changing a running installation, preserve its data and coordinate the actual stopped service; do not launch a second supervisor against the same SQLite. Code on disk does not update existing workers. Use the documented backup/restore process for migrations.
 

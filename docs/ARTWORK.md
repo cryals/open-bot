@@ -8,7 +8,7 @@
 | [open-bot-modules.png](assets/open-bot-modules.png) | Concept illustration of a modular control system, not a screenshot or exact architecture diagram | Built-in imagegen |
 | [badges/](assets/badges/)                           | Six monochrome SVG badges                                                                        | Project script    |
 
-Generated on 2026-10-30 with the built-in image generation tool, not the fallback CLI. Final PNG outputs were copied unchanged into the repository. The cover used [public/stopco.png](../public/stopco.png) as a supporting reference for the existing brand symbol. It did not replace that original logo.
+Generated on 2026-10-30 with the built-in image generation tool, not the fallback CLI. Final PNG outputs were copied unchanged into the repository. The cover used [public/stopco.png](https://github.com/cryals/open-bot/blob/main/public/stopco.png) as a supporting reference for the existing brand symbol. It did not replace that original logo.
 
 ## Recreate badges
 
@@ -16,7 +16,7 @@ Generated on 2026-10-30 with the built-in image generation tool, not the fallbac
 node scripts/readme-badges.mjs
 ```
 
-The badge source is [scripts/readme-badges.mjs](../scripts/readme-badges.mjs). The palette follows the panel: near-black surfaces, white square corner details, gray labels and white values. SVG keeps small text sharp at different display scales.
+The badge source is [scripts/readme-badges.mjs](https://github.com/cryals/open-bot/blob/main/scripts/readme-badges.mjs). The palette follows the panel: near-black surfaces, white square corner details, gray labels and white values. SVG keeps small text sharp at different display scales.
 
 Badges describe project properties, not live server availability. `STATUS / RELEASE` is editorial metadata. `CI / VIEW RUNS` links to the actual Checks workflow; no passing result is hard-coded. Runtime, Discord format and license labels must be updated with the project when those properties change.
 
@@ -64,4 +64,4 @@ The generated output was visually compared with the source. Imagegen rescaled/re
 
 ## Sources and rights
 
-The [Stopco source](https://github.com/cryals/cryals/blob/main/web/public/logo/stopco.png) and existing AL-S styling were supplied by the project owner. See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for scope and upstream rights. The wordmark uses the product name **Open Bot**; supplied community rule content keeps the name **Open Space**.
+The [Stopco source](https://github.com/cryals/cryals/blob/main/web/public/logo/stopco.png) and existing AL-S styling were supplied by the project owner. See [THIRD_PARTY_NOTICES.md](https://github.com/cryals/open-bot/blob/main/THIRD_PARTY_NOTICES.md) for scope and upstream rights. The wordmark uses the product name **Open Bot**; supplied community rule content keeps the name **Open Space**.
