@@ -82,7 +82,7 @@ try {
   const logError = (error: unknown, scope: string) => {
     errors.report(error, scope);
   };
-  const secrets = [config.token, config.clientSecret, config.logWebhook || ''];
+  const secrets = [config.token, config.clientSecret, config.logWebhook || '', config.redisUrl || ''];
   if (role === 'bot') {
     const [{ DiscordService }, { ModuleManager }, { Publisher }, { botModules }, { Events }] =
       await Promise.all([
@@ -93,8 +93,12 @@ try {
         import('discord.js'),
       ]);
     const discord = new DiscordService(config, store, (error, scope) => logError(error, scope || 'gateway'));
-    const activity = new ActivityService(store, discord, secrets, { onError: logError });
-    activityError = () => activity.deliveryError;
+    const activity = new ActivityService(store, discord, secrets, {
+      onError: logError,
+      redisUrl: config.redisUrl,
+      redisKey: config.redisKey,
+    });
+    activityError = () => activity.deliveryError || activity.storageError;
     discord.setActivity(activity);
     const publisher = new Publisher(store, discord, activity, errors);
     const manager = new ModuleManager({
@@ -143,7 +147,7 @@ try {
       clearInterval(repairTimer);
       discord.client.off(Events.InteractionCreate, handler);
       await manager.stop();
-      activity.close();
+      await activity.close();
       store.close();
     };
     await manager.load(botModules);
@@ -158,12 +162,16 @@ try {
       import('../modules/web/index.js'),
     ]);
     const discord = new DiscordRest(config, store, () => status.bot.ready);
-    const activity = new ActivityService(store, discord, secrets, { deliver: false, onError: logError });
+    const activity = new ActivityService(store, discord, secrets, {
+      deliver: false,
+      consume: false,
+      onError: logError,
+    });
     const web = new WebModule(config, store, activity, discord, errors, () => status);
     modules = () => [{ id: 'web', title: 'Web', state: state === 'running' ? 'running' : 'starting' }];
     cleanup = async () => {
       await web.stop();
-      activity.close();
+      await activity.close();
       store.close();
     };
     await web.start();

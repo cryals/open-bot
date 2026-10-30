@@ -39,11 +39,18 @@ export class ErrorReporter {
   ) {
     this.root = resolve(dirname(config.databasePath), 'errors');
     this.rest = new REST({ version: '10', timeout: 8000, retries: 0 }).setToken(config.token);
-    this.secrets = [config.token, config.clientSecret, config.logWebhook || ''].filter(Boolean);
+    this.secrets = [
+      config.token,
+      config.clientSecret,
+      config.logWebhook || '',
+      config.redisUrl || '',
+      config.redisUrl ? decodeURIComponent(new URL(config.redisUrl).password) : '',
+    ].filter(Boolean);
   }
   redact(text: string) {
     for (const secret of this.secrets) text = text.split(secret).join('[REDACTED]');
     return text
+      .replace(/rediss?:\/\/[^\s"<>]+/gi, '[REDACTED_REDIS_URL]')
       .replace(/(\/api\/(?:v\d+\/)?webhooks\/\d+\/)[\w.-]+/g, '$1[REDACTED]')
       .replace(
         /((?:authorization|cookie|client_secret|access_token|refresh_token|csrf|oauth_code)["']?\s*[:=]\s*)[^\s,;]+/gi,

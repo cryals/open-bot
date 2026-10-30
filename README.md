@@ -178,6 +178,10 @@ For the Vite interface, set `APP_ORIGIN=http://localhost:5173` in `.env`; keep t
 
 **Stack:** Node.js 24 · TypeScript · discord.js 14 · Fastify 5 · React 19 · Vite · SQLite · Drizzle ORM.
 
+## Activity buffering
+
+Activity events use Redis Streams and SQLite batches of up to 100 events, flushed every second. A durable local outbox supports replay after worker or Redis failures; UUIDs deduplicate SQLite writes. If Redis is unavailable, the same batch writer processes the disk queue directly. Rules, sessions, publication revisions and message IDs still commit immediately to SQLite. Compose includes a private Redis service with AOF; standalone deployments can set `REDIS_URL`. See [operations](docs/OPERATIONS.md#пакетный-журнал-и-redis) for recovery and backup constraints.
+
 ## License
 
 [Open Bot Project License 1.0](LICENSE) — a custom source-available license. Private non-commercial use is permitted. Public or community deployment, redistribution, and commercial use require prior written permission from cryals. The full terms are in `LICENSE`, in English and Russian; licensing contact: `support@stopco.ru`.

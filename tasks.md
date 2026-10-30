@@ -91,6 +91,18 @@ Specification: [Ticket and Metrics design](docs/superpowers/specs/2026-10-30-tic
 - [ ] Update Docker configuration, backup/restore, environment examples and operator documentation.
 - [ ] Run build/type/format and Compose configuration checks; report runtime validation separately. Add or run automated tests only if requested.
 
+## Redis activity batching — approved 2026-10-30
+
+- [x] Add a durable local activity outbox and optional Redis Streams transport.
+- [x] Write up to 100 events per SQLite transaction, on a one-second timer or batch threshold.
+- [x] Deduplicate event UUIDs and confirm Stream messages only after persistence.
+- [x] Keep local batch processing operational during Redis outage or write rejection.
+- [x] Preserve immediate rules, publication and session persistence and live Discord role checks.
+- [x] Release SQLite statements between export chunks; isolate failed Discord log channels.
+- [x] Add Redis AOF service, volume, safe configuration, backup and recovery documentation.
+- [x] Verify unit/regression scenarios for batching, replay, fallback and log delivery.
+- [ ] Run the real Redis integration test in an environment with Redis/Docker Engine available.
+
 ## Original acceptance criteria (MVP)
 
 - The bot can publish and update one persistent launcher in the configured channel.

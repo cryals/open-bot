@@ -5,6 +5,7 @@ import type { Store } from './store.js';
 import type { DiscordPort } from './discord.js';
 import type { BotMessage } from '../shared/blocks.js';
 import type { ActivityEntry, ActivityPage } from '../shared/activity.js';
+import { ActivityQueue, RedisActivityStream, activityEventId, type ActivityEvent } from './activity-queue.js';
 
 type Actor = { userId: string; name: string };
 type LogInput = {
@@ -17,6 +18,7 @@ type LogInput = {
 };
 type Row = {
   id: number;
+  event_id: string | null;
   created_at: number;
   actor: string;
   actor_name: string;
@@ -33,21 +35,41 @@ export class ActivityService {
   private timer?: ReturnType<typeof setInterval>;
   private sending = false;
   private closed = false;
-  private retryAt = 0;
+  private retryAt = new Map<string, number>();
   deliveryError: string | null = null;
   fileError: string | null = null;
   private databaseError: string | null = null;
+  private queue: ActivityQueue;
   readonly root: string;
   constructor(
     private store: Store,
     private discord: DiscordPort,
     private secrets: string[] = [],
-    private options: { deliver?: boolean; onError?: (error: unknown, scope: string) => void } = {},
+    private options: {
+      deliver?: boolean;
+      consume?: boolean;
+      redisUrl?: string;
+      redisKey?: string;
+      onError?: (error: unknown, scope: string) => void;
+    } = {},
   ) {
     this.root =
       store.sqlite.name === ':memory:'
         ? resolve('output/testlogs')
         : resolve(dirname(store.sqlite.name), 'logs');
+    const stream =
+      options.redisUrl && options.consume !== false
+        ? new RedisActivityStream(options.redisUrl, options.redisKey || 'open-bot:activity', (error) => {
+            this.options.onError?.(error, 'activity.redis');
+          })
+        : undefined;
+    this.queue = new ActivityQueue(
+      store.sqlite.name === ':memory:'
+        ? resolve('output/test-outbox', activityEventId())
+        : resolve(dirname(store.sqlite.name), 'activity-outbox'),
+      (events) => this.persist(events),
+      { consume: options.consume !== false, stream, onError: options.onError },
+    );
     if (options.deliver !== false) {
       this.timer = setInterval(() => {
         void this.flush().catch((error) => options.onError?.(error, 'activity.flush'));
@@ -58,7 +80,9 @@ export class ActivityService {
   private redact(value: string) {
     let result = value;
     for (const secret of this.secrets) if (secret) result = result.split(secret).join('[REDACTED]');
-    return result.replace(/(\/api\/webhooks\/\d+\/)[^\s"<>]+/g, '$1[REDACTED]');
+    return result
+      .replace(/(\/api\/webhooks\/\d+\/)[^\s"<>]+/g, '$1[REDACTED]')
+      .replace(/rediss?:\/\/[^\s"<>]+/gi, '[REDACTED_REDIS_URL]');
   }
   private text(value: unknown) {
     return this.redact(
@@ -68,6 +92,7 @@ export class ActivityService {
   private entry(row: Row): ActivityEntry {
     return {
       id: row.id,
+      eventId: row.event_id,
       createdAt: row.created_at,
       actor: row.actor,
       actorName: row.actor_name,
@@ -97,66 +122,83 @@ export class ActivityService {
             .join('\n')
         : null;
     const now = Date.now();
-    const details = this.redact(JSON.stringify(input.details || {}));
-    let row: Row = {
-      id: 0,
-      created_at: now,
+    const event: ActivityEvent = {
+      eventId: activityEventId(),
+      createdAt: now,
       actor: actor.userId,
-      actor_name: this.redact(actor.name),
+      actorName: this.redact(actor.name),
       kind: input.kind,
       target: this.redact(input.target),
       summary: this.redact(input.summary),
-      details,
-      before_text: before,
-      after_text: after,
+      details: JSON.parse(this.redact(JSON.stringify(input.details || {}))),
+      before,
+      after,
       diff,
-      log_channel_id: null,
     };
     try {
-      const channel = this.store.getSettings().logChannelId;
-      const result = this.store.sqlite
-        .prepare(
-          'INSERT INTO activity_log(created_at,actor,actor_name,kind,target,summary,details,before_text,after_text,diff,log_channel_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-        )
-        .run(
-          now,
-          actor.userId,
-          this.redact(actor.name),
-          input.kind,
-          this.redact(input.target),
-          this.redact(input.summary),
-          details,
-          before,
-          after,
-          diff,
-          channel,
-        );
-      row = this.store.sqlite
-        .prepare('SELECT * FROM activity_log WHERE id=?')
-        .get(Number(result.lastInsertRowid)) as Row;
+      this.queue.enqueue(event);
       this.databaseError = null;
     } catch (error) {
-      this.databaseError = 'Не удалось записать журнал в SQLite; подробности сохраняются в JSONL';
-      this.options.onError?.(error, 'activity.database');
+      this.databaseError = 'Не удалось сохранить событие в локальную очередь журнала.';
+      this.options.onError?.(error, 'activity.outbox');
     }
-    try {
-      mkdirSync(this.root, { recursive: true });
+    return event.eventId;
+  }
+  private persist(events: ActivityEvent[]) {
+    const channel = this.store.getSettings().logChannelId;
+    const insert = this.store.sqlite.prepare(
+      'INSERT INTO activity_log(event_id,created_at,actor,actor_name,kind,target,summary,details,before_text,after_text,diff,log_channel_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING RETURNING *',
+    );
+    const rows = this.store.sqlite.transaction(() =>
+      events.map((event) => {
+        const row = insert.get(
+          event.eventId,
+          event.createdAt,
+          event.actor,
+          event.actorName,
+          event.kind,
+          event.target,
+          event.summary,
+          JSON.stringify(event.details),
+          event.before,
+          event.after,
+          event.diff,
+          channel,
+        ) as Row | undefined;
+        return (
+          row ||
+          (this.store.sqlite.prepare('SELECT * FROM activity_log WHERE event_id=?').get(event.eventId) as Row)
+        );
+      }),
+    )();
+    // Group writes by the event's date, including events replayed after a long outage.
+    const days = new Map<string, string[]>();
+    for (const row of rows) {
       const day = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Moscow',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-      }).format(now);
-      appendFileSync(
-        resolve(this.root, day + '-' + process.pid + '.jsonl'),
-        JSON.stringify(this.entry(row)) + '\n',
-      );
+      }).format(row.created_at);
+      const lines = days.get(day) || [];
+      lines.push(JSON.stringify(this.entry(row)));
+      days.set(day, lines);
+    }
+    try {
+      mkdirSync(this.root, { recursive: true });
+      for (const [day, lines] of days)
+        appendFileSync(resolve(this.root, day + '-' + process.pid + '.jsonl'), lines.join('\n') + '\n');
       this.fileError = null;
     } catch (error) {
-      this.fileError = 'Не удалось записать файл журнала; события сохранены в SQLite';
-      this.options.onError?.(error, 'activity.file');
+      this.fileError = 'Не удалось записать JSONL; пакет остаётся в очереди для повтора.';
+      throw error;
     }
-    return row.id;
+  }
+  async ingest() {
+    await this.queue.flush();
+  }
+  get storageError() {
+    return this.fileError || this.databaseError || this.queue.error;
   }
   list(search = '', before = Number.MAX_SAFE_INTEGER): ActivityPage {
     const query = '%' + search + '%';
@@ -172,32 +214,41 @@ export class ActivityService {
       entries: rows.map((row) => this.entry(row)),
       pending: pending.total,
       deliveryError: this.deliveryError,
-      fileError: this.fileError || this.databaseError,
+      fileError: this.storageError,
     };
   }
   *export() {
     const { last } = this.store.sqlite
       .prepare('SELECT coalesce(max(id),0) AS last FROM activity_log')
       .get() as { last: number };
-    for (const row of this.store.sqlite
-      .prepare('SELECT * FROM activity_log WHERE id<=? ORDER BY id')
-      .iterate(last) as IterableIterator<Row>)
-      yield JSON.stringify(this.entry(row)) + '\n';
+    let cursor = 0;
+    while (cursor < last) {
+      const rows = this.store.sqlite
+        .prepare('SELECT * FROM activity_log WHERE id>? AND id<=? ORDER BY id LIMIT 100')
+        .all(cursor, last) as Row[];
+      if (!rows.length) break;
+      cursor = rows.at(-1)!.id;
+      for (const row of rows) yield JSON.stringify(this.entry(row)) + '\n';
+    }
   }
   async flush() {
-    if (this.closed || this.sending || Date.now() < this.retryAt || !this.discord.isReady()) return;
-    const pending = this.store.sqlite
+    if (this.closed || this.sending || !this.discord.isReady()) return;
+    const channels = this.store.sqlite
       .prepare(
-        'SELECT * FROM activity_log WHERE delivered=0 AND log_channel_id IS NOT NULL ORDER BY id LIMIT 10',
+        'SELECT log_channel_id AS channel FROM activity_log WHERE delivered=0 AND log_channel_id IS NOT NULL GROUP BY log_channel_id ORDER BY min(id)',
       )
-      .all() as Row[];
+      .all() as { channel: string }[];
+    const channel = channels.find(({ channel }) => (this.retryAt.get(channel) || 0) <= Date.now())?.channel;
+    if (!channel) return;
+    const pending = this.store.sqlite
+      .prepare('SELECT * FROM activity_log WHERE delivered=0 AND log_channel_id=? ORDER BY id LIMIT 10')
+      .all(channel) as Row[];
     if (!pending.length) return;
     const group: Row[] = [];
     const texts: string[] = [];
     let size = 0;
     let characters = 0;
     for (const row of pending) {
-      if (row.log_channel_id !== pending[0].log_channel_id) break;
       const body =
         `**${row.summary.replace(/`/g, '')}**\nАвтор: <@${row.actor}> (${row.actor_name})\nОбъект: ${row.target}\n-# ${row.kind} · #${row.id} · <t:${Math.floor(row.created_at / 1000)}:f>` +
         (row.diff ? '\n```diff\n' + row.diff.replace(/```/g, '``\u200b`').slice(0, 1000) + '\n```' : '');
@@ -232,17 +283,19 @@ export class ActivityService {
         for (const row of group) update.run(row.id);
       })();
       this.deliveryError = null;
+      this.retryAt.delete(channel);
     } catch (error) {
       this.deliveryError =
         'Не удалось отправить журнал в Discord. Проверьте канал и права бота. События сохранены.';
-      this.retryAt = Date.now() + 30000;
+      this.retryAt.set(channel, Date.now() + 30000);
       this.options.onError?.(error, 'activity.delivery');
     } finally {
       this.sending = false;
     }
   }
-  close() {
+  async close() {
     this.closed = true;
     clearInterval(this.timer);
+    await this.queue.close();
   }
 }

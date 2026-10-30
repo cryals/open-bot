@@ -19,6 +19,8 @@ export type Config = {
   trustProxy: boolean;
   logChannelId?: string | null;
   logWebhook?: string | null;
+  redisUrl?: string;
+  redisKey?: string;
 };
 
 export function loadConfig(): Config {
@@ -35,6 +37,21 @@ export function loadConfig(): Config {
     ADMIN_ROLE_ID: z.union([snowflake, z.literal('')]).optional(),
     TRUST_PROXY: z.enum(['true', 'false']).default('false'),
     APP_ORIGIN: z.url().optional(),
+    REDIS_URL: z
+      .union([
+        z
+          .url()
+          .refine(
+            (value) => ['redis:', 'rediss:'].includes(new URL(value).protocol),
+            'Use redis:// or rediss://',
+          ),
+        z.literal(''),
+      ])
+      .optional(),
+    REDIS_KEY_PREFIX: z
+      .string()
+      .regex(/^[a-zA-Z0-9:_-]{1,100}$/)
+      .default('open-bot'),
     LOG_ID: z.union([snowflake, z.literal('')]).optional(),
     LOG_WEBHOOK: z
       .union([
@@ -99,5 +116,7 @@ export function loadConfig(): Config {
     trustProxy: env.TRUST_PROXY === 'true',
     logChannelId: env.LOG_ID || null,
     logWebhook: env.LOG_WEBHOOK || null,
+    redisUrl: env.REDIS_URL || undefined,
+    redisKey: `${env.REDIS_KEY_PREFIX}:${env.GUILD_ID}:activity`,
   };
 }

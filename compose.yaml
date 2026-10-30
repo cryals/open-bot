@@ -23,6 +23,8 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-false}
       LOG_ID: ${LOG_ID:-}
       LOG_WEBHOOK: ${LOG_WEBHOOK:-}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-open-bot}
     ports:
       - '${BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000'
     volumes:
@@ -42,5 +44,38 @@ services:
         max-size: '10m'
         max-file: '3'
 
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--appendfsync',
+        'everysec',
+        '--maxmemory',
+        '128mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    mem_limit: 256m
+    pids_limit: 64
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
 volumes:
   open-bot-data:
+  redis-data:

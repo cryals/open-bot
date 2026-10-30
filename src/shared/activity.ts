@@ -11,6 +11,7 @@ export const uiEventSchema = z.object({
 export type UiEvent = z.infer<typeof uiEventSchema>;
 export type ActivityEntry = {
   id: number;
+  eventId: string | null;
   createdAt: number;
   actor: string;
   actorName: string;

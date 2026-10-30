@@ -54,7 +54,12 @@ export async function createApp(options: {
   app.decorateRequest('adminSession', null);
   const activity =
     options.activity ||
-    new ActivityService(store, discord, [config.token, config.clientSecret, config.logWebhook || '']);
+    new ActivityService(
+      store,
+      discord,
+      [config.token, config.clientSecret, config.logWebhook || '', config.redisUrl || ''],
+      { redisUrl: config.redisUrl, redisKey: config.redisKey },
+    );
   const publisher = new Publisher(store, discord, activity, options.errors);
   discord.setActivity?.(activity);
   app.addHook('onClose', async () => {
@@ -62,7 +67,7 @@ export async function createApp(options: {
       { userId: config.clientId, name: 'Open Bot' },
       { kind: 'system.stop', target: 'server', summary: 'Сервис остановлен' },
     );
-    if (!options.activity) activity.close();
+    if (!options.activity) await activity.close();
   });
   const actor = (request: FastifyRequest) => request.adminSession!;
   activity.record(
