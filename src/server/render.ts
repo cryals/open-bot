@@ -7,7 +7,7 @@ import {
   SeparatorBuilder,
   TextDisplayBuilder,
 } from 'discord.js';
-import { paginate, type RulesDocument, type RuleKey } from '../shared/rules.js';
+import { paginate, type RulesDocument, type RuleKey, type ViewPage } from '../shared/rules.js';
 import { renderBlock } from './blocks.js';
 import { customMessage } from './blocks.js';
 import { infoBlocks } from '../shared/rules.js';
@@ -68,9 +68,15 @@ export function menu(document: RulesDocument, userId: string) {
     allowedMentions: { parse: [] as never[] },
   };
 }
-export function rulesView(document: RulesDocument, key: RuleKey, index: number, userId: string) {
+export function rulesView(
+  document: RulesDocument,
+  key: RuleKey,
+  index: number,
+  userId: string,
+  views?: ViewPage[],
+) {
   const set = document.rulesets.find((set) => set.key === key)!;
-  const pages = paginate(set);
+  const pages = views ?? paginate(set);
   const pageIndex = Math.min(Math.max(index, 0), pages.length - 1);
   const page = pages[pageIndex];
   const header = container().addTextDisplayComponents(text('# ' + set.title), text(set.intro));
@@ -94,8 +100,9 @@ export function rulesView(document: RulesDocument, key: RuleKey, index: number, 
 export function validatePayloads(document: RulesDocument) {
   const payloads: { components: unknown[] }[] = [launcher(document), menu(document, '111111111111111111')];
   for (const set of document.rulesets) {
-    for (let index = 0; index < paginate(set).length; index++)
-      payloads.push(rulesView(document, set.key, index, '111111111111111111'));
+    const pages = paginate(set);
+    for (let index = 0; index < pages.length; index++)
+      payloads.push(rulesView(document, set.key, index, '111111111111111111', pages));
   }
   for (const payload of payloads) {
     if (Buffer.byteLength(JSON.stringify(payload)) > 10000)

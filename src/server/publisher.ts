@@ -26,8 +26,9 @@ export class Publisher {
     media.prepare(launcher(document));
     for (const set of document.rulesets) {
       for (const page of set.pages) media.validate(pageBlocks(page));
-      for (let index = 0; index < paginate(set).length; index++)
-        media.prepare(rulesView(document, set.key, index, '111111111111111111'));
+      const pages = paginate(set);
+      for (let index = 0; index < pages.length; index++)
+        media.prepare(rulesView(document, set.key, index, '111111111111111111', pages));
     }
   }
   async publish(

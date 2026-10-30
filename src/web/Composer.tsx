@@ -49,6 +49,7 @@ export function Composer({
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [document, setDocument] = useState<MessageCollection>(emptyCollection);
   const [baseline, setBaseline] = useState('');
+  const [draftVersion, setDraftVersion] = useState(1);
   const [index, setIndex] = useState(0);
   const [channel, setChannel] = useState('');
   const [busy, setBusy] = useState(false);
@@ -75,6 +76,7 @@ export function Composer({
           setWorkspace(next);
           setDocument(next.draft);
           setBaseline(JSON.stringify(next.draft));
+          setDraftVersion(next.version);
         }
       })
       .catch((cause: unknown) => {
@@ -124,7 +126,10 @@ export function Composer({
     await run(async () => {
       try {
         const next = editing
-          ? await api<ComposerWorkspace>('/messages/' + editing.id, 'PUT', selected)
+          ? await api<ComposerWorkspace>('/messages/' + editing.id, 'PUT', {
+              message: selected,
+              version: editing.version,
+            })
           : await api<ComposerWorkspace>('/messages/send', 'POST', {
               requestId: requestId.current,
               channelId: channel,
@@ -137,6 +142,7 @@ export function Composer({
           setEditing(null);
           setDocument(next.draft);
           setBaseline(JSON.stringify(next.draft));
+          setDraftVersion(next.version);
           setIndex(0);
           setTab('history');
         }
@@ -260,11 +266,12 @@ export function Composer({
                 onClick={() =>
                   void run(async () => {
                     const next = await api<ComposerWorkspace>('/composer', 'PUT', {
-                      version: workspace.version,
+                      version: draftVersion,
                       document,
                     });
                     setWorkspace(next);
                     setBaseline(JSON.stringify(document));
+                    setDraftVersion(next.version);
                     setStatus('Черновик сообщений сохранён');
                   })
                 }
@@ -290,6 +297,7 @@ export function Composer({
                   setEditing(null);
                   setDocument(workspace.draft);
                   setBaseline(JSON.stringify(workspace.draft));
+                  setDraftVersion(workspace.version);
                   setIndex(0);
                 }}
               >
@@ -333,6 +341,7 @@ export function Composer({
                   </button>
                 </div>
                 <BlockEditor
+                  key={selected.id}
                   blocks={selected.blocks}
                   onChange={(blocks) => update({ ...selected, blocks })}
                 />
@@ -468,6 +477,7 @@ export function Composer({
                   </button>
                   <button
                     className="icon-button danger"
+                    disabled={busy}
                     aria-label={'Удалить шаблон ' + template.title}
                     onClick={() => {
                       if (window.confirm('Удалить шаблон «' + template.title + '»?'))
@@ -518,6 +528,7 @@ export function Composer({
                   </a>
                   <button
                     className="button"
+                    disabled={busy}
                     onClick={() => {
                       if (dirty && !window.confirm('Заменить несохранённые изменения?')) return;
                       setDocument({
@@ -536,6 +547,7 @@ export function Composer({
                   </button>
                   <button
                     className="icon-button"
+                    disabled={busy}
                     aria-label="Копировать в новый черновик"
                     onClick={() =>
                       load({

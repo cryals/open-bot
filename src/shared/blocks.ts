@@ -14,7 +14,12 @@ export const httpsUrl = z
     }
   }, 'Укажите HTTPS-ссылку');
 export const mediaUrl = z.union([httpsUrl, z.string().regex(localMediaPattern)]);
-const picture = z.object({ url: mediaUrl, description: z.string().max(300), spoiler: z.boolean() });
+const picture = z.object({
+  id: id.optional(),
+  url: mediaUrl,
+  description: z.string().max(300),
+  spoiler: z.boolean(),
+});
 const link = z.object({ id, label: z.string().trim().min(1).max(80), url: httpsUrl });
 const text = z.object({ id, type: z.literal('text'), content: z.string().trim().min(1).max(30000) });
 const separator = z.object({
@@ -63,6 +68,50 @@ export const blockSchema = z.discriminatedUnion('type', [
 ]);
 export type Block = z.infer<typeof blockSchema>;
 export type ChildBlock = Exclude<Block, { type: 'container' }>;
+export function uniqueBlockIds(blocks: Block[]): boolean {
+  const ids = blocks.flatMap((block) =>
+    block.type === 'container' ? [block.id, ...block.children.map((child) => child.id)] : [block.id],
+  );
+  return new Set(ids).size === ids.length;
+}
+/** Give older galleries stable item identities when they enter the editor. */
+export function withPictureIds(blocks: Block[]): Block[] {
+  let changed = false;
+  const next = blocks.map((block): Block => {
+    if (block.type === 'gallery' && block.items.some((item) => !item.id)) {
+      changed = true;
+      return {
+        ...block,
+        items: block.items.map((item, index) =>
+          item.id ? item : { ...item, id: `${block.id.slice(0, 80)}:image:${index}` },
+        ),
+      };
+    }
+    if (block.type === 'container') {
+      const children = withPictureIds(block.children) as ChildBlock[];
+      if (children !== block.children) {
+        changed = true;
+        return { ...block, children };
+      }
+    }
+    return block;
+  });
+  return changed ? next : blocks;
+}
+export function patchBlock(blocks: Block[], targetId: string, transform: (block: Block) => Block): Block[] {
+  let changed = false;
+  const next = blocks.map((block): Block => {
+    let updated = block;
+    if (block.id === targetId) updated = transform(block);
+    else if (block.type === 'container') {
+      const children = patchBlock(block.children, targetId, transform) as ChildBlock[];
+      if (children !== block.children) updated = { ...block, children };
+    }
+    if (updated !== block) changed = true;
+    return updated;
+  });
+  return changed ? next : blocks;
+}
 export function moveBlock(
   blocks: Block[],
   sourceId: string,
@@ -95,14 +144,21 @@ export function moveBlock(
 export type Picture = z.infer<typeof picture>;
 export const messageSchema = z.object({
   id,
-  blocks: z.array(blockSchema).min(1).max(40),
+  blocks: z.array(blockSchema).min(1).max(40).refine(uniqueBlockIds, 'ID блоков должны быть уникальны'),
   silent: z.boolean(),
   mentions: z.object({ users: z.boolean(), roles: z.boolean(), everyone: z.boolean() }),
 });
 export type BotMessage = z.infer<typeof messageSchema>;
 export const collectionSchema = z.object({
   title: z.string().trim().min(1).max(100),
-  messages: z.array(messageSchema).min(1).max(10),
+  messages: z
+    .array(messageSchema)
+    .min(1)
+    .max(10)
+    .refine(
+      (messages) => new Set(messages.map((message) => message.id)).size === messages.length,
+      'ID сообщений должны быть уникальны',
+    ),
 });
 export type MessageCollection = z.infer<typeof collectionSchema>;
 export const emptyMessage = (): BotMessage => ({
@@ -186,6 +242,7 @@ export function messageProblem(message: BotMessage): string | null {
 }
 export type SentMessage = {
   id: number;
+  version: number;
   channelId: string;
   messageId: string;
   message: BotMessage;

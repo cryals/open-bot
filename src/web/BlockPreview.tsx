@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { File, ImageOff } from 'lucide-react';
 import type { Block } from '../shared/blocks.js';
 import { RuleMarkdown } from './Markdown.js';
@@ -23,6 +23,8 @@ function PicturePreview({
     ) : (
       <img
         src={url}
+        loading="lazy"
+        decoding="async"
         alt={description || 'Изображение'}
         referrerPolicy="no-referrer"
         onError={() => setError(true)}
@@ -37,7 +39,7 @@ function PicturePreview({
     image
   );
 }
-export function BlocksPreview({ blocks }: { blocks: Block[] }) {
+export const BlocksPreview = memo(function BlocksPreview({ blocks }: { blocks: Block[] }) {
   return (
     <div className="blocks-preview">
       {blocks.map((block, index) => (
@@ -147,4 +149,4 @@ export function BlocksPreview({ blocks }: { blocks: Block[] }) {
       ))}
     </div>
   );
-}
+});

@@ -3,6 +3,7 @@ import type { BotModule } from '../../runtime/types.js';
 import { menu, notice, rulesView } from '../../render.js';
 import { MediaService } from '../../media.js';
 import { HttpError } from '../../errors.js';
+import { publishedRules } from '../../published-rules.js';
 
 const module: BotModule = {
   id: 'info',
@@ -13,9 +14,9 @@ const module: BotModule = {
     {
       data: new SlashCommandBuilder().setName('info').setDescription('Открыть правила Discord и игры'),
       async execute({ interaction }, { store }) {
-        const document = store.active();
-        if (!document) throw new HttpError(400, 'Правила ещё не опубликованы. Обратитесь к администрации.');
-        await interaction.editReply(menu(document, interaction.user.id));
+        const snapshot = publishedRules(store);
+        if (!snapshot) throw new HttpError(400, 'Правила ещё не опубликованы. Обратитесь к администрации.');
+        await interaction.editReply(menu(snapshot.document, interaction.user.id));
       },
     },
     {
@@ -56,8 +57,9 @@ const module: BotModule = {
           throw new HttpError(403, 'Откройте собственную панель через /info или «Читать правила».');
         if (action === 'open') await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         else await interaction.deferUpdate();
-        const document = store.active();
-        if (!document) throw new HttpError(400, 'Правила ещё не опубликованы.');
+        const snapshot = publishedRules(store);
+        if (!snapshot) throw new HttpError(400, 'Правила ещё не опубликованы.');
+        const { document } = snapshot;
         const key = parts[4];
         const page = Number(parts[5]);
         const payload =
@@ -65,7 +67,7 @@ const module: BotModule = {
           (key === 'game' || key === 'discord') &&
           Number.isSafeInteger(page) &&
           page >= 0
-            ? rulesView(document, key, page, interaction.user.id)
+            ? rulesView(document, key, page, interaction.user.id, snapshot.pages[key])
             : menu(document, interaction.user.id);
         await interaction.editReply({ ...new MediaService(store).prepare(payload), attachments: [] });
       },

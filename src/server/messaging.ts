@@ -12,6 +12,7 @@ import { HttpError } from './errors.js';
 
 type HistoryRow = {
   id: number;
+  version: number;
   channel_id: string;
   message_id: string;
   document: string;
@@ -46,6 +47,7 @@ export class MessagingStore {
   private mapHistory(row: HistoryRow): SentMessage {
     return {
       id: row.id,
+      version: row.version,
       channelId: row.channel_id,
       messageId: row.message_id,
       message: JSON.parse(row.document),
@@ -75,10 +77,12 @@ export class MessagingStore {
     if (!row) throw new HttpError(404, 'Сообщение не найдено в истории этого бота');
     return this.mapHistory(row);
   }
-  update(id: number, message: BotMessage, actor: string) {
-    this.store.sqlite
-      .prepare('UPDATE sent_messages SET document=?,actor=? WHERE id=?')
-      .run(JSON.stringify(message), actor, id);
+  update(id: number, message: BotMessage, actor: string, version: number) {
+    const changed = this.store.sqlite
+      .prepare('UPDATE sent_messages SET document=?,actor=?,version=version+1 WHERE id=? AND version=?')
+      .run(JSON.stringify(message), actor, id, version);
+    if (!changed.changes)
+      throw new HttpError(409, 'Сообщение изменено в другой вкладке. Откройте его заново из истории.');
   }
   begin(id: string, actor: string, channelId: string, document: MessageCollection): Dispatch {
     const serialized = JSON.stringify(document);

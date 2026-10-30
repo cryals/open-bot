@@ -90,7 +90,7 @@ export function ActivityView() {
     }
     void load();
     const timer = setInterval(() => {
-      if (liveRef.current) void load();
+      if (liveRef.current && !document.hidden) void load();
     }, 10000);
     return () => {
       alive = false;

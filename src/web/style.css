@@ -176,6 +176,11 @@ hr {
   flex-direction: column;
   padding: 27px 17px 0;
   z-index: 30;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.sidebar > * {
+  flex-shrink: 0;
 }
 .brand {
   display: flex;
@@ -248,7 +253,7 @@ hr {
   color: var(--ink);
 }
 .page-nav {
-  min-height: 80px;
+  min-height: 190px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -257,6 +262,7 @@ hr {
 }
 .page-list {
   overflow: auto;
+  min-height: 110px;
   padding: 0 0 10px;
   scrollbar-width: thin;
 }
@@ -626,10 +632,10 @@ hr {
   color: var(--ink);
 }
 .app-tag {
-  font-size: 8px;
+  font-size: 10px;
   background: var(--accent);
   padding: 2px 4px;
-  color: var(--ink);
+  color: var(--on-accent);
   border-radius: 0;
 }
 .discord-card {

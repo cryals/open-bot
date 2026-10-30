@@ -103,6 +103,15 @@ Specification: [Ticket and Metrics design](docs/superpowers/specs/2026-10-30-tic
 - [x] Verify unit/regression scenarios for batching, replay, fallback and log delivery.
 - [ ] Run the real Redis integration test in an environment with Redis/Docker Engine available.
 
+## Performance and UX — 2026-10-30
+
+- [x] Cache published pagination by revision and remove repeated pagination during validation.
+- [x] Check command cooldown before expensive REST authorization.
+- [x] Defer and memoize previews, lazy-load images, pause journal polling on hidden tabs.
+- [x] Fix message-edit races, draft-version drift and stale upload callbacks.
+- [x] Repair sidebar scrolling, APP contrast and contextual settings actions.
+- [x] Add regression tests, manually verify the draft conflict in FakeDiscord UI, and record a bounded CPU benchmark in docs/PERFORMANCE.md.
+
 ## Original acceptance criteria (MVP)
 
 - The bot can publish and update one persistent launcher in the configured channel.

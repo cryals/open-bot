@@ -3,9 +3,10 @@ import { ArrowLeft, ArrowRight, House, Eye } from 'lucide-react';
 import { paginate, type Ruleset } from '../shared/rules.js';
 import { BlocksPreview } from './BlockPreview.js';
 import { Logo } from './Logo.js';
+import { memo, useDeferredValue, useMemo } from 'react';
 
-export function Preview({
-  set,
+export const Preview = memo(function Preview({
+  set: currentSet,
   index,
   onIndex,
 }: {
@@ -13,7 +14,8 @@ export function Preview({
   index: number;
   onIndex: (index: number) => void;
 }) {
-  const pages = paginate(set);
+  const set = useDeferredValue(currentSet);
+  const pages = useMemo(() => paginate(set), [set]);
   const position = Math.min(index, pages.length - 1);
   const page = pages[position];
   return (
@@ -81,4 +83,4 @@ export function Preview({
       </p>
     </aside>
   );
-}
+});

@@ -208,7 +208,7 @@ test('bot sending is authorized, resumes partial batches, deduplicates retries a
       200,
     );
     assert.equal(ctx.discord.sent.length, 2);
-    const history = second.json().history as { id: number; messageId: string }[];
+    const history = second.json().history as { id: number; messageId: string; version: number }[];
     assert.equal(history.length, 2);
     const edited = emptyMessage();
     edited.blocks = [{ id: 'edit', type: 'text', content: 'Исправлено' }];
@@ -216,7 +216,7 @@ test('bot sending is authorized, resumes partial batches, deduplicates retries a
       method: 'PUT',
       url: '/api/messages/' + history[0].id,
       headers: ctx.headers,
-      payload: edited,
+      payload: { message: edited, version: history[0].version },
     });
     assert.equal(updated.statusCode, 200);
     assert.equal(updated.json().history[0].messageId, history[0].messageId);

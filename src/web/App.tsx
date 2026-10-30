@@ -178,9 +178,10 @@ export function App() {
       setBusy(false);
     }
   }
-  function accept(next: Workspace) {
+  function accept(next: Workspace, submitted?: RulesDocument) {
     setWorkspace(next);
-    setDocument(next.document);
+    // An upload can finish while a save/publish request is in flight.
+    setDocument((current) => (submitted && current !== submitted ? current : next.document));
   }
   function switchSet(next: RuleKey) {
     setKey(next);
@@ -203,9 +204,21 @@ export function App() {
     );
   }
   function updatePage(values: Partial<RulePage>) {
-    updateSet({
-      pages: current!.pages.map((page) => (page.id === selected!.id ? { ...page, ...values } : page)),
-    });
+    const pageId = selected!.id;
+    setDocument(
+      (previous) =>
+        previous && {
+          ...previous,
+          rulesets: previous.rulesets.map((set) =>
+            set.key === key
+              ? {
+                  ...set,
+                  pages: set.pages.map((page) => (page.id === pageId ? { ...page, ...values } : page)),
+                }
+              : set,
+          ) as RulesDocument['rulesets'],
+        },
+    );
   }
   function selectPage(id: string) {
     setSelectedId(id);
@@ -225,7 +238,7 @@ export function App() {
   }
   async function save() {
     await run(async () => {
-      accept(await api<Workspace>('/draft', 'PUT', { document, version: workspace!.version }));
+      accept(await api<Workspace>('/draft', 'PUT', { document, version: workspace!.version }), document!);
       setSuccess('Черновик сохранён');
     });
   }
@@ -237,7 +250,7 @@ export function App() {
       onConfirm: () => {
         setModal(null);
         void run(async () => {
-          accept(await api<Workspace>('/publish', 'POST', { version: workspace!.version }));
+          accept(await api<Workspace>('/publish', 'POST', { version: workspace!.version }), document!);
           setSuccess('Информация и правила опубликованы в Discord');
         });
       },
@@ -532,7 +545,7 @@ export function App() {
                         : 'Опубликованные версии можно вернуть в черновик.'}
             </p>
           </div>
-          <div className="heading-actions" hidden={mode === 'messages' || mode === 'activity'}>
+          <div className="heading-actions" hidden={mode !== 'rules' && mode !== 'info'}>
             <span className={'save-state ' + (dirty ? 'unsaved' : '')}>
               {dirty ? (
                 <>
@@ -603,7 +616,9 @@ export function App() {
                 </div>
                 <BlockEditor
                   blocks={infoBlocks(document)}
-                  onChange={(launcherBlocks) => setDocument({ ...document, launcherBlocks })}
+                  onChange={(launcherBlocks) =>
+                    setDocument((previous) => previous && { ...previous, launcherBlocks })
+                  }
                 />
                 <p className="editor-hint">
                   <ShieldCheck size={15} />

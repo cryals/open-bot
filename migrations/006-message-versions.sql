@@ -1,0 +1,1 @@
+ALTER TABLE sent_messages ADD COLUMN version INTEGER NOT NULL DEFAULT 1;

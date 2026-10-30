@@ -1,4 +1,4 @@
-import { useRef, useState, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import {
   AlignLeft,
   ArrowDown,
@@ -31,6 +31,8 @@ import {
 import {
   componentCount,
   moveBlock,
+  patchBlock,
+  withPictureIds,
   blockSchema,
   messageProblem,
   type Block,
@@ -66,7 +68,7 @@ const hints = {
   actions: 'До 5 кнопок со ссылками',
   file: 'Прикрепить документ к сообщению',
 };
-const picture = (): Picture => ({ url: '', description: '', spoiler: false });
+const picture = (): Picture => ({ id: crypto.randomUUID(), url: '', description: '', spoiler: false });
 export function makeBlock(type: Block['type']): Block {
   const id = crypto.randomUUID();
   switch (type) {
@@ -215,19 +217,29 @@ function UploadButton({
     </div>
   );
 }
-function PictureInput({ value, onChange }: { value: Picture; onChange: (value: Picture) => void }) {
+function PictureInput({
+  value,
+  onChange,
+  onUpload,
+}: {
+  value: Picture;
+  onChange: (value: Picture) => void;
+  onUpload: (url: string) => void;
+}) {
   return (
     <div className="picture-input">
       {value.url && (
         <div className="image-input-preview">
           <img
             src={value.url}
+            loading="lazy"
+            decoding="async"
             alt={value.description || 'Выбранное изображение'}
             referrerPolicy="no-referrer"
           />
         </div>
       )}
-      <UploadButton kind="image" onUpload={(url) => onChange({ ...value, url })} />
+      <UploadButton kind="image" onUpload={onUpload} />
       <label>
         Или HTTPS-ссылка
         <input
@@ -292,18 +304,38 @@ function Palette({ nested, onAdd }: { nested: boolean; onAdd: (type: Block['type
 }
 
 export function BlockEditor({
-  blocks,
+  blocks: inputBlocks,
   onChange,
   nested = false,
   parentId = null,
   onMoveBlock,
+  onPatchBlock,
 }: {
   blocks: Block[];
   onChange: (blocks: Block[]) => void;
   nested?: boolean;
   parentId?: string | null;
   onMoveBlock?: (id: string, parent: string | null, index: number) => void;
+  onPatchBlock?: (id: string, transform: (block: Block) => Block) => void;
 }) {
+  const blocks = useMemo(() => withPictureIds(inputBlocks), [inputBlocks]);
+  const latest = useRef({ blocks, onChange });
+  latest.current = { blocks, onChange };
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const patch =
+    onPatchBlock ||
+    ((id: string, transform: (block: Block) => Block) => {
+      if (!mounted.current) return;
+      const { blocks, onChange } = latest.current;
+      const next = patchBlock(blocks, id, transform);
+      if (next !== blocks) onChange(next);
+    });
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [dragging, setDragging] = useState<string | null>(null);
   const dragMove =
@@ -494,6 +526,7 @@ export function BlockEditor({
                       nested
                       parentId={block.id}
                       onMoveBlock={dragMove}
+                      onPatchBlock={patch}
                       blocks={block.children}
                       onChange={(children) => update(index, { ...block, children: children as ChildBlock[] })}
                     />
@@ -505,7 +538,7 @@ export function BlockEditor({
                       Изображения <span>{block.items.length} / 10</span>
                     </div>
                     {block.items.map((item, itemIndex) => (
-                      <div className="gallery-item-editor" key={itemIndex}>
+                      <div className="gallery-item-editor" key={item.id}>
                         <div className="item-header">
                           <span>Изображение {itemIndex + 1}</span>
                           <button
@@ -523,6 +556,18 @@ export function BlockEditor({
                         </div>
                         <PictureInput
                           value={item}
+                          onUpload={(url) =>
+                            patch(block.id, (current) =>
+                              current.type === 'gallery'
+                                ? {
+                                    ...current,
+                                    items: current.items.map((picture) =>
+                                      picture.id === item.id ? { ...picture, url } : picture,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
                           onChange={(value) =>
                             update(index, {
                               ...block,
@@ -606,6 +651,13 @@ export function BlockEditor({
                       {block.accessory.type === 'thumbnail' ? (
                         <PictureInput
                           value={block.accessory}
+                          onUpload={(url) =>
+                            patch(block.id, (current) =>
+                              current.type === 'section' && current.accessory.type === 'thumbnail'
+                                ? { ...current, accessory: { ...current.accessory, url } }
+                                : current,
+                            )
+                          }
                           onChange={(value) =>
                             update(index, { ...block, accessory: { type: 'thumbnail', ...value } })
                           }
@@ -708,7 +760,11 @@ export function BlockEditor({
                     )}
                     <UploadButton
                       kind="file"
-                      onUpload={(url, name) => update(index, { ...block, url, name })}
+                      onUpload={(url, name) =>
+                        patch(block.id, (current) =>
+                          current.type === 'file' ? { ...current, url, name } : current,
+                        )
+                      }
                     />
                     <label className="checkbox">
                       <input

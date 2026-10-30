@@ -20,6 +20,7 @@ The following identifiers come from the installed direct dependency manifests co
 | `lucide-react`                                                                                       | ISC              |
 | `react`, `react-dom`                                                                                 | MIT              |
 | `react-markdown`, `remark-gfm`                                                                       | MIT              |
+| `redis`                                                                                              | MIT              |
 | `zod`                                                                                                | MIT              |
 
 `package-lock.json` records the resolved dependency tree. Development dependencies, transitive packages and bundled components also keep their own licenses. Retain their required notices when distributing an installation or build, including notices contained in dependency files.

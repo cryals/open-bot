@@ -20,6 +20,7 @@ export async function composerRoutes(
   const messages = new MessagingStore(store);
   const media = new MediaService(store);
   const sending = new Set<string>();
+  const editing = new Set<number>();
   const actor = (request: FastifyRequest) => request.adminSession!.userId;
   const validate = (document: z.infer<typeof collectionSchema>) => {
     for (const message of document.messages) {
@@ -149,19 +150,29 @@ export async function composerRoutes(
   });
   app.put('/api/messages/:id', async (request) => {
     const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params);
-    const message = messageSchema.parse(request.body);
+    const { message, version } = z
+      .object({ message: messageSchema, version: z.number().int().positive() })
+      .parse(request.body);
     validate({ title: 'Обновление', messages: [message] });
+    if (editing.has(id)) throw new HttpError(409, 'Это сообщение уже обновляется. Подождите завершения.');
     const sent = messages.sent(id);
-    await discord.editMessage(message, sent.channelId, sent.messageId);
-    messages.update(id, message, actor(request));
-    activity.record(request.adminSession!, {
-      kind: 'message.edit',
-      target: `channel:${sent.channelId}/message:${sent.messageId}`,
-      summary: 'Отредактировано сообщение бота',
-      details: { channelId: sent.channelId, messageId: sent.messageId },
-      before: sent.message,
-      after: message,
-    });
-    return messages.workspace();
+    if (sent.version !== version)
+      throw new HttpError(409, 'Сообщение изменено в другой вкладке. Откройте его заново из истории.');
+    editing.add(id);
+    try {
+      await discord.editMessage(message, sent.channelId, sent.messageId);
+      messages.update(id, message, actor(request), version);
+      activity.record(request.adminSession!, {
+        kind: 'message.edit',
+        target: `channel:${sent.channelId}/message:${sent.messageId}`,
+        summary: 'Отредактировано сообщение бота',
+        details: { channelId: sent.channelId, messageId: sent.messageId },
+        before: sent.message,
+        after: message,
+      });
+      return messages.workspace();
+    } finally {
+      editing.delete(id);
+    }
   });
 }

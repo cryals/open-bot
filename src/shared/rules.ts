@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { blockSchema, blockText, componentCount, mediaRefs, type Block, type ChildBlock } from './blocks.js';
+import {
+  blockSchema,
+  blockText,
+  componentCount,
+  mediaRefs,
+  uniqueBlockIds,
+  type Block,
+  type ChildBlock,
+} from './blocks.js';
 
 export const snowflake = z.string().regex(/^\d{17,20}$/, 'Некорректный Discord ID');
 export const ruleKey = z.enum(['discord', 'game']);
@@ -8,7 +16,12 @@ export const pageSchema = z
     id: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
     title: z.string().trim().min(1).max(150),
     body: z.string().trim().max(30000).default(''),
-    blocks: z.array(blockSchema).min(1).max(100).optional(),
+    blocks: z
+      .array(blockSchema)
+      .min(1)
+      .max(100)
+      .refine(uniqueBlockIds, 'ID блоков должны быть уникальны')
+      .optional(),
     enabled: z.boolean(),
   })
   .refine((page) => Boolean(page.blocks?.length || page.body), 'Добавьте текст или блоки страницы');
@@ -29,7 +42,12 @@ export const rulesetSchema = z.object({
 export const documentSchema = z.object({
   launcherTitle: z.string().trim().min(1).max(120),
   launcherBody: z.string().trim().min(1).max(1800),
-  launcherBlocks: z.array(blockSchema).min(1).max(40).optional(),
+  launcherBlocks: z
+    .array(blockSchema)
+    .min(1)
+    .max(40)
+    .refine(uniqueBlockIds, 'ID блоков должны быть уникальны')
+    .optional(),
   rulesets: z
     .tuple([rulesetSchema, rulesetSchema])
     .refine((sets) => sets[0].key === 'discord' && sets[1].key === 'game', 'Ожидаются наборы Discord и Игра'),

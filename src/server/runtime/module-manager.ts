@@ -109,11 +109,6 @@ export class ModuleManager {
         const entry = this.commands.get(interaction.commandName);
         if (!entry) throw new HttpError(404, 'Команда недоступна. Откройте /help.');
         scope = entry.module + '.command.' + interaction.commandName;
-        if (
-          entry.command.admin &&
-          !(await this.context.discord.authorize(actor.userId, this.context.store.getSettings().adminRoleId))
-        )
-          throw new HttpError(403, 'Эта команда доступна только администрации.');
         const key = actor.userId + ':' + interaction.commandName;
         if ((this.cooldowns.get(key) || 0) > Date.now() || this.running.has(key))
           throw new HttpError(
@@ -124,17 +119,25 @@ export class ModuleManager {
         if (this.cooldowns.size > 1000)
           for (const [key, until] of this.cooldowns) if (until < Date.now()) this.cooldowns.delete(key);
         this.running.add(key);
-        this.context.activity.record(actor, {
-          kind: 'bot.command',
-          target,
-          summary: 'Выполнена команда ' + target,
-          details: {
-            interactionId: interaction.id,
-            channelId: interaction.channelId,
-            options: loggedOptions(interaction.options.data),
-          },
-        });
         try {
+          if (
+            entry.command.admin &&
+            !(await this.context.discord.authorize(
+              actor.userId,
+              this.context.store.getSettings().adminRoleId,
+            ))
+          )
+            throw new HttpError(403, 'Эта команда доступна только администрации.');
+          this.context.activity.record(actor, {
+            kind: 'bot.command',
+            target,
+            summary: 'Выполнена команда ' + target,
+            details: {
+              interactionId: interaction.id,
+              channelId: interaction.channelId,
+              options: loggedOptions(interaction.options.data),
+            },
+          });
           await within(45000, (signal) =>
             entry.command.execute({ interaction, ackMs, signal }, this.runtime),
           );
