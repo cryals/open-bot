@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 // These badges describe the project. Build results remain on the Actions page.
 const badges = [
-  ['status', 'STATUS', 'IN DEVELOPMENT'],
+  ['status', 'STATUS', 'RELEASE'],
   ['runtime', 'NODE', '24.18+'],
   ['discord', 'DISCORD', 'COMPONENTS V2'],
   ['hosting', 'DEPLOY', 'SELF-HOSTED'],

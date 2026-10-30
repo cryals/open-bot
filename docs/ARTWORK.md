@@ -18,7 +18,7 @@ node scripts/readme-badges.mjs
 
 The badge source is [scripts/readme-badges.mjs](../scripts/readme-badges.mjs). The palette follows the panel: near-black surfaces, white square corner details, gray labels and white values. SVG keeps small text sharp at different display scales.
 
-Badges describe project properties, not live server availability. `STATUS / IN DEVELOPMENT` is editorial metadata. `CI / VIEW RUNS` links to the actual Checks workflow; no passing result is hard-coded. Runtime, Discord format and license labels must be updated with the project when those properties change.
+Badges describe project properties, not live server availability. `STATUS / RELEASE` is editorial metadata. `CI / VIEW RUNS` links to the actual Checks workflow; no passing result is hard-coded. Runtime, Discord format and license labels must be updated with the project when those properties change.
 
 ## Image generation prompts
 
@@ -49,6 +49,18 @@ Composition/framing: panoramic, centered with generous margins, strong horizonta
 Text: no words or numbers at all.
 Avoid: colorful gradients, neon, mascots, rounded cartoon robots, logos, illegible faux UI, fake screenshots, fake dashboards, watermarks.
 ```
+
+## Documentation screenshots
+
+`assets/screenshots/{rules,info,settings,messages,activity,history}.png` are real Playwright captures from the isolated FakeDiscord UI, not production Discord or customer data. The companion `rules-guide.png` was edited with the built-in imagegen tool from the clean `rules.png`; it is an annotated illustration, not a separate behavior check. Clean originals remain available alongside it.
+
+Prompt for `rules-guide.png` (built-in edit mode):
+
+```text
+Use case: precise-object-edit. Asset type: annotated screenshot for Open Bot user documentation. Input image is the edit target, a real 1440x1000 web UI screenshot. Preserve the ENTIRE original screenshot, all existing Russian UI text, every button and its disabled state, fonts, layout and dimensions. Make only an overlay of four small amber-yellow numbered circles and thin amber rectangular outlines with arrows. Do not repaint, translate, rewrite, invent or move any interface content. Number 1 highlights the left page-list area x34..240 y403..700. Number 2 highlights the central text editing area x350..937 y554..754. Number 3 highlights the right preview area x1002..1386 y230..877. Number 4 highlights the top save/publish buttons x1115..1387 y125..164. Place numbers near each outlined area's corner, without hiding button labels. Only added text allowed is digits 1,2,3,4. No explanatory labels, watermark or extra decoration. The illustration must remain an exact screenshot with simple educational annotations.
+```
+
+The generated output was visually compared with the source. Imagegen rescaled/reconstructed the raster; use the clean screenshot and written steps as the authoritative UI reference. Numbers show: 1 — pages, 2 — text block, 3 — preview, 4 — save/publish. The stored illustration uses only demonstration content.
 
 ## Sources and rights
 

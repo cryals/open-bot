@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Open Bot Release'
+  short_description: 'Выпуски, документация и проверка Open Bot'
+  default_prompt: 'Используй $open-bot-release для подготовки выпуска и актуализации документации Open Bot.'

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Open Bot Observability'
+  short_description: 'Журнал, Redis, ошибки и метрики Open Bot'
+  default_prompt: 'Используй $open-bot-observability для диагностики журналов и телеметрии Open Bot.'

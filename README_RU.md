@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/badges/status.svg" alt="Статус: в разработке">
+  <img src="docs/assets/badges/status.svg" alt="Статус: релиз">
   <a href="https://nodejs.org/en/download"><img src="docs/assets/badges/runtime.svg" alt="Node.js 24.18 или новее"></a>
   <a href="docs/MODULES.md"><img src="docs/assets/badges/discord.svg" alt="Discord Components V2"></a>
   <a href="docs/OPERATIONS.md"><img src="docs/assets/badges/hosting.svg" alt="Размещение на своём сервере"></a>
@@ -28,6 +28,8 @@
 ---
 
 **Open Bot** — бот для управления серверами Discord с веб-панелью, визуальным редактором сообщений и модульными slash-командами. Публикуйте информацию сообщества, ведите правила Discord и игры, добавляйте ссылки на вики и поддержку. Каждый участник листает правила в сообщении, видимом только ему, не переключая страницы другим.
+
+**Релиз 1.0.** [Портал пользователя](docs/user/README.md) · [Портал разработчика](docs/developer/README.md). После установки оба портала доступны по **`/docs/`** на адресе панели: пошаговые инструкции, скриншоты интерфейса и справочники.
 
 Open Bot — название продукта. **Open Space** — название сообщества в начальных текстах правил. Сейчас одна установка обслуживает **один Discord-сервер**.
 

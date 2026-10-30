@@ -305,6 +305,9 @@ export function App() {
             <ArrowUpRight size={18} />
           </a>
           <small>Доступ для администрации Discord-сервера</small>
+          <a className="text-link" href="/docs/">
+            Документация
+          </a>
         </div>
         <p className="login-footer">OPEN BOT / УПРАВЛЕНИЕ DISCORD-СЕРВЕРОМ</p>
       </main>
@@ -895,7 +898,9 @@ export function App() {
           </section>
         )}
         <footer className="main-footer">
-          <span>Open Bot · Управление сервером Discord</span>
+          <span>
+            Open Bot · Релиз 1.0 · <a href="/docs/">Документация</a>
+          </span>
           <span>Черновик v{workspace.version}</span>
         </footer>
       </main>

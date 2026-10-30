@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/badges/status.svg" alt="Status: in development">
+  <img src="docs/assets/badges/status.svg" alt="Status: release">
   <a href="https://nodejs.org/en/download"><img src="docs/assets/badges/runtime.svg" alt="Node.js 24.18 or newer"></a>
   <a href="docs/MODULES.md"><img src="docs/assets/badges/discord.svg" alt="Discord Components V2"></a>
   <a href="docs/OPERATIONS.md"><img src="docs/assets/badges/hosting.svg" alt="Self-hosted"></a>
@@ -28,6 +28,8 @@
 ---
 
 **Open Bot** is a self-hosted Discord management bot with a web panel, a visual message editor, and modular slash commands. Publish community information, maintain Discord and game rules, and let each member browse their own copy of the rules without changing anyone else's page.
+
+**Release 1.0.** [User portal](docs/user/README.md) · [Developer portal](docs/developer/README.md). After installation, both portals are available at **`/docs/`** on the panel's address, with UI screenshots and task-based guides.
 
 Open Bot is the product name. **Open Space** is the community used in the supplied rule content. Each installation currently manages **one Discord guild**.
 

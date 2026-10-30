@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Open Bot Modules'
+  short_description: 'Создание и сопровождение модулей Open Bot'
+  default_prompt: 'Используй $open-bot-modules для изменения модуля Open Bot с учётом текущего runtime.'

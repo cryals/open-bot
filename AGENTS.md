@@ -22,7 +22,7 @@
 - Navigation should be ephemeral and scoped to the interacting user. The public launcher remains in the configured channel.
 - Keep each ruleset's configured introductory text visible on every page of that ruleset.
 
-## Proposed stack
+## Stack
 
 - Node.js 24 LTS and strict TypeScript.
 - discord.js v14 for the bot and Components V2.
@@ -49,3 +49,16 @@
 - Check OAuth role authorization, including a user without the configured role.
 - Check launcher update/recovery and persistence across restart.
 - Check that a failed publish leaves the previous published revision usable.
+
+## Release and documentation
+
+- Product status is Release 1.0. This is product metadata, not a claim of uninterrupted availability or passing CI. Keep the draft version indicator: it describes editable content.
+- Maintain two distinct documentation portals: `docs/user/` for administration and use; `docs/developer/` for code, modules, telemetry and operations. Entry point: `docs/README.md`; served URL: `/docs/` after build.
+- The explicit manifest in `scripts/build-docs.tsx` defines public documentation. Do not expose internal specs, review reports, credentials or the whole source tree through static serving.
+- Include changed workflows and screenshots when updating user-visible behavior. Capture with FakeDiscord, preserve clean originals, and store selected illustrations under `docs/assets/screenshots/`. Authentication state and traces stay in ignored `output/playwright/`.
+- Project skills are versioned in `skills/`: open-bot-modules, open-bot-observability and open-bot-release. Read the relevant skill when changing its area; sync installed local copies after editing. Do not assume planned modules are implemented.
+- Keep release completion separate from future feature plans in tasks.md. Do not keep routine run/check reminders as unfinished feature tasks or silently mark blocked checks as passed.
+
+## Local machine constraint
+
+- Docker Engine is unavailable on the owner's Windows machine because of virtualization problems. Do not start/restart Docker, WSL, Hyper-V or virtualization services, or retry container builds/runs. Static Compose validation is allowed without exposing secrets. Report Docker runtime checks as not run; use local Node.js and FakeDiscord.
