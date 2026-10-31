@@ -15,6 +15,8 @@ User/developer guides live in `docs/user/` and `docs/developer/`, entry `docs/RE
 
 Run `npm run docs:generate` for the module overview, per-module pages and marked MkDocs navigation. It reads registered metadata and slash definitions without starting lifecycle/Gateway. Preserve manual notes outside generated markers. Documentation CI generates missing pages into the build artifact before MkDocs/Pages; it does not create source commits.
 
+Module header artwork lives in `docs/assets/modules/<module-id>.png`; the generator includes available images below module titles. Keep full prompts in the adjacent manifest. These conceptual illustrations are distinct from screenshots and must not be presented as evidence of UI or runtime behavior.
+
 Capture actual UI with FakeDiscord (`npm run ui:harness`, optionally UI_PORT). Store temporary browser state/traces in ignored `output/playwright/`. Copy only selected clean screenshots into `docs/assets/screenshots/`. For annotations retain the unmodified source and check buttons, labels and states against it. Generated artwork is not evidence of application behavior.
 
 ## Validation and rollout

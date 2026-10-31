@@ -2,6 +2,8 @@
 
 # Moderation
 
+![Moderation — иллюстрация модуля](../../assets/modules/moderation.png)
+
 Дела, предупреждения и подтверждаемые наказания.
 
 **ID:** `moderation` · **Процесс:** Bot.

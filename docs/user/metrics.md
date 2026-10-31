@@ -1,5 +1,7 @@
 # Prometheus и Grafana
 
+![Metrics — иллюстрация модуля](../assets/modules/metrics.png)
+
 Используются существующие Prometheus и Grafana. Open Bot предоставляет отдельный защищённый HTTP endpoint; новые контейнеры мониторинга не нужны.
 
 ```dotenv

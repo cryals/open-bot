@@ -2,6 +2,8 @@
 
 # Starboard
 
+![Starboard — иллюстрация модуля](../../assets/modules/starboard.png)
+
 Подборки сообщений по уникальным голосам с защитой приватных каналов.
 
 **ID:** `starboard` · **Процесс:** Bot.

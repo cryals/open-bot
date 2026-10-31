@@ -2,6 +2,8 @@
 
 # Подписки
 
+![Подписки — иллюстрация модуля](../../assets/modules/subscriptions.png)
+
 Анонсы YouTube, Twitch, Kick, TikTok, Reddit и VK с очередью доставки.
 
 **ID:** `subscriptions` · **Процесс:** Bot.

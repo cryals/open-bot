@@ -2,6 +2,8 @@
 
 # Moderation Logs
 
+![Moderation Logs — иллюстрация модуля](../../assets/modules/moderation-logs.png)
+
 Карточки наказаний с отдельной сохраняемой доставкой.
 
 **ID:** `moderation-logs` · **Процесс:** Bot.

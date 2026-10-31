@@ -2,6 +2,8 @@
 
 # Slowmode
 
+![Slowmode — иллюстрация модуля](../../assets/modules/slowmode.png)
+
 Интервал сообщений Discord и ограничения частоты силами бота.
 
 **ID:** `slowmode` · **Процесс:** Bot.

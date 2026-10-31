@@ -1,5 +1,7 @@
 # Игровые серверы
 
+![Game Server Status — иллюстрация модуля](../assets/modules/game-server-status.png)
+
 Game Server Status поддерживает Space Station 14, Space Station 13, Minecraft Java/Bedrock, Terraria через TShock и Project Zomboid. Статус доступен в панели, через slash-команду и в обновляемом сообщении Components V2.
 
 ## Подключение

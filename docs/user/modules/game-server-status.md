@@ -2,6 +2,8 @@
 
 # Game Server Status
 
+![Game Server Status — иллюстрация модуля](../../assets/modules/game-server-status.png)
+
 Мониторинг SS14, SS13, Minecraft, Terraria и Project Zomboid с обновляемыми сообщениями.
 
 **ID:** `game-server-status` · **Процесс:** Bot.

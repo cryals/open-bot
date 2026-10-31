@@ -66,6 +66,7 @@
 - Include changed workflows and screenshots when updating user-visible behavior. Capture with FakeDiscord, preserve clean originals, and store selected illustrations under `docs/assets/screenshots/`. Authentication state and traces stay in ignored `output/playwright/`.
 - Project skills are versioned in `skills/`: open-bot-modules, open-bot-observability and open-bot-release. Read the relevant skill when changing its area; sync installed local copies after editing. Do not assume planned modules are implemented.
 - Run `npm run docs:generate` after module metadata/command changes. It owns marked regions in `docs/user/modules/*.md`, the overview and MkDocs module navigation. Preserve handwritten notes outside markers. Documentation CI generates missing pages before building; it does not commit generated files automatically.
+- Module reference headers use conceptual artwork from `docs/assets/modules/<module-id>.png`; the generator includes available images below each title. Keep full imagegen prompts in the artwork manifest and distinguish these illustrations from actual UI screenshots.
 - Keep release completion separate from future feature plans in tasks.md. Do not keep routine run/check reminders as unfinished feature tasks or silently mark blocked checks as passed.
 
 ## Local machine constraint

@@ -2,6 +2,8 @@
 
 # Metrics
 
+![Metrics — иллюстрация модуля](../../assets/modules/metrics.png)
+
 Метрики процессов, команд, HTTP и тикетов для Prometheus/Grafana.
 
 **ID:** `metrics` · **Процесс:** Bot.

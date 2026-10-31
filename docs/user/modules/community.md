@@ -2,6 +2,8 @@
 
 # Community Core
 
+![Community Core — иллюстрация модуля](../../assets/modules/community.png)
+
 Общий порядок событий и сохраняемые задания модулей.
 
 **ID:** `community` · **Процесс:** Bot.

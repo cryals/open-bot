@@ -2,6 +2,8 @@
 
 # SS14 Watchdog
 
+![SS14 Watchdog — иллюстрация модуля](../../assets/modules/watchdog.png)
+
 Подтверждаемые операции питания, обновления и отката SS14.
 
 **ID:** `watchdog` · **Процесс:** Bot.

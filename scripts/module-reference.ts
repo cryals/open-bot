@@ -97,14 +97,10 @@ const overview = [
 const nav = [navStart, '  - Модули:', '      - Все модули: user/catalog.md'];
 for (const module of modules) {
   const rows = commands(module),
-    lines = [
-      '# ' + module.title,
-      '',
-      module.description,
-      '',
-      `**ID:** \`${module.id}\` · **Процесс:** ${module.process}.`,
-      '',
-    ];
+    lines = ['# ' + module.title, ''];
+  if (existsSync(resolve(root, 'docs/assets/modules', module.id + '.png')))
+    lines.push(`![${module.title} — иллюстрация модуля](../../assets/modules/${module.id}.png)`, '');
+  lines.push(module.description, '', `**ID:** \`${module.id}\` · **Процесс:** ${module.process}.`, '');
   if (module.dependencies?.length)
     lines.push('**Зависимости:** ' + module.dependencies.map((id) => '`' + id + '`').join(', ') + '.', '');
   if (module.requirements?.intents?.length)

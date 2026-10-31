@@ -1,5 +1,11 @@
 # README artwork and badges
 
+## Module headers
+
+Each of the 23 module reference pages has its own conceptual header illustration. Files are stored in `assets/modules/<module-id>.png`. These are built-in imagegen outputs in the monochrome Open Bot style, not screenshots or diagrams of the exact runtime. The Markdown heading supplies the module name; the artwork deliberately contains no text.
+
+The [module artwork manifest](assets/modules/manifest.json) records the output filename, module and complete final prompt for each image. The documentation generator adds available headers inside its managed page region; subsequent command-reference generation preserves them and leaves handwritten notes outside the markers intact.
+
 ## Assets
 
 | File                                                | Purpose                                                                                          | Production        |

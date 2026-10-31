@@ -1,0 +1,145 @@
+{
+  "generatedOn": "2026-10-31",
+  "tool": "Built-in imagegen",
+  "kind": "Conceptual module header artwork, not UI screenshots",
+  "entries": [
+    {
+      "id": "core",
+      "title": "Core",
+      "file": "core.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Core. Subject: A central carved graphite processor cube seated in a silver square frame, with three smaller interlocking modules around it; a strong center of orchestration."
+    },
+    {
+      "id": "help",
+      "title": "Help",
+      "file": "help.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Help. Subject: An open sculptural technical reference book with stepped page tabs and a small directional compass made of metal; a clear guide to finding the right command."
+    },
+    {
+      "id": "info",
+      "title": "Info",
+      "file": "info.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Info. Subject: An elegant framed information notice with three layered blank content cards and one prominent round action button; a public information hub."
+    },
+    {
+      "id": "ticket",
+      "title": "Ticket",
+      "file": "ticket.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Ticket. Subject: A pair of folded support tickets beside a protected compartment with a small keyhole; personal support and a separate private staff conversation."
+    },
+    {
+      "id": "metrics",
+      "title": "Metrics",
+      "file": "metrics.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Metrics. Subject: A precision instrument with three finely etched time-series curves and a small row of rising metal bars; measured system activity, without numerical readings."
+    },
+    {
+      "id": "game-server-status",
+      "title": "Game Server Status",
+      "file": "game-server-status.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Game Server Status. Subject: Five compact architectural server towers connected to one small status instrument, each tower bearing a subtle circular signal indicator; monitoring multiple game servers."
+    },
+    {
+      "id": "watchdog",
+      "title": "SS14 Watchdog",
+      "file": "watchdog.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: SS14 Watchdog. Subject: A single architectural server tower beside a protected mechanical power switch inside a confirmation ring; deliberate controlled power operations."
+    },
+    {
+      "id": "moderation",
+      "title": "Moderation",
+      "file": "moderation.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Moderation. Subject: Balanced precision metal scales in front of a substantial protective shield, with one small case folder at the base; considered moderation decisions."
+    },
+    {
+      "id": "moderation-logs",
+      "title": "Moderation Logs",
+      "file": "moderation-logs.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Moderation Logs. Subject: An open archival ledger with parallel engraved entry lines and a trail of three small linked record tiles; a durable history of moderation actions."
+    },
+    {
+      "id": "community",
+      "title": "Community Core",
+      "file": "community.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Community Core. Subject: One silver routing junction linking an orderly arrangement of separate graphite modules, with small events represented by square metal tokens in the channels."
+    },
+    {
+      "id": "automod",
+      "title": "AutoMod",
+      "file": "automod.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: AutoMod. Subject: A translucent precision filtering screen in front of a protective shield, allowing orderly blank message tiles through and diverting one irregular tile."
+    },
+    {
+      "id": "autoban",
+      "title": "AutoBan",
+      "file": "autoban.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: AutoBan. Subject: A guarded entrance gate with two blank account tokens approaching it, one admitted and one stopped by a small solid barrier; entry policy screening."
+    },
+    {
+      "id": "anti-raid",
+      "title": "AntiRaid",
+      "file": "anti-raid.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: AntiRaid. Subject: A fortified silver gateway and broad protective shield holding back a cluster of many small dark account tokens; controlled defensive containment without people or weapons."
+    },
+    {
+      "id": "slowmode",
+      "title": "Slowmode",
+      "file": "slowmode.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Slowmode. Subject: A beautiful mechanical escapement and a sparse metering track releasing small square message tokens one at a time at regular intervals; no clock numerals."
+    },
+    {
+      "id": "role-menus",
+      "title": "Role Menus",
+      "file": "role-menus.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Role Menus. Subject: A tidy fan of three selectable blank identity cards paired with three differently shaped metal keys; safe role selection and deliberate choices."
+    },
+    {
+      "id": "autoresponder",
+      "title": "Autoresponder",
+      "file": "autoresponder.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Autoresponder. Subject: Two sculptural blank speech panels facing each other, joined by a short reflected signal path; one incoming message producing one contextual reply."
+    },
+    {
+      "id": "custom-commands",
+      "title": "Custom Commands",
+      "file": "custom-commands.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Custom Commands. Subject: A short elegant sequence of interchangeable command tiles fitted into a modular programming rail, one tile lifted slightly ready to be rearranged; safe customizable commands."
+    },
+    {
+      "id": "forms",
+      "title": "Forms",
+      "file": "forms.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Forms. Subject: A layered structured application form made from ivory paper and metal, with empty checkboxes, blank answer lines and a small decision stamp; applications and appeals."
+    },
+    {
+      "id": "giveaways",
+      "title": "Giveaways",
+      "file": "giveaways.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Giveaways. Subject: A restrained ivory prize box with a silver ribbon beside a shallow bowl of unnumbered raffle balls; fair community prize drawings."
+    },
+    {
+      "id": "subscriptions",
+      "title": "Social Feeds",
+      "file": "subscriptions.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Social Feeds. Subject: Six small signal beacons feeding into one precise delivery tray holding blank announcement cards; subscriptions converging into one announcement stream."
+    },
+    {
+      "id": "starboard",
+      "title": "Starboard",
+      "file": "starboard.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Starboard. Subject: One luminous brushed-silver five-pointed star pinned above a beautifully framed blank message card, with a few small voting tokens neatly arranged below."
+    },
+    {
+      "id": "guild-backup",
+      "title": "Guild Backup",
+      "file": "guild-backup.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Guild Backup. Subject: A secure architectural archive vault with exactly three snapshot drawers and a carefully layered stack of blank channel and role cards; preserved server structure and recoverable snapshots."
+    },
+    {
+      "id": "web",
+      "title": "Web",
+      "file": "web.png",
+      "prompt": "Use case: stylized-concept. Asset: an individual wiki header illustration for Open Bot. Create a wide panoramic landscape banner, approximately 1536x512 (3:1), in the existing Open Bot / AL-S visual family. Near-black #080808 background, ivory and brushed silver objects, graphite shadows, fine tactile stone and metal detail, subtle etched grain, one very thin rectangular graphite border with restrained square corner registration marks. A single clear sculptural composition, generous negative space, restrained architectural studio lighting, crisp high contrast, all subject objects fully visible within the frame. Monochrome only, no colored gradients. This is editorial conceptual artwork, not a screenshot or a real Discord response. No letters, words, numbers, logos, watermarks, robots or people. The module name will be typeset outside this image by the documentation site. Module: Web. Subject: An architectural desktop browser frame holding a sculptural three-column control console with blank panels and modular controls; a conceptual administration workspace, not an actual interface."
+    }
+  ]
+}
