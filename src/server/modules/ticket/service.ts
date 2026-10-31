@@ -87,6 +87,8 @@ export class TicketService {
         'Включите сообщения и Message Content в настройках приложения, затем перезапустите Bot',
       );
     if (!settings.enabled) return settings;
+    if (!settings.fullRoleId || !settings.viewRoleId)
+      throw new HttpError(400, 'Выберите полную роль Ticket и роль просмотра');
     if (!settings.staffChannelId) throw new HttpError(400, 'Выберите закрытый служебный канал');
     const rest = restPort(this.discord);
     const channels = (await rest.get(`/guilds/${this.config.guildId}/channels`, {
@@ -203,9 +205,13 @@ export class TicketService {
         if (
           active.length &&
           (settings.staffChannelId !== before.document.staffChannelId ||
-            settings.fullRoleId !== before.document.fullRoleId)
+            settings.fullRoleId !== before.document.fullRoleId ||
+            settings.staffThreadName !== before.document.staffThreadName)
         )
-          throw new HttpError(409, 'Нельзя менять служебный канал или полную роль при активных тикетах');
+          throw new HttpError(
+            409,
+            'Нельзя менять служебный канал, полную роль или имя ветки при активных тикетах',
+          );
         // Roles/parent changes need an explicit migration, including when intake is disabled.
         for (const old of before.document.categories) {
           const next = settings.categories.find((item) => item.id === old.id);
@@ -361,7 +367,7 @@ export class TicketService {
         ),
         deny: '0',
       },
-      ...[...new Set([...category.supportRoles, full])].map((id) => ({
+      ...[...new Set([...category.supportRoles, ...(full ? [full] : [])])].map((id) => ({
         id,
         type: 0,
         allow: customerAllow,
@@ -578,7 +584,7 @@ export class TicketService {
         const active = (await rest.get(`/guilds/${this.config.guildId}/threads/active`)) as {
           threads: { id: string; name: string; parent_id: string }[];
         };
-        const name = 'ticket-' + ticket.id;
+        const name = settings.staffThreadName.replaceAll('{id}', String(ticket.id));
         const existing = active.threads.find(
           (thread) => thread.name === name && thread.parent_id === settings.staffChannelId,
         );
@@ -743,8 +749,8 @@ export class TicketService {
               state: 'closed',
               stage: 'done',
               closed_at: now,
-              expires_at: now + 180 * 86400000,
-              next_at: now + 180 * 86400000,
+              expires_at: now + settings.retentionDays * 86400000,
+              next_at: now + settings.retentionDays * 86400000,
               error: null,
             });
             this.tickets.event(

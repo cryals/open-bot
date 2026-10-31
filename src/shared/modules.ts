@@ -85,9 +85,21 @@ export const ticketCategorySchema = z.object({
 export const ticketConfigSchema = z
   .object({
     enabled: z.boolean(),
-    fullRoleId: snowflakeId.default('1565440922336886876'),
-    viewRoleId: snowflakeId.default('1565620276916658276'),
+    fullRoleId: snowflakeId.nullable().default(null),
+    viewRoleId: snowflakeId.nullable().default(null),
     staffChannelId: snowflakeId.nullable(),
+    retentionDays: z.number().int().min(1).max(3650).default(180),
+    maxOpenPerUser: z.number().int().min(1).max(25).default(3),
+    staffThreadName: z
+      .string()
+      .min(1)
+      .max(60)
+      .regex(/^[\p{L}\p{N}_{}-]+$/u)
+      .refine(
+        (value) => value.includes('{id}') && !/[{}]/.test(value.replaceAll('{id}', '')),
+        'Имя должно содержать {id}; другие переменные не поддерживаются',
+      )
+      .default('ticket-{id}'),
     maxAttachmentMb: z.number().int().min(1).max(25).default(25),
     maxArchiveMb: z.number().int().min(100).max(100000).default(10000),
     panel: blocksSchema,
@@ -101,9 +113,12 @@ export type TicketConfig = z.infer<typeof ticketConfigSchema>;
 export type TicketCategory = z.infer<typeof ticketCategorySchema>;
 export const initialTicketConfig: TicketConfig = {
   enabled: false,
-  fullRoleId: '1565440922336886876',
-  viewRoleId: '1565620276916658276',
+  fullRoleId: null,
+  viewRoleId: null,
   staffChannelId: null,
+  retentionDays: 180,
+  maxOpenPerUser: 3,
+  staffThreadName: 'ticket-{id}',
   maxAttachmentMb: 25,
   maxArchiveMb: 10000,
   panel: [{ id: 'ticket-panel', type: 'text', content: '# Поддержка\nВыберите категорию обращения.' }],

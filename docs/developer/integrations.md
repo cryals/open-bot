@@ -10,7 +10,7 @@
 creating: channel → thread → control → staff-card
 open / claimed / waiting
 closing: freeze → archive → archive-thread → delete-channel
-closed: 180 дней → purging → удаление ветки, файлов и записей
+closed: retentionDays (по умолчанию 180 дней) → purging → удаление ветки, файлов и записей
 ```
 
 Ошибки сохраняют стадию и срок следующей попытки. Имена/topic и сохранённые ID используются для поиска уже созданных объектов; сообщения получают nonce. Discord не даёт общей транзакции с SQLite и бессрочного idempotency key. После неопределённого исхода длительного сбоя может потребоваться ручная сверка объектов.
@@ -25,13 +25,13 @@ closed: 180 дней → purging → удаление ветки, файлов �
 
 ## Game Server Status
 
-`statusUrl()` преобразует ss14/ss14s адрес с сохранением пути. Zod ограничивает ответ `/status`, body ограничен 256 КБ, timeout — 5 секунд. Кеш 15 секунд и single-flight принадлежат процессу. Наблюдения живут в SQLite и исполняются Bot worker раз в минуту.
+`statusUrl()` преобразует ss14/ss14s адрес с сохранением пути. Zod ограничивает ответ `/status`, body ограничен 256 КБ, timeout — 5 секунд. Срок кеша задаёт application.monitoring.cacheSeconds; single-flight принадлежит процессу. Наблюдения живут в SQLite и исполняются Bot worker с интервалом application.monitoring.refreshSeconds.
 
 `application.gameServerHosts` — разрешённый список точных хостов из панели (старый ENV `GAME_SERVER_HOSTS` служит только первым seed). Не превращайте его в разрешение произвольных URL из React. Redirect запрещён. Удаление конфигурации атомарно отключает наблюдения; удалённое Discord-сообщение создаётся заново.
 
 Мониторинг также поддерживает SS13 BYOND, Minecraft Java/Bedrock, Terraria TShock REST и Project Zomboid A2S. `protocols.ts` нормализует ответы без сохранения списков игроков. GameDig обрабатывает Minecraft/A2S; BYOND имеет ограниченный frame parser и абсолютный timeout. TShock использует bounded fetch без redirect; конфигурация хранит только ENV reference `GAME_SERVER_TOKEN_*`.
 
-Bot опрашивает все настроенные серверы независимо от наличия Discord-карточки и готовности Gateway, максимум четыре одновременно. SQLite `server_monitor_samples` хранит последний нормализованный ответ и hash текущей конфигурации. Общий кеш Bot/Web — 15 секунд. Metrics читает эти проекции через `state.ts`, не импортирует query-протоколы и не выполняет сетевой опрос. После 150 секунд или изменения hash ответ считается неизвестным. Labels содержат только фиксированные имена игр.
+Bot опрашивает все настроенные серверы независимо от наличия Discord-карточки и готовности Gateway, с ограничением application.monitoring.concurrency (по умолчанию четыре). SQLite `server_monitor_samples` хранит последний нормализованный ответ и hash текущей конфигурации. Общий кеш Bot/Web задаётся application.monitoring.cacheSeconds (по умолчанию 15 секунд). Metrics читает эти проекции через `state.ts`, не импортирует query-протоколы и не выполняет сетевой опрос. После 2,5 интервалов refreshSeconds или изменения hash ответ считается неизвестным. Labels содержат только фиксированные имена игр.
 
 ## Watchdog
 

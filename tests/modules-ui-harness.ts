@@ -7,8 +7,16 @@ import { ActivityService } from '../src/server/activity.js';
 import { TicketService } from '../src/server/modules/ticket/service.js';
 import { ServerStatusService } from '../src/server/modules/game-server-status/service.js';
 import { WatchdogService } from '../src/server/modules/watchdog/service.js';
-import { ModuleDiscord, ticketSettings, AUTHOR, VIEWER, MANAGER, SUPPORT } from './module-fixtures.js';
-import { initialTicketConfig } from '../src/shared/modules.js';
+import {
+  ModuleDiscord,
+  ticketSettings,
+  AUTHOR,
+  VIEWER,
+  MANAGER,
+  SUPPORT,
+  FULL_ROLE,
+  VIEW_ROLE,
+} from './module-fixtures.js';
 import { testConfig } from './fixtures.js';
 const port = Number(process.env.UI_PORT || 3320),
   mockPort = port + 1;
@@ -35,7 +43,7 @@ discord.rest.get = async (route, options) => {
     return [
       { id: config.guildId, name: 'everyone', permissions: '0', position: 0 },
       { id: demoRole, name: 'Open Bot', permissions: '8', position: 100 },
-      ...[SUPPORT, initialTicketConfig.fullRoleId, initialTicketConfig.viewRoleId].map((id) => ({
+      ...[SUPPORT, FULL_ROLE, VIEW_ROLE].map((id) => ({
         id,
         name: id,
         permissions: '0',
@@ -48,13 +56,7 @@ discord.rest.get = async (route, options) => {
     return {
       user: { id, username: 'Демо' },
       roles:
-        id === config.clientId
-          ? [demoRole]
-          : id === AUTHOR
-            ? []
-            : id === MANAGER
-              ? [initialTicketConfig.fullRoleId]
-              : [initialTicketConfig.viewRoleId],
+        id === config.clientId ? [demoRole] : id === AUTHOR ? [] : id === MANAGER ? [FULL_ROLE] : [VIEW_ROLE],
     };
   }
   return demoGet(route, options);

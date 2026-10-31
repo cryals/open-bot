@@ -149,6 +149,27 @@ export function ApplicationSettings({ guild }: { guild: GuildInfo }) {
             />
           </label>
         ))}
+        <h3>Мониторинг игровых серверов</h3>
+        {(
+          [
+            ['refreshSeconds', 'Обновление статуса и сообщений, секунд', 30, 3600],
+            ['cacheSeconds', 'Кеш запросов статуса, секунд', 1, 30],
+            ['concurrency', 'Одновременных опросов', 1, 8],
+          ] as const
+        ).map(([key, title, min, max]) => (
+          <label key={key}>
+            {title}
+            <input
+              type="number"
+              min={min}
+              max={max}
+              value={draft.monitoring[key]}
+              onChange={(event) =>
+                change({ monitoring: { ...draft.monitoring, [key]: Number(event.target.value) } })
+              }
+            />
+          </label>
+        ))}
         <h3>Метрики</h3>
         <label className="checkbox-row">
           <input

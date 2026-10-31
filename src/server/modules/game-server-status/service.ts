@@ -70,7 +70,8 @@ export class ServerStatusService {
   async get(id: string): Promise<ServerStatus> {
     const server = this.settings().document.servers.find((server) => server.id === id);
     if (!server) throw new HttpError(404, 'Игровой сервер не найден');
-    const hosts = new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts;
+    const { gameServerHosts: hosts, monitoring } = new ApplicationSettingsStore(this.store, this.config).get()
+      .document;
     gameEndpoint(server, hosts);
     const key = serverSignature(server);
     const sample = this.store.sqlite
@@ -78,7 +79,8 @@ export class ServerStatusService {
         'SELECT document,updated_at,last_success_at FROM server_monitor_samples WHERE server_id=? AND signature=?',
       )
       .get(id, key) as { document: string; updated_at: number; last_success_at: number | null } | undefined;
-    if (sample && sample.updated_at > Date.now() - 15000) return JSON.parse(sample.document) as ServerStatus;
+    if (sample && sample.updated_at > Date.now() - monitoring.cacheSeconds * 1000)
+      return JSON.parse(sample.document) as ServerStatus;
     const pending = this.requests.get(key);
     if (pending) return pending;
     const started = Date.now();
@@ -187,7 +189,11 @@ export class ServerStatusService {
     if (this.busy) return;
     this.busy = true;
     try {
-      const hosts = new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts;
+      const { gameServerHosts: hosts, monitoring } = new ApplicationSettingsStore(
+        this.store,
+        this.config,
+      ).get().document;
+      const refreshMs = monitoring.refreshSeconds * 1000;
       const queue = this.settings().document.servers.filter((server) => {
         try {
           gameEndpoint(server, hosts);
@@ -197,11 +203,13 @@ export class ServerStatusService {
         const saved = this.store.sqlite
           .prepare('SELECT updated_at,signature FROM server_monitor_samples WHERE server_id=?')
           .get(server.id) as { updated_at: number; signature: string } | undefined;
-        return !saved || saved.signature !== serverSignature(server) || saved.updated_at < Date.now() - 60000;
+        return (
+          !saved || saved.signature !== serverSignature(server) || saved.updated_at < Date.now() - refreshMs
+        );
       });
-      // Four bounded queries at a time; all configured servers are monitored, even without a Discord watch.
+      // Bounded queries; all configured servers are monitored, even without a Discord watch.
       await Promise.all(
-        Array.from({ length: Math.min(4, queue.length) }, async () => {
+        Array.from({ length: Math.min(monitoring.concurrency, queue.length) }, async () => {
           for (;;) {
             const server = queue.shift();
             if (!server) return;
@@ -234,14 +242,14 @@ export class ServerStatusService {
           if (!messageId) messageId = await this.discord.sendMessage(message, watch.channel_id, watch.nonce);
           this.store.sqlite
             .prepare('UPDATE server_watches SET message_id=?,next_at=?,error=NULL WHERE id=?')
-            .run(messageId, Date.now() + 60000, watch.id);
+            .run(messageId, Date.now() + refreshMs, watch.id);
         } catch (error) {
           if (!watch.error) this.onError(error, 'game-server-status.watch');
           this.store.sqlite
             .prepare('UPDATE server_watches SET error=?,next_at=? WHERE id=?')
             .run(
               'Не удалось обновить сообщение. Проверьте канал и права бота.',
-              Date.now() + 60000,
+              Date.now() + refreshMs,
               watch.id,
             );
         }

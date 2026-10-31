@@ -57,8 +57,8 @@ Exporter слушает выделенный host/port, требует bearer to
 
 ## Мониторинг игр и Grafana (октябрь 2026)
 
-Game Server Status хранит нормализованный ответ в `server_monitor_samples` вместе с hash конфигурации. Bot опрашивает все настроенные серверы раз в минуту, до четырёх параллельно; потеря Gateway останавливает отправку карточек, но не query. Web читает тот же 15-секундный кеш. Запись от старой конфигурации не считается актуальной.
+Game Server Status хранит нормализованный ответ в `server_monitor_samples` вместе с hash конфигурации. Bot опрашивает все настроенные серверы с интервалом и параллелизмом из application.monitoring (по умолчанию раз в минуту, до четырёх параллельно); потеря Gateway останавливает отправку карточек, но не query. Web читает тот же кеш; его срок задаёт application.monitoring.cacheSeconds. Запись от старой конфигурации не считается актуальной.
 
-Exporter импортирует только `state.ts`, без GameDig/query. Срез по пяти играм имеет online/offline/unknown; TTL 150 секунд. Суммы игроков включают только известные значения свежих доступных серверов. Worker counters запросов и histogram сбрасываются при рестарте; текущие gauge восстанавливаются из SQLite. Серверные ID и адреса не используются в labels.
+Exporter импортирует только `state.ts`, без GameDig/query. Срез по пяти играм имеет online/offline/unknown; TTL — 2,5 настроенных интервала refreshSeconds (150 секунд по умолчанию). Суммы игроков включают только известные значения свежих доступных серверов. Worker counters запросов и histogram сбрасываются при рестарте; текущие gauge восстанавливаются из SQLite. Серверные ID и адреса не используются в labels.
 
 Добавлены Gateway connected/latency, просроченные задания, возраст activity/error outbox, SQLite/WAL bytes, состояние giveaway/restore/Watchdog, время сбора и последнее успешное создание копии. HTTP `/metrics` объединяет параллельные сборы и кеширует результат пять секунд; `collect()` остаётся свежим снимком для диагностики. Alert rules находятся в `monitoring/alerts.example.yml`, dashboard — `public/monitoring/grafana.json`.

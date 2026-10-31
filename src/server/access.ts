@@ -16,7 +16,12 @@ export async function permissions(
 ): Promise<Access> {
   const ticket = new ModuleStore(store).get('tickets', ticketConfigSchema, initialTicketConfig).document;
   const base = discord.access
-    ? await discord.access(userId, store.getSettings().adminRoleId, ticket.fullRoleId, ticket.viewRoleId)
+    ? await discord.access(
+        userId,
+        store.getSettings().adminRoleId,
+        ticket.fullRoleId || '',
+        ticket.viewRoleId || '',
+      )
     : await discord
         .authorize(userId, store.getSettings().adminRoleId)
         .then((admin) => ({ admin, ticketManage: admin, ticketView: admin }));

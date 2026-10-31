@@ -95,9 +95,9 @@ export class TicketStore {
                 "SELECT COUNT(*) n FROM tickets WHERE author_id=? AND state IN ('creating','open','claimed','waiting','closing')",
               )
               .get(author) as { n: number }
-          ).n >= 3
+          ).n >= this.config().document.maxOpenPerUser
         )
-          throw new HttpError(429, 'У вас уже три активных обращения');
+          throw new HttpError(429, 'Достигнут настроенный лимит активных обращений');
         const result = this.store.sqlite
           .prepare('INSERT INTO tickets(author_id,category_id,form,created_at) VALUES(?,?,?,?)')
           .run(author, category, JSON.stringify(form), Date.now());

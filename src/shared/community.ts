@@ -351,6 +351,8 @@ export const guildBackupSchema = z.object({
   maxArchiveMb: z.number().int().min(16).max(64).default(64),
   includeMembers: z.boolean().default(false),
   includeMessages: z.boolean().default(true),
+  messagesPerChannel: z.number().int().min(1).max(100).default(20),
+  keepCopies: z.number().int().min(1).max(30).default(3),
   excludedChannels: ids.default([]),
 });
 export const communityDefinitions = {

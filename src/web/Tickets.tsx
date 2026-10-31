@@ -458,9 +458,10 @@ export function Tickets({ access, active = true }: { access: Access; active?: bo
               <label>
                 Полная роль Ticket
                 <select
-                  value={settings.document.fullRoleId}
-                  onChange={(event) => patch({ fullRoleId: event.target.value })}
+                  value={settings.document.fullRoleId || ''}
+                  onChange={(event) => patch({ fullRoleId: event.target.value || null })}
                 >
+                  <option value="">Выберите роль</option>
                   {guild.roles.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
@@ -471,9 +472,10 @@ export function Tickets({ access, active = true }: { access: Access; active?: bo
               <label>
                 Роль просмотра
                 <select
-                  value={settings.document.viewRoleId}
-                  onChange={(event) => patch({ viewRoleId: event.target.value })}
+                  value={settings.document.viewRoleId || ''}
+                  onChange={(event) => patch({ viewRoleId: event.target.value || null })}
                 >
+                  <option value="">Выберите роль</option>
                   {guild.roles.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
@@ -517,10 +519,37 @@ export function Tickets({ access, active = true }: { access: Access; active?: bo
                   onChange={(event) => patch({ maxArchiveMb: Number(event.target.value) })}
                 />
               </label>
+              <label>
+                Хранение закрытых тикетов, дней
+                <input
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={settings.document.retentionDays}
+                  onChange={(event) => patch({ retentionDays: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Активных обращений на участника
+                <input
+                  type="number"
+                  min={1}
+                  max={25}
+                  value={settings.document.maxOpenPerUser}
+                  onChange={(event) => patch({ maxOpenPerUser: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Имя служебной ветки (переменная {'{id}'})
+                <input
+                  value={settings.document.staffThreadName}
+                  onChange={(event) => patch({ staffThreadName: event.target.value })}
+                />
+              </label>
             </div>
             <p>
-              Архив закрытого обращения хранится 180 дней. Затем удаляются его файлы, переписка и служебная
-              ветка.
+              Новые закрытые обращения хранятся {settings.document.retentionDays} дней. Затем удаляются их
+              файлы, переписка и служебная ветка.
             </p>
           </section>
           <section className="module-card">

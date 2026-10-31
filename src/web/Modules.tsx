@@ -108,8 +108,8 @@ function ExistingModules({
               <h2>Игровые серверы</h2>
               <p>
                 SS14, SS13, Minecraft Java/Bedrock, Terraria TShock и Project Zomboid. Разрешённые хосты:{' '}
-                {snapshot.gameServerHosts.join(', ') || 'не заданы — откройте настройки приложения'}. Опрос
-                кешируется на 15 секунд; наблюдения обновляются раз в минуту.
+                {snapshot.gameServerHosts.join(', ') || 'не заданы — откройте настройки приложения'}. Опрос и
+                кеш настраиваются в настройках приложения.
               </p>
               {servers.servers.map((server, index) => (
                 <div className="module-card" key={index}>

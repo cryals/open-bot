@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { z } from 'zod';
 import { documentSchema, type RulePage, type RulesDocument } from '../shared/rules.js';
 
 function sections(source: string, marker: string): RulePage[] {
@@ -16,6 +17,15 @@ function sections(source: string, marker: string): RulePage[] {
 }
 
 export function loadSeed(): RulesDocument {
+  const content = z
+    .object({
+      launcherTitle: z.string(),
+      launcherBody: z.string(),
+      discordTitle: z.string(),
+      discordIntro: z.string(),
+      gameTitle: z.string(),
+    })
+    .parse(JSON.parse(readFileSync(resolve('rules/content.json'), 'utf8')));
   const game = readFileSync(resolve('rules/game.md'), 'utf8').replace(/\r/g, '');
   const discord = readFileSync(resolve('rules/discord.md'), 'utf8').replace(/\r/g, '');
   const gamePages = sections(game, '##');
@@ -23,20 +33,18 @@ export function loadSeed(): RulesDocument {
     .filter((page) => page.title.startsWith('Страница'))
     .map((page) => ({ ...page, title: page.title.replace(/^Страница \d+ — /, '') }));
   return documentSchema.parse({
-    launcherTitle: 'Правила Open Space',
-    launcherBody:
-      '**Правила Discord** — общение и поведение в сообществе.\n\n**Правила игры** — ролевая игра и взаимодействие на сервере Open Space 16+.\n\nВыберите раздел. Страницы с правилами будут видны только вам.',
+    launcherTitle: content.launcherTitle,
+    launcherBody: content.launcherBody,
     rulesets: [
       {
         key: 'discord',
-        title: 'Правила Discord',
-        intro:
-          'Правила основаны на [Условиях Discord](https://discord.com/terms) и [Правилах сообщества](https://discord.com/guidelines). За нарушения возможны мут, кик или бан по решению модерации.',
+        title: content.discordTitle,
+        intro: content.discordIntro,
         pages: discordPages,
       },
       {
         key: 'game',
-        title: 'Правила Open Space',
+        title: content.gameTitle,
         intro: game
           .split(/^## /m)[0]
           .replace(/^# .*\n+/, '')

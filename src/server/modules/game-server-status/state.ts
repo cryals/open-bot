@@ -4,11 +4,17 @@ import { serverConfigSchema } from '../../../shared/modules.js';
 import { gameTypeSchema, type GameServerStatus } from '../../../shared/game-servers.js';
 import type { Store } from '../../store.js';
 import { ModuleStore } from '../../module-store.js';
+import { applicationSettingsSchema, defaultApplicationSettings } from '../../../shared/settings.js';
 
 export const serverSignature = (server: GameServer) =>
   createHash('sha256').update(JSON.stringify(server)).digest('hex');
 /** Metrics consume persisted projections only. No networking or user/server IDs in labels. */
 export function monitorSummary(store: Store, now = Date.now()) {
+  const { monitoring } = new ModuleStore(store).get(
+    'application',
+    applicationSettingsSchema,
+    defaultApplicationSettings,
+  ).document;
   const servers = new ModuleStore(store).get('game-servers', serverConfigSchema, { servers: [] }).document
     .servers;
   const samples = store.sqlite.prepare('SELECT * FROM server_monitor_samples').all() as {
@@ -39,7 +45,7 @@ export function monitorSummary(store: Store, now = Date.now()) {
         result.oldestAge,
         sample ? Math.max(0, (now - sample.updated_at) / 1000) : 999,
       );
-      if (!sample || sample.updated_at < now - 150000) {
+      if (!sample || sample.updated_at < now - monitoring.refreshSeconds * 2500) {
         result.unknown++;
         continue;
       }

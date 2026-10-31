@@ -47,7 +47,14 @@ export function settingsRoutes(
     )
       throw new HttpError(400, 'Канал ошибок отсутствует на сервере');
     const before = settings.get();
-    const after = settings.save(input.document, input.version);
+    const after = store.sqlite
+      .transaction(() => {
+        const saved = settings.save(input.document, input.version);
+        if (before.document.monitoring.refreshSeconds !== saved.document.monitoring.refreshSeconds)
+          store.sqlite.prepare('UPDATE server_watches SET next_at=0 WHERE enabled=1').run();
+        return saved;
+      })
+      .immediate();
     settings.applyLive();
     activity.record(request.adminSession!, {
       kind: 'settings.application',

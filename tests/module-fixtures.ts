@@ -7,9 +7,13 @@ export const STAFF = '777777777777777777',
   SUPPORT = '999999999999999999',
   AUTHOR = '666666666666666666',
   VIEWER = '123456789012345678',
-  MANAGER = '123456789012345679';
+  MANAGER = '123456789012345679',
+  FULL_ROLE = '555555555555555551',
+  VIEW_ROLE = '555555555555555552';
 export const ticketSettings: TicketConfig = {
   ...initialTicketConfig,
+  fullRoleId: FULL_ROLE,
+  viewRoleId: VIEW_ROLE,
   enabled: true,
   staffChannelId: STAFF,
   categories: [
@@ -40,7 +44,7 @@ export class ModuleDiscord extends FakeDiscord {
         name: 'служебный',
         permission_overwrites: [
           { id: testConfig.guildId, type: 0, allow: '0', deny: '1024' },
-          ...[initialTicketConfig.fullRoleId, initialTicketConfig.viewRoleId].map((id) => ({
+          ...[FULL_ROLE, VIEW_ROLE].map((id) => ({
             id,
             type: 0,
             allow: '1024',
@@ -99,18 +103,14 @@ export class ModuleDiscord extends FakeDiscord {
       if (parts[2] === 'threads')
         return { threads: [...this.channels.values()].filter((channel) => channel.type === 12) };
       if (parts[2] === 'roles')
-        return [
-          testConfig.guildId,
-          SUPPORT,
-          initialTicketConfig.fullRoleId,
-          initialTicketConfig.viewRoleId,
-          '444444444444444444',
-        ].map((id, position) => ({
-          id,
-          name: id,
-          permissions: id === '444444444444444444' ? '8' : '0',
-          position,
-        }));
+        return [testConfig.guildId, SUPPORT, FULL_ROLE, VIEW_ROLE, '444444444444444444'].map(
+          (id, position) => ({
+            id,
+            name: id,
+            permissions: id === '444444444444444444' ? '8' : '0',
+            position,
+          }),
+        );
       if (parts[2] === 'members')
         return {
           user: { id: parts[3], username: 'Demo user' },
@@ -118,8 +118,8 @@ export class ModuleDiscord extends FakeDiscord {
             parts[3] === testConfig.clientId || parts[3] === AUTHOR
               ? ['444444444444444444']
               : parts[3] === MANAGER
-                ? [SUPPORT, initialTicketConfig.fullRoleId]
-                : [initialTicketConfig.viewRoleId],
+                ? [SUPPORT, FULL_ROLE]
+                : [VIEW_ROLE],
         };
     }
     if (parts[0] === 'channels') {

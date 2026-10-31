@@ -40,6 +40,8 @@ Follow the user's requested validation scope. FakeDiscord and local builds cover
 
 Use communityDefinitions, CommunityStore, JobStore and the catalog. Operational settings belong to SQLite/web. ENV retains secrets and deployment parameters. Intent changes require explicit restart and applied-state reporting.
 
+Never introduce community-specific role/channel IDs or names into runtime defaults. New Ticket installations start with no full/view roles; migration 013 alone preserves historical access. Initial rules metadata lives in rules/content.json; existing database content remains authoritative. Reuse the Ticket, backup and application.monitoring settings for retention, naming, limits and polling. Keep protocol constraints and internal identifiers fixed.
+
 Use GuildAuthority for guild ownership, hierarchy and safe roles. Public issuance excludes application-access roles and dangerous Discord permissions. Form reviewer access is per current form, distinct from formsView. Applicant OAuth never opens staff routes. Authorization bypasses the message-policy config cache.
 
 Keep unknown sanctions/restore steps stopped for reconciliation. New channels start closed. Replacement requires a confirmed plan and fresh source ownership/fingerprint checks. Never repeat an uncertain remote mutation automatically.

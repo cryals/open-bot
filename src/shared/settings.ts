@@ -37,6 +37,13 @@ export const applicationSettingsSchema = z.object({
   metricsEnabled: z.boolean(),
   gameServerHosts: z.array(hostname).max(100),
   watchdogHosts: z.array(hostname).max(100),
+  monitoring: z
+    .object({
+      refreshSeconds: z.number().int().min(30).max(3600).default(60),
+      cacheSeconds: z.number().int().min(1).max(30).default(15),
+      concurrency: z.number().int().min(1).max(8).default(4),
+    })
+    .default({ refreshSeconds: 60, cacheSeconds: 15, concurrency: 4 }),
   grants: z.object(
     Object.fromEntries(capabilityNames.map((key) => [key, z.array(snowflakeId).max(20)])) as Record<
       Capability,
@@ -58,6 +65,7 @@ export const defaultApplicationSettings: ApplicationSettings = {
   metricsEnabled: false,
   gameServerHosts: [],
   watchdogHosts: [],
+  monitoring: { refreshSeconds: 60, cacheSeconds: 15, concurrency: 4 },
   grants: Object.fromEntries(capabilityNames.map((key) => [key, [] as string[]])) as Record<
     Capability,
     string[]

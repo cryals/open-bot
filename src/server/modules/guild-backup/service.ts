@@ -191,7 +191,7 @@ export class GuildBackupService {
               attachments: z.array(z.record(z.string(), z.unknown())).max(10).optional(),
             }),
           )
-          .max(20),
+          .max(100),
       )
       .parse(manifest.sections.messages || {});
     manifest.sections.members = z
@@ -253,9 +253,9 @@ export class GuildBackupService {
       );
     const old = this.context.store.sqlite
       .prepare(
-        "SELECT id FROM guild_backups WHERE state='ready' AND id NOT IN (SELECT backup_id FROM guild_restores WHERE state IN ('prepared','queued','running','unknown','failed')) ORDER BY created_at DESC LIMIT -1 OFFSET 3",
+        "SELECT id FROM guild_backups WHERE state='ready' AND id NOT IN (SELECT backup_id FROM guild_restores WHERE state IN ('prepared','queued','running','unknown','failed')) ORDER BY created_at DESC LIMIT -1 OFFSET ?",
       )
-      .all() as { id: string }[];
+      .all(this.configs.config('guild-backup').document.keepCopies) as { id: string }[];
     for (const row of old) {
       await unlink(resolve(this.root, row.id + '.json.gz')).catch((error) => {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
@@ -432,7 +432,7 @@ export class GuildBackupService {
           !config.excludedChannels.includes(String(channel.parent_id)),
       )) {
         const page = (await get(
-          `/channels/${channel.id}/messages?limit=20`,
+          `/channels/${channel.id}/messages?limit=${config.messagesPerChannel}`,
           'messages:' + channel.id,
           [],
         )) as ObjectData[];
