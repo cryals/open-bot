@@ -1,6 +1,8 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { BotModule } from '../../runtime/types.js';
 import { notice } from '../../render.js';
+import { telemetry } from '../../telemetry.js';
+let pulse: ReturnType<typeof setInterval> | undefined;
 
 const module: BotModule = {
   id: 'core',
@@ -8,8 +10,19 @@ const module: BotModule = {
   description: 'Подключение бота, жизненный цикл модулей и диагностика.',
   async start({ discord }) {
     await discord.start();
+    clearInterval(pulse);
+    const update = () => {
+      telemetry.gatewayConnected.set(discord.isReady() ? 1 : 0);
+      const ping = discord.client.ws.ping;
+      if (Number.isFinite(ping) && ping >= 0) telemetry.gatewayLatency.set(ping / 1000);
+    };
+    update();
+    pulse = setInterval(update, 10000);
+    pulse.unref();
   },
   async stop({ discord }) {
+    clearInterval(pulse);
+    telemetry.gatewayConnected.set(0);
     await discord.stop();
   },
   commands: [

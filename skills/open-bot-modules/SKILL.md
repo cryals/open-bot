@@ -28,6 +28,8 @@ Reuse Publisher for rules/info publication and its SQLite lock, version checks a
 
 For state-changing integrations, define what survives a crash and how an unknown remote result is reconciled. A timeout does not prove that a remote action failed. Do not automatically retry game-server power actions or real content publication as a diagnostic step.
 
+Game Server Status uses one typed configuration for SS14, SS13, Minecraft Java/Bedrock, Terraria TShock and Project Zomboid. Preserve default SS14 decoding and keep Watchdog identity independent. Protocols live in game-server-status/protocols.ts; normalized persisted samples/metrics projections live in state.ts. TShock only stores GAME_SERVER_TOKEN_* references, never credentials in URLs or records.
+
 ## Completion
 
 Use `docs/developer/telemetry.md` when adding logging or metrics. Record safe actor/operation/result projections, never credentials. Update user commands, developer docs and env/backup guidance if their contracts changed.

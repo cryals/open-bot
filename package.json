@@ -36,6 +36,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.7",
+    "gamedig": "5.3.3",
     "lucide-react": "^0.468.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/gamedig": "5.0.3",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

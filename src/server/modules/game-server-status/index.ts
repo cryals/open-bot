@@ -3,6 +3,7 @@ import type { BotModule, BotContext } from '../../runtime/types.js';
 import { ServerStatusService } from './service.js';
 import { customMessage } from '../../blocks.js';
 import { notice } from '../../render.js';
+import { gameTypeSchema, gameTitles, type GameType } from '../../../shared/game-servers.js';
 const services = new WeakMap<object, ServerStatusService>();
 function service(context: BotContext) {
   let result = services.get(context.store);
@@ -18,7 +19,7 @@ let timer: ReturnType<typeof setInterval> | undefined;
 const module: BotModule = {
   id: 'game-server-status',
   title: 'Game Server Status',
-  description: 'Состояние SS14-серверов и обновляемые сообщения.',
+  description: 'Мониторинг SS14, SS13, Minecraft, Terraria и Project Zomboid с обновляемыми сообщениями.',
   dependencies: ['core'],
   async start(context) {
     timer = setInterval(
@@ -37,7 +38,7 @@ const module: BotModule = {
     {
       data: new SlashCommandBuilder()
         .setName('server-status')
-        .setDescription('Статус SS14-сервера или список серверов')
+        .setDescription('Статус игрового сервера или список серверов')
         .addStringOption((option) => option.setName('server').setDescription('ID сервера')),
       async execute({ interaction }, context) {
         const api = service(context),
@@ -73,11 +74,23 @@ const module: BotModule = {
         .addSubcommand((command) =>
           command
             .setName('add')
-            .setDescription('Добавить SS14-сервер')
+            .setDescription('Добавить игровой сервер')
             .addStringOption((option) => option.setName('id').setDescription('Короткий ID').setRequired(true))
             .addStringOption((option) => option.setName('name').setDescription('Название').setRequired(true))
             .addStringOption((option) =>
-              option.setName('address').setDescription('ss14:// или ss14s://').setRequired(true),
+              option
+                .setName('address')
+                .setDescription('Адрес status API или host:query-port')
+                .setRequired(true),
+            )
+            .addStringOption((option) =>
+              option
+                .setName('game')
+                .setDescription('Игра; по умолчанию SS14')
+                .addChoices(...gameTypeSchema.options.map((value) => ({ name: gameTitles[value], value }))),
+            )
+            .addStringOption((option) =>
+              option.setName('token-env').setDescription('Имя GAME_SERVER_TOKEN_* для Terraria TShock'),
             ),
         )
         .addSubcommand((command) =>
@@ -119,6 +132,8 @@ const module: BotModule = {
             id: interaction.options.getString('id', true),
             name: interaction.options.getString('name', true),
             address: interaction.options.getString('address', true),
+            game: (interaction.options.getString('game') as GameType | null) || 'ss14',
+            tokenEnv: interaction.options.getString('token-env'),
           });
           api.save(snapshot.document, snapshot.version);
         }

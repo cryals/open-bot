@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { blockSchema, uniqueBlockIds } from './blocks.js';
 import type { Capability } from './settings.js';
+import { gameTypeSchema } from './game-servers.js';
 
 export const snowflakeId = z.string().regex(/^\d{17,20}$/);
 export const moduleId = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,39}$/);
@@ -18,10 +19,18 @@ export const blocksSchema = z
   .min(1)
   .max(30)
   .refine(uniqueBlockIds, 'Повторяющиеся ID блоков');
-export const serverSchema = z.object({
+const serverIdentitySchema = z.object({
   id: moduleId,
   name: z.string().trim().min(1).max(150),
   address: z.string().trim().min(1).max(500),
+});
+export const serverSchema = serverIdentitySchema.extend({
+  game: gameTypeSchema.default('ss14'),
+  tokenEnv: z
+    .string()
+    .regex(/^GAME_SERVER_TOKEN_[A-Z0-9_]{1,60}$/)
+    .nullable()
+    .default(null),
 });
 export const serverConfigSchema = z
   .object({ servers: z.array(serverSchema).max(30) })
@@ -31,7 +40,7 @@ export const serverConfigSchema = z
   );
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
 export type GameServer = z.infer<typeof serverSchema>;
-export const watchdogServerSchema = serverSchema.extend({
+export const watchdogServerSchema = serverIdentitySchema.extend({
   instance: moduleId,
   tokenEnv: z.string().regex(/^WATCHDOG_TOKEN_[A-Z0-9_]{1,60}$/),
 });

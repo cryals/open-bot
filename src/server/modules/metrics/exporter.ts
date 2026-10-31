@@ -3,17 +3,22 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { Gauge, Counter, Registry } from '@prometheus-io/client';
 import type { Config } from '../../config.js';
 import type { Store } from '../../store.js';
-import { readdirSync, existsSync } from 'node:fs';
+import { statSync } from 'node:fs';
+import { readdir, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { monitorSummary } from '../game-server-status/state.js';
 
 export class MetricsExporter {
   private server?: Server;
+  private cached?: { until: number; body: string };
+  private collecting?: Promise<string>;
   constructor(
     private config: Config,
     private store: Store,
     private onError: (error: unknown) => void = () => {},
   ) {}
   async collect() {
+    const started = performance.now();
     const rows = this.store.sqlite
       .prepare('SELECT * FROM metric_snapshots WHERE updated_at>?')
       .all(Date.now() - 30000) as { process: string; document: string; updated_at: number }[];
@@ -27,6 +32,14 @@ export class MetricsExporter {
       labelNames: ['worker'],
       registers: [runtime],
     });
+    const available = new Gauge({
+      name: 'open_bot_worker_telemetry_fresh',
+      help: 'Worker has telemetry newer than 30 seconds',
+      labelNames: ['worker'],
+      registers: [runtime],
+    });
+    for (const worker of ['bot', 'web'])
+      available.set({ worker }, rows.some((row) => row.process === worker) ? 1 : 0);
     for (const role of ['bot', 'web'])
       fresh.set(
         { worker: role },
@@ -87,14 +100,34 @@ export class MetricsExporter {
       ['errors', 'errors/pending'],
     ]) {
       const root = resolve(dirname(this.config.databasePath), path);
-      queues.set(
-        { queue },
-        existsSync(root)
-          ? readdirSync(root, { withFileTypes: true }).filter(
-              (file) => file.name.endsWith('.json') && file.isFile(),
-            ).length
-          : 0,
+      const entries = (
+        await readdir(root, { withFileTypes: true }).catch((error) => {
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+          throw error;
+        })
+      ).filter((file) => file.isFile() && file.name.endsWith('.json'));
+      queues.set({ queue }, entries.length);
+      const oldest = new Gauge({
+        name: 'open_bot_disk_queue_' + queue + '_oldest_age_seconds',
+        help: 'Oldest pending ' + queue + ' disk event age',
+        registers: [runtime],
+      });
+      let age = 0,
+        cursor = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(8, entries.length) }, async () => {
+          for (;;) {
+            const entry = entries[cursor++];
+            if (!entry) return;
+            try {
+              age = Math.max(age, (Date.now() - (await stat(resolve(root, entry.name))).mtimeMs) / 1000);
+            } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            }
+          }
+        }),
       );
+      oldest.set(Math.max(0, age));
     }
     const jobs = new Gauge({
       name: 'open_bot_module_jobs',
@@ -136,6 +169,119 @@ export class MetricsExporter {
       .prepare('SELECT state,COUNT(*) n FROM form_submissions GROUP BY state')
       .all() as { state: string; n: number }[])
       forms.set({ state: row.state }, row.n);
+    const gameStates = new Gauge({
+      name: 'open_bot_game_servers',
+      help: 'Configured servers by game and status; stale or unqueried samples are unknown',
+      labelNames: ['game', 'state'],
+      registers: [runtime],
+    });
+    const gameMetrics = Object.fromEntries(
+      [
+        ['configured', 'open_bot_game_servers_configured', 'Configured game servers'],
+        ['players', 'open_bot_game_players', 'Players reported by fresh online servers'],
+        ['capacity', 'open_bot_game_capacity', 'Capacity reported by fresh online servers'],
+        ['playerSamples', 'open_bot_game_player_samples', 'Fresh online servers reporting a player count'],
+        [
+          'oldestAge',
+          'open_bot_game_oldest_sample_age_seconds',
+          'Oldest configured game sample, 999 when never queried',
+        ],
+        [
+          'maxDuration',
+          'open_bot_game_query_last_duration_seconds',
+          'Maximum last query duration for a game',
+        ],
+      ].map(([key, name, help]) => [
+        key,
+        new Gauge({ name, help, labelNames: ['game'], registers: [runtime] }),
+      ]),
+    );
+    for (const summary of monitorSummary(this.store)) {
+      for (const state of ['online', 'offline', 'unknown'] as const)
+        gameStates.set({ game: summary.game, state }, summary[state]);
+      for (const [key, metric] of Object.entries(gameMetrics))
+        metric.set({ game: summary.game }, summary[key as Exclude<keyof typeof summary, 'game'>]);
+    }
+    const jobAge = new Gauge({
+      name: 'open_bot_job_oldest_pending_age_seconds',
+      help: 'Overdue age of oldest pending durable job',
+      labelNames: ['kind'],
+      registers: [runtime],
+    });
+    for (const row of this.store.sqlite
+      .prepare(
+        "SELECT kind,max(0,(?-min(due_at))/1000.0) age FROM core_jobs WHERE state='pending' GROUP BY kind",
+      )
+      .all(Date.now()) as { kind: string; age: number }[])
+      jobAge.set({ kind: row.kind }, row.age);
+    for (const [name, table] of [
+      ['giveaways', 'giveaways'],
+      ['power_operations', 'power_operations'],
+      ['guild_backups', 'guild_backups'],
+      ['guild_restores', 'guild_restores'],
+    ] as const) {
+      const metric = new Gauge({
+        name: 'open_bot_' + name,
+        help: 'Retained ' + name + ' by state',
+        labelNames: ['state'],
+        registers: [runtime],
+      });
+      for (const row of this.store.sqlite
+        .prepare(`SELECT state,COUNT(*) n FROM ${table} GROUP BY state`)
+        .all() as { state: string; n: number }[])
+        metric.set({ state: row.state }, row.n);
+    }
+    const backupAge = new Gauge({
+      name: 'open_bot_guild_backup_last_success_timestamp_seconds',
+      help: 'Creation timestamp of most recent successful guild backup; zero when absent',
+      registers: [runtime],
+    });
+    backupAge.set(
+      ((
+        this.store.sqlite
+          .prepare("SELECT max(created_at) time FROM guild_backups WHERE state='ready'")
+          .get() as { time: number | null }
+      ).time || 0) / 1000,
+    );
+    const backupEnabled = new Gauge({
+      name: 'open_bot_guild_backup_enabled',
+      help: 'Scheduled guild backups are enabled',
+      registers: [runtime],
+    });
+    backupEnabled.set(
+      (
+        this.store.sqlite
+          .prepare(
+            "SELECT json_extract(document,'$.enabled') enabled FROM module_config WHERE id='guild-backup'",
+          )
+          .get() as { enabled: number } | undefined
+      )?.enabled === 1
+        ? 1
+        : 0,
+    );
+    const databaseBytes = new Gauge({
+      name: 'open_bot_database_size_bytes',
+      help: 'SQLite database and WAL size',
+      labelNames: ['file'],
+      registers: [runtime],
+    });
+    for (const [file, path] of [
+      ['database', this.config.databasePath],
+      ['wal', this.config.databasePath + '-wal'],
+    ]) {
+      try {
+        databaseBytes.set({ file }, statSync(path).size);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        databaseBytes.set({ file }, 0);
+      }
+    }
+    const duration = new Gauge({
+      name: 'open_bot_exporter_collection_duration_seconds',
+      help: 'Time spent collecting local metrics for this response',
+      registers: [runtime],
+    });
+    duration.set((performance.now() - started) / 1000);
     return (await registry.metrics()) + '\n' + (await runtime.metrics());
   }
   async start() {
@@ -157,7 +303,18 @@ export class MetricsExporter {
         return;
       }
       try {
-        const body = await this.collect();
+        if (!this.cached || this.cached.until < Date.now()) {
+          this.collecting ??= this.collect()
+            .then((body) => {
+              this.cached = { until: Date.now() + 5000, body };
+              return body;
+            })
+            .finally(() => {
+              this.collecting = undefined;
+            });
+          await this.collecting;
+        }
+        const body = this.cached!.body;
         response
           .writeHead(200, {
             'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',

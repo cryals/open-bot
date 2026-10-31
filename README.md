@@ -129,7 +129,7 @@ Commands register automatically in the configured guild. `/send-info` uses the *
 
 ## Modular by design
 
-Independent modules include **Ticket** (private channels, staff threads, transcripts, 180-day retention), **Game Server Status** (SS14 status and persistent cards), **Watchdog** (confirmed restart/update/stop/revert) and **Metrics** (protected Prometheus endpoint and Grafana dashboard). They have web controls and slash commands. [Integration guide](docs/developer/integrations.md).
+Independent modules include **Ticket** (private channels, staff threads, transcripts, 180-day retention), **Game Server Status** (SS14, SS13, Minecraft Java/Bedrock, Terraria TShock, Project Zomboid and persistent cards), **Watchdog** (confirmed restart/update/stop/revert) and **Metrics** (protected Prometheus endpoint, 32 Grafana panels and example alert rules). They have web controls and slash commands. [Integration guide](docs/developer/integrations.md).
 
 <p align="center">
   <img src="docs/assets/open-bot-modules.png" alt="Concept illustration of a modular control system" width="1000">

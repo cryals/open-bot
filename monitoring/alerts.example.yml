@@ -1,0 +1,66 @@
+groups:
+  - name: open-bot
+    rules:
+      - alert: OpenBotMetricsEndpointUnavailable
+        expr: up{job="open-bot"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: metrics endpoint cannot be scraped'
+      - alert: OpenBotWorkerTelemetryMissing
+        expr: open_bot_worker_telemetry_fresh == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: worker {{ $labels.worker }} has no fresh telemetry'
+      - alert: OpenBotGatewayDisconnected
+        expr: open_bot_gateway_connected{worker="bot"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: Discord Gateway disconnected'
+      - alert: OpenBotGameServerOffline
+        expr: open_bot_game_servers{state="offline"} > 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: offline servers in {{ $labels.game }}'
+      - alert: OpenBotGameMonitorStale
+        expr: open_bot_game_servers{state="unknown"} > 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: stale or missing status in {{ $labels.game }}'
+      - alert: OpenBotJobOverdue
+        expr: open_bot_job_oldest_pending_age_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: overdue {{ $labels.kind }} jobs'
+      - alert: OpenBotErrorDeliveryBacklog
+        expr: open_bot_disk_queue_errors_oldest_age_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: error delivery queue is not draining'
+      - alert: OpenBotGuildBackupMissing
+        expr: (open_bot_guild_backup_enabled == 1) and (open_bot_guild_backup_last_success_timestamp_seconds == 0)
+        for: 25h
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: no successful scheduled guild backup'
+      - alert: OpenBotGuildBackupTooOld
+        expr: (open_bot_guild_backup_enabled == 1) and (open_bot_guild_backup_last_success_timestamp_seconds > 0) and (time() - open_bot_guild_backup_last_success_timestamp_seconds > 90000)
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Open Bot: scheduled guild backup is older than 25 hours or missing'

@@ -50,6 +50,7 @@ export function secretValues(config: Config) {
       .filter(
         ([name]) =>
           /^WATCHDOG_TOKEN_[A-Z0-9_]+$/.test(name) ||
+          /^GAME_SERVER_TOKEN_[A-Z0-9_]+$/.test(name) ||
           /(?:_SECRET|_TOKEN|_API_KEY)$/.test(name) ||
           name === 'INTEGRATION_KEY',
       )

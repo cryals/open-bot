@@ -55,6 +55,7 @@ export async function moduleRoutes(
     gameServerHosts: new ApplicationSettingsStore(store, config).get().document.gameServerHosts,
     watchdogHosts: new ApplicationSettingsStore(store, config).get().document.watchdogHosts,
     tokenNames: Object.keys(process.env).filter((key) => /^WATCHDOG_TOKEN_[A-Z0-9_]+$/.test(key)),
+    serverTokenNames: Object.keys(process.env).filter((key) => /^GAME_SERVER_TOKEN_[A-Z0-9_]+$/.test(key)),
     metrics: {
       enabled: config.metricsEnabled || false,
       host: config.metricsHost || '127.0.0.1',

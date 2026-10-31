@@ -9,6 +9,7 @@ import { Tickets } from './Tickets.js';
 import './modules.css';
 import { Community } from './Community.js';
 import { Moderation } from './Moderation.js';
+import { gameTitles, gameAddresses, type GameType } from '../shared/game-servers.js';
 export type ModuleKind = 'tickets' | 'servers' | 'watchdog' | 'metrics' | 'community' | 'moderation';
 type Snapshot = {
   servers: { document: ServerConfig; version: number };
@@ -25,6 +26,7 @@ type Snapshot = {
   gameServerHosts: string[];
   watchdogHosts: string[];
   tokenNames: string[];
+  serverTokenNames: string[];
   metrics: { enabled: boolean; host: string; port: number };
 };
 export function Modules(props: { kind: ModuleKind; access: Access; guild?: GuildInfo | null }) {
@@ -103,18 +105,40 @@ function ExistingModules({
         <>
           <div hidden={kind !== 'servers'}>
             <section className="module-card">
-              <h2>SS14-серверы</h2>
+              <h2>Игровые серверы</h2>
               <p>
-                Адреса ss14:// и ss14s:// преобразуются в HTTP /status. Разрешённые хосты:{' '}
+                SS14, SS13, Minecraft Java/Bedrock, Terraria TShock и Project Zomboid. Разрешённые хосты:{' '}
                 {snapshot.gameServerHosts.join(', ') || 'не заданы — откройте настройки приложения'}. Опрос
                 кешируется на 15 секунд; наблюдения обновляются раз в минуту.
               </p>
               {servers.servers.map((server, index) => (
                 <div className="module-card" key={index}>
                   <div className="module-grid">
+                    <label>
+                      Игра
+                      <select
+                        value={server.game}
+                        onChange={(event) => {
+                          const game = event.target.value as GameType;
+                          setServers({
+                            servers: servers.servers.map((item, i) =>
+                              i === index
+                                ? { ...item, game, address: gameAddresses[game], tokenEnv: null }
+                                : item,
+                            ),
+                          });
+                        }}
+                      >
+                        {Object.entries(gameTitles).map(([value, title]) => (
+                          <option key={value} value={value}>
+                            {title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     {(['id', 'name', 'address'] as const).map((field) => (
                       <label key={field}>
-                        {{ id: 'ID сервера', name: 'Название', address: 'Адрес SS14' }[field]}
+                        {{ id: 'ID сервера', name: 'Название', address: 'Адрес / query-порт' }[field]}
                         <input
                           value={server[field]}
                           data-no-audit={field === 'address' ? true : undefined}
@@ -128,7 +152,40 @@ function ExistingModules({
                         />
                       </label>
                     ))}
+                    {server.game === 'terraria' && (
+                      <label>
+                        ENV-токен TShock
+                        <select
+                          value={server.tokenEnv || ''}
+                          onChange={(event) =>
+                            setServers({
+                              servers: servers.servers.map((item, i) =>
+                                i === index ? { ...item, tokenEnv: event.target.value || null } : item,
+                              ),
+                            })
+                          }
+                        >
+                          <option value="">Без токена (публичный status)</option>
+                          {snapshot.serverTokenNames.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                   </div>
+                  <p className="field-help">
+                    {server.game === 'terraria'
+                      ? 'Нужен TShock REST: базовый HTTP(S)-адрес, не игровой порт 7777. Токен хранится только в ENV.'
+                      : server.game === 'ss13'
+                        ? 'BYOND-адрес с игровым портом; сервер должен разрешать topic ?status.'
+                        : server.game === 'minecraft'
+                          ? 'minecraft://host:25565 для Java, bedrock://host:19132 для Bedrock.'
+                          : server.game === 'project-zomboid'
+                            ? 'UDP-порт Steam/A2S query сервера. Он может отличаться от игрового порта.'
+                            : 'Адрес ss14:// или ss14s://; путь /status добавится автоматически.'}
+                  </p>
                   <div className="module-toolbar">
                     <button
                       className="button"
@@ -153,7 +210,8 @@ function ExistingModules({
                     <p>
                       {status[server.id].name} · {status[server.id].status} · Игроки{' '}
                       {status[server.id].players} · {status[server.id].map} · {status[server.id].preset} ·
-                      Раунд {status[server.id].roundId}
+                      {['ss13', 'ss14'].includes(server.game) ? 'Раунд ' + status[server.id].roundId : ''} ·
+                      Query {Math.round(status[server.id].latencyMs)} мс
                       {status[server.id].error ? ' · ' + status[server.id].error : ''}
                     </p>
                   )}
@@ -170,6 +228,8 @@ function ExistingModules({
                           id: 'server-' + (servers.servers.length + 1),
                           name: 'Новый сервер',
                           address: 'ss14s://example.com',
+                          game: 'ss14',
+                          tokenEnv: null,
                         },
                       ],
                     })

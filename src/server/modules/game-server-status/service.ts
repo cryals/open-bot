@@ -1,58 +1,23 @@
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
 import type { Store } from '../../store.js';
 import type { DiscordPort } from '../../discord.js';
 import type { Config } from '../../config.js';
 import { ModuleStore } from '../../module-store.js';
-import { allowedEndpoint, limitedResponse } from '../../module-http.js';
 import { serverConfigSchema, type GameServer } from '../../../shared/modules.js';
 import type { BotMessage } from '../../../shared/blocks.js';
+import { gameTitles, type GameServerStatus } from '../../../shared/game-servers.js';
 import { HttpError } from '../../errors.js';
 import { telemetry } from '../../telemetry.js';
 import { ApplicationSettingsStore } from '../../application-settings.js';
-
-export function statusUrl(address: string) {
-  const source = address.includes('://') ? address : 'ss14://' + address;
-  const url = new URL(source);
-  if (url.username || url.password || url.search || url.hash)
-    throw new HttpError(400, 'Адрес статуса не должен содержать credentials, query или fragment');
-  if (!['ss14:', 'ss14s:', 'http:', 'https:'].includes(url.protocol))
-    throw new HttpError(400, 'Используйте ss14:// или ss14s://');
-  const secure = ['ss14s:', 'https:'].includes(url.protocol);
-  const port = url.port || (secure ? '443' : '1212');
-  // URL.protocol cannot replace a non-special protocol with HTTP directly.
-  return new URL(
-    `${secure ? 'https' : 'http'}://${url.hostname}:${port}${url.pathname.replace(/\/$/, '')}/status`,
-  );
-}
-const scalar = z.union([z.string().max(200), z.number()]);
-const responseSchema = z.object({
-  name: z.string().max(300).optional(),
-  players: scalar.optional(),
-  soft_max_players: scalar.optional(),
-  round_id: scalar.optional(),
-  map: z.string().max(200).optional(),
-  preset: z.string().max(200).optional(),
-  run_level: z.number().int().optional(),
-  round_start_time: z.string().max(100).nullable().optional(),
-});
+import { gameEndpoint, queryGame } from './protocols.js';
+import { serverSignature } from './state.js';
+export { statusUrl } from './protocols.js';
+export type ServerStatus = GameServerStatus;
 const safe = (value: unknown) =>
   String(value ?? '?')
     .replace(/([\\`*_~|>])/g, '\\$1')
     .replace(/@/g, '@\u200b')
     .slice(0, 300);
-export type ServerStatus = {
-  online: boolean;
-  name: string;
-  players: string;
-  status: string;
-  map: string;
-  preset: string;
-  roundId: string;
-  roundMinutes: number | null;
-  updatedAt: number;
-  error?: string;
-};
 type Watch = {
   id: number;
   server_id: string;
@@ -65,7 +30,6 @@ type Watch = {
 };
 export class ServerStatusService {
   readonly configStore: ModuleStore;
-  private cache = new Map<string, { expires: number; value: ServerStatus }>();
   private requests = new Map<string, Promise<ServerStatus>>();
   private busy = false;
   constructor(
@@ -83,90 +47,105 @@ export class ServerStatusService {
     const parsed = serverConfigSchema.parse(document);
     for (const server of parsed.servers) this.validate(server);
     const before = this.settings().document;
-    const result = this.store.sqlite
+    return this.store.sqlite
       .transaction(() => {
-        const saved = this.configStore.save('game-servers', serverConfigSchema, parsed, version);
+        const result = this.configStore.save('game-servers', serverConfigSchema, parsed, version);
         for (const server of before.servers)
-          if (!parsed.servers.some((item) => item.id === server.id))
+          if (!parsed.servers.some((item) => item.id === server.id)) {
             this.store.sqlite
               .prepare('UPDATE server_watches SET enabled=0,next_at=0 WHERE server_id=?')
               .run(server.id);
-        return saved;
+            this.store.sqlite.prepare('DELETE FROM server_monitor_samples WHERE server_id=?').run(server.id);
+          }
+        return result;
       })
       .immediate();
-    this.cache.clear();
-    return result;
   }
   validate(server: GameServer) {
-    allowedEndpoint(
-      statusUrl(server.address).href,
+    gameEndpoint(
+      server,
       new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts,
     );
   }
   async get(id: string): Promise<ServerStatus> {
     const server = this.settings().document.servers.find((server) => server.id === id);
     if (!server) throw new HttpError(404, 'Игровой сервер не найден');
-    const key = server.id + ':' + server.address;
-    const cached = this.cache.get(key);
-    if (cached && cached.expires > Date.now()) return cached.value;
+    const hosts = new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts;
+    gameEndpoint(server, hosts);
+    const key = serverSignature(server);
+    const sample = this.store.sqlite
+      .prepare(
+        'SELECT document,updated_at,last_success_at FROM server_monitor_samples WHERE server_id=? AND signature=?',
+      )
+      .get(id, key) as { document: string; updated_at: number; last_success_at: number | null } | undefined;
+    if (sample && sample.updated_at > Date.now() - 15000) return JSON.parse(sample.document) as ServerStatus;
     const pending = this.requests.get(key);
     if (pending) return pending;
     const started = Date.now();
     const request = (async () => {
       let value: ServerStatus;
       try {
-        const url = allowedEndpoint(
-          statusUrl(server.address).href,
-          new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts,
-        );
-        const response = await fetch(url, {
-          redirect: 'error',
-          signal: AbortSignal.timeout(5000),
-          headers: { 'User-Agent': 'Open-Bot/1.0 (SS14 status)' },
-        });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const data = responseSchema.parse(JSON.parse(await limitedResponse(response)));
-        const start = data.round_start_time ? Date.parse(data.round_start_time) : NaN;
-        value = {
-          online: true,
-          name: data.name || server.name,
-          players: `${data.players ?? '?'}/${data.soft_max_players ?? '?'}`,
-          status:
-            ({ 0: 'Лобби', 1: 'В игре', 2: 'Завершение' } as Record<number, string>)[data.run_level ?? -1] ||
-            'Неизвестно',
-          map: data.map || '?',
-          preset: data.preset || '?',
-          roundId: String(data.round_id ?? '?'),
-          roundMinutes:
-            data.run_level === 1 && Number.isFinite(start)
-              ? Math.max(0, Math.floor((Date.now() - start) / 60000))
-              : null,
-          updatedAt: Date.now(),
-        };
+        value = await queryGame(server, hosts);
       } catch (error) {
-        if (!cached || cached.value.online) this.onError(error, 'game-server-status.fetch');
+        if (!sample || (JSON.parse(sample.document) as ServerStatus).online)
+          this.onError(error, 'game-server-status.fetch');
         value = {
           online: false,
           name: server.name,
           players: '—',
+          playerCount: null,
+          maxPlayers: null,
           status: 'Недоступен',
           map: '—',
           preset: '—',
           roundId: '—',
           roundMinutes: null,
+          version: '—',
+          latencyMs: Date.now() - started,
           updatedAt: Date.now(),
-          error: 'Сервер не ответил корректно за 5 секунд',
+          error:
+            error instanceof HttpError
+              ? error.message
+              : 'Query не ответил корректно. Проверьте порт, протокол и доступ к status API; таймаут — 5 секунд.',
         };
       }
+      const current = this.settings().document.servers.find((item) => item.id === id);
+      if (current && serverSignature(current) === key) {
+        this.store.sqlite
+          .prepare(
+            'INSERT INTO server_monitor_samples(server_id,game,signature,document,updated_at,last_success_at) VALUES(?,?,?,?,?,?) ON CONFLICT(server_id) DO UPDATE SET game=excluded.game,signature=excluded.signature,document=excluded.document,updated_at=excluded.updated_at,last_success_at=excluded.last_success_at',
+          )
+          .run(
+            id,
+            server.game,
+            key,
+            JSON.stringify(value),
+            value.updatedAt,
+            value.online ? value.updatedAt : (sample?.last_success_at ?? null),
+          );
+      }
       telemetry.observe('game-server-status', 'fetch', value.online ? 'success' : 'error', started);
-      if (this.cache.size >= 60) this.cache.delete(this.cache.keys().next().value!);
-      this.cache.set(key, { expires: Date.now() + 15000, value });
+      telemetry.gameProbes.inc({ game: server.game, outcome: value.online ? 'success' : 'error' });
+      telemetry.gameProbeDuration.observe({ game: server.game }, (Date.now() - started) / 1000);
       return value;
     })().finally(() => this.requests.delete(key));
     this.requests.set(key, request);
     return request;
   }
   message(server: GameServer, status: ServerStatus): BotMessage {
+    const details = [
+      `**Игра:** ${gameTitles[server.game]}`,
+      `**Игроки:** ${safe(status.players)}`,
+      `**Статус:** ${safe(status.status)}${status.roundMinutes !== null ? ' · ' + status.roundMinutes + ' мин' : ''}`,
+    ];
+    if (status.map !== '?') details.push(`**Карта / мир:** ${safe(status.map)}`);
+    if (status.preset !== '?') details.push(`**Режим:** ${safe(status.preset)}`);
+    if (['ss14', 'ss13'].includes(server.game) && status.roundId !== '?')
+      details.push(`**Раунд:** ${safe(status.roundId)}`);
+    if (status.version !== '?' && status.online) details.push(`**Версия:** ${safe(status.version)}`);
+    if (status.online) details.push(`**Query:** ${Math.round(status.latencyMs)} мс`);
+    if (status.error) details.push(safe(status.error));
+    details.push(`-# ${safe(server.id)} · обновлено <t:${Math.floor(status.updatedAt / 1000)}:R>`);
     return {
       id: server.id,
       silent: true,
@@ -180,11 +159,7 @@ export class ServerStatusService {
           children: [
             { id: 'title', type: 'text', content: `## ${safe(status.name)}` },
             { id: 'separator', type: 'separator', divider: true, spacing: 'small' },
-            {
-              id: 'details',
-              type: 'text',
-              content: `**Игроки:** ${safe(status.players)}\n**Статус:** ${safe(status.status)}${status.roundMinutes !== null ? ' · ' + status.roundMinutes + ' мин' : ''}\n**Карта:** ${safe(status.map)}\n**Режим:** ${safe(status.preset)}\n**Раунд:** ${safe(status.roundId)}\n\n${status.error ? safe(status.error) + '\n' : ''}-# ${safe(server.id)} · обновлено <t:${Math.floor(status.updatedAt / 1000)}:R>`,
-            },
+            { id: 'details', type: 'text', content: details.join('\n') },
           ],
         },
       ],
@@ -209,9 +184,32 @@ export class ServerStatusService {
     this.store.sqlite.prepare('UPDATE server_watches SET enabled=0,next_at=0 WHERE id=?').run(id);
   }
   async tick() {
-    if (this.busy || !this.discord.isReady()) return;
+    if (this.busy) return;
     this.busy = true;
     try {
+      const hosts = new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts;
+      const queue = this.settings().document.servers.filter((server) => {
+        try {
+          gameEndpoint(server, hosts);
+        } catch {
+          return false;
+        }
+        const saved = this.store.sqlite
+          .prepare('SELECT updated_at,signature FROM server_monitor_samples WHERE server_id=?')
+          .get(server.id) as { updated_at: number; signature: string } | undefined;
+        return !saved || saved.signature !== serverSignature(server) || saved.updated_at < Date.now() - 60000;
+      });
+      // Four bounded queries at a time; all configured servers are monitored, even without a Discord watch.
+      await Promise.all(
+        Array.from({ length: Math.min(4, queue.length) }, async () => {
+          for (;;) {
+            const server = queue.shift();
+            if (!server) return;
+            await this.get(server.id).catch((error) => this.onError(error, 'game-server-status.poll'));
+          }
+        }),
+      );
+      if (!this.discord.isReady()) return;
       for (const watch of this.watches()
         .filter((watch) => watch.next_at <= Date.now())
         .slice(0, 10)) {

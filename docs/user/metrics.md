@@ -25,3 +25,29 @@ Bot, Web и exporter работают в отдельных процессах. 
 Счётчики использования процесса сбрасываются при его перезапуске. Общие числа созданных/закрытых тикетов и суммы времени ответа/решения хранятся в SQLite и сохраняются после удаления 180-дневного архива. ID пользователей, тикетов, каналов и тексты не используются как labels.
 
 Endpoint возвращает 401 без правильного токена и 503 при ошибке сбора. Его сбой не останавливает Bot и Web workers. Описание метрик и интеграции: [телеметрия](../developer/telemetry.md).
+
+## Игровые серверы и новые панели
+
+Dashboard версии 3 содержит 32 панели: дополнительно — состояния и онлайн по играм, p95 и ошибки query, возраст статуса, Discord Gateway/heartbeat, просроченные задания, возраст очередей, размер SQLite/WAL, копии сервера, восстановления, розыгрыши и действия Watchdog.
+
+Метрики Game Server Status сгруппированы по `game`, без адресов, ID серверов и игроков. Подробный отдельный сервер смотрите в панели или через `/server-status`. `unknown` означает отсутствие свежих данных (150 секунд) или изменение конфигурации. Offline — свежий неуспешный query, а не отсутствие данных. Кешированные чтения не увеличивают счётчики запросов.
+
+| Метрика                                                          | Значение                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `open_bot_game_servers{game,state}`                              | Число online/offline/unknown серверов.                                         |
+| `open_bot_game_servers_configured`                               | Число настроенных серверов каждой игры.                                        |
+| `open_bot_game_players`, `open_bot_game_capacity`                | Онлайн и вместимость свежих доступных серверов.                                |
+| `open_bot_game_player_samples`                                   | Число серверов, действительно сообщивших онлайн.                               |
+| `open_bot_game_probes_total{game,outcome}`                       | Фактические запросы status. Сбрасывается с worker.                             |
+| `open_bot_game_probe_duration_seconds`                           | Histogram времени query.                                                       |
+| `open_bot_game_oldest_sample_age_seconds`                        | Возраст самой старой выборки; 999, если выборки ещё не было.                   |
+| `open_bot_gateway_connected`, `open_bot_gateway_latency_seconds` | Подключение Discord и последний heartbeat. Задержка актуальна при подключении. |
+| `open_bot_job_oldest_pending_age_seconds`                        | Возраст просроченного задания по типу.                                         |
+| `open_bot_database_size_bytes{file}`                             | Размер файла SQLite и WAL.                                                     |
+| `open_bot_exporter_collection_duration_seconds`                  | Время локального сбора метрик.                                                 |
+
+Exporter не опрашивает игры или Discord: читает SQLite и worker snapshots. Ответ `/metrics` кешируется на 5 секунд; параллельные scrape используют один сбор. Старые worker snapshots по-прежнему исключаются после 30 секунд.
+
+## Оповещения
+
+Готовые примеры правил: [monitoring/alerts.example.yml](https://github.com/cryals/open-bot/blob/main/monitoring/alerts.example.yml). Подключите файл через `rule_files` существующего Prometheus и настройте Alertmanager. Включены недоступность exporter, отсутствие worker/Gateway, offline/unknown серверы, просроченные задания, очередь ошибок и отсутствие плановой копии. Для последнего правила расписание должно быть включено; порог — 25 часов. Эти примеры не меняют настройки вашей Grafana или Prometheus автоматически.

@@ -54,3 +54,11 @@ telemetry.observe('example', 'refresh', 'success', startedAtMilliseconds);
 Exporter слушает выделенный host/port, требует bearer token минимум 32 символа, сравнивает SHA-256 timing-safe. Защищайте транспорт закрытой сетью/TLS. [Настройка scrape и dashboard](../user/metrics.md).
 
 При задержке audit смотрите возраст outbox и состояние consumer, не удаляйте pending-файлы. Реальному Redis regression нужен отдельный `TEST_REDIS_URL`, иначе он skipped. При недоступности exporter смотрите его worker и freshness отдельно от Bot/Web. Работающий healthcheck не доказывает успешный scrape.
+
+## Мониторинг игр и Grafana (октябрь 2026)
+
+Game Server Status хранит нормализованный ответ в `server_monitor_samples` вместе с hash конфигурации. Bot опрашивает все настроенные серверы раз в минуту, до четырёх параллельно; потеря Gateway останавливает отправку карточек, но не query. Web читает тот же 15-секундный кеш. Запись от старой конфигурации не считается актуальной.
+
+Exporter импортирует только `state.ts`, без GameDig/query. Срез по пяти играм имеет online/offline/unknown; TTL 150 секунд. Суммы игроков включают только известные значения свежих доступных серверов. Worker counters запросов и histogram сбрасываются при рестарте; текущие gauge восстанавливаются из SQLite. Серверные ID и адреса не используются в labels.
+
+Добавлены Gateway connected/latency, просроченные задания, возраст activity/error outbox, SQLite/WAL bytes, состояние giveaway/restore/Watchdog, время сбора и последнее успешное создание копии. HTTP `/metrics` объединяет параллельные сборы и кеширует результат пять секунд; `collect()` остаётся свежим снимком для диагностики. Alert rules находятся в `monitoring/alerts.example.yml`, dashboard — `public/monitoring/grafana.json`.

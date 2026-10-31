@@ -27,6 +27,8 @@ Pass public projections, not raw config/request objects. Add new credentials to 
 
 Use bounded labels (module/operation/outcome), correct units and explicit Bot/Web/Metrics aggregation. Snapshots update every 10 seconds; exclude stale data after 30 seconds. Ticket totals persist independently of archive deletion; worker counters reset on restart. IDs/content/URLs are not labels. Preserve bearer authentication, dedicated listener and dashboard queries matching exported names.
 
+Game monitoring persists normalized samples in server_monitor_samples. Export game aggregates only, with unknown for missing/stale/config-mismatched samples after 150 seconds. Game queries run in Bot, never in Metrics. Keep the 5-second scrape cache and single-flight collection. Reflect exported names in Grafana and monitoring/alerts.example.yml.
+
 ## Verification
 
 Community gauges use bounded jobs/cases/feed/form labels. Dynamic slash operation labels normalize to `run`. Separate requested, observed and applied events. AutoMod excerpts expire independently of audit; form answers and Ticket transcripts must not enter permanent browser activity logs. Credentials are encrypted and write-only through HTTP. The primary error channel is now a web setting; legacy LOG_ID only seeds it. LOG_WEBHOOK stays in technical ENV.

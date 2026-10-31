@@ -129,7 +129,7 @@ npm start
 
 ## Модули и восстановление
 
-Добавлены **Ticket** (закрытые каналы, служебные ветки, транскрипты и хранение 180 дней), **Game Server Status** (SS14 status и постоянные карточки), **Watchdog** (подтверждаемые restart/update/stop/revert) и **Metrics** (защищённый Prometheus endpoint и dashboard Grafana). Есть веб-управление и slash-команды. [Контракты интеграций](docs/developer/integrations.md).
+Добавлены **Ticket** (закрытые каналы, служебные ветки, транскрипты и хранение 180 дней), **Game Server Status** (SS14, SS13, Minecraft Java/Bedrock, Terraria TShock, Project Zomboid и постоянные карточки), **Watchdog** (подтверждаемые restart/update/stop/revert) и **Metrics** (защищённый Prometheus endpoint, 32 панели Grafana и примеры alert rules). Есть веб-управление и slash-команды. [Контракты интеграций](docs/developer/integrations.md).
 
 <p align="center">
   <img src="docs/assets/open-bot-modules.png" alt="Концептуальная иллюстрация модульной системы управления" width="1000">

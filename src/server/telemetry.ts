@@ -47,6 +47,29 @@ export const telemetry = new (class {
     labelNames: ['worker'],
     registers: [this.registry],
   });
+  readonly gameProbes = new Counter<'game' | 'outcome'>({
+    name: 'open_bot_game_probes_total',
+    help: 'Actual game status requests, excluding cached reads',
+    labelNames: ['game', 'outcome'],
+    registers: [this.registry],
+  });
+  readonly gameProbeDuration = new Histogram<'game'>({
+    name: 'open_bot_game_probe_duration_seconds',
+    help: 'Game query completion time including protocol negotiation',
+    labelNames: ['game'],
+    buckets: [0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10],
+    registers: [this.registry],
+  });
+  readonly gatewayConnected = new Gauge({
+    name: 'open_bot_gateway_connected',
+    help: 'Discord Gateway ready state',
+    registers: [this.registry],
+  });
+  readonly gatewayLatency = new Gauge({
+    name: 'open_bot_gateway_latency_seconds',
+    help: 'Last known Discord Gateway heartbeat latency',
+    registers: [this.registry],
+  });
   private timer?: ReturnType<typeof setInterval>;
   private defaultMetricsStarted = false;
   observe(module: string, operation: string, outcome: string, started: number) {
