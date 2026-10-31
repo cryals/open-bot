@@ -17,7 +17,7 @@ import { HttpError } from './errors.js';
 import { composerRoutes } from './composer-routes.js';
 import { ActivityService } from './activity.js';
 import { Publisher } from './publisher.js';
-import type { ErrorReporter } from './runtime/error-reporter.js';
+import { ErrorReporter } from './runtime/error-reporter.js';
 import { uiEventSchema } from '../shared/activity.js';
 import type { Access } from '../shared/modules.js';
 import { initialTicketConfig, ticketConfigSchema } from '../shared/modules.js';
@@ -26,6 +26,12 @@ import { ModuleStore } from './module-store.js';
 import { moduleRoutes } from './module-routes.js';
 import { secretValues } from './module-http.js';
 import { telemetry } from './telemetry.js';
+import { settingsRoutes } from './settings-routes.js';
+import { hasPanelAccess } from '../shared/modules.js';
+import { moderationRoutes } from './moderation-routes.js';
+import { communityRoutes } from './community-routes.js';
+import { integrationRoutes } from './integration-routes.js';
+import { FormService } from './modules/forms/service.js';
 declare module 'fastify' {
   interface FastifyRequest {
     adminSession: NonNullable<ReturnType<Store['session']>> | null;
@@ -120,7 +126,7 @@ export async function createApp(options: {
     const session = store.session(request.cookies.os_session || '');
     if (!session) throw new HttpError(401, 'Войдите через Discord');
     const access = await permissions(discord, store, config, session.userId);
-    if (!access.admin && !access.ticketView) {
+    if (!hasPanelAccess(access)) {
       activity.record(session, {
         kind: 'auth.denied',
         target: 'admin',
@@ -136,19 +142,33 @@ export async function createApp(options: {
     if (request.url.startsWith('/api/') || request.url.startsWith('/auth/'))
       reply.header('Cache-Control', 'no-store');
     if (request.url.startsWith('/api/') && request.url.split('?')[0] !== '/api/health') {
-      const session = await authenticate(request);
+      const applicant = request.url.startsWith('/api/applicant/');
+      const session = applicant
+        ? store.session(request.cookies.os_session || '')
+        : await authenticate(request);
+      if (!session) throw new HttpError(401, 'Войдите через Discord');
       request.adminSession = session;
       const path = request.url.split('?')[0];
       const ticket = path === '/api/tickets' || path.startsWith('/api/tickets/');
       const common = ['/api/me', '/api/logout'].includes(path);
       const media = path === '/api/media' || path.startsWith('/api/media/');
+      const moderation = path === '/api/moderation' || path.startsWith('/api/moderation/');
+      const community = path === '/api/community' || path.startsWith('/api/community/');
       if (
+        !applicant &&
         !common &&
-        !(ticket
-          ? request.adminAccess.ticketView
-          : media
-            ? request.adminAccess.ticketManage
-            : request.adminAccess.admin)
+        !(community
+          ? hasPanelAccess(request.adminAccess)
+          : moderation
+            ? request.adminAccess.moderationView || request.adminAccess.moderationManage
+            : ticket
+              ? request.adminAccess.ticketView
+              : media
+                ? request.adminAccess.ticketManage ||
+                  request.adminAccess.rolesManage ||
+                  request.adminAccess.formsManage ||
+                  request.adminAccess.feedsManage
+                : request.adminAccess.admin)
       )
         throw new HttpError(403, 'Нет доступа к этому разделу');
       if (media && !request.adminAccess.admin && request.method === 'GET') {
@@ -217,8 +237,18 @@ export async function createApp(options: {
   app.get(
     '/auth/discord',
     { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
-    async (_request, reply) => {
+    async (request, reply) => {
       const state = store.createOAuthState();
+      const query = z
+        .object({
+          form: z
+            .string()
+            .regex(/^[a-z0-9][a-z0-9_-]{0,39}$/)
+            .optional(),
+        })
+        .parse(request.query);
+      if (query.form) reply.setCookie('ob_form_return', query.form, { ...cookieOptions, maxAge: 600 });
+      else reply.clearCookie('ob_form_return', cookieOptions);
       const url = new URL('https://discord.com/oauth2/authorize');
       url.search = new URLSearchParams({
         client_id: config.clientId,
@@ -246,8 +276,12 @@ export async function createApp(options: {
       throw new HttpError(400, 'Вход устарел. Вернитесь на главную страницу и повторите вход.');
     if (query.error || !query.code) return reply.redirect(config.appOrigin + '/?error=cancelled');
     const user = await oauth.exchange(query.code);
-    const access = await permissions(discord, store, config, user.id);
-    if (!access.admin && !access.ticketView) return reply.redirect(config.appOrigin + '/?error=forbidden');
+    const formReturn = request.cookies.ob_form_return;
+    reply.clearCookie('ob_form_return', cookieOptions);
+    if (!formReturn) {
+      const access = await permissions(discord, store, config, user.id);
+      if (!hasPanelAccess(access)) return reply.redirect(config.appOrigin + '/?error=forbidden');
+    }
     if (request.cookies.os_session) store.deleteSession(request.cookies.os_session);
     const session = store.createSession(user);
     activity.record(
@@ -255,7 +289,10 @@ export async function createApp(options: {
       { kind: 'auth.login', target: 'admin', summary: 'Вход в панель через Discord' },
     );
     reply.setCookie('os_session', session.token, { ...cookieOptions, maxAge: 8 * 60 * 60 });
-    return reply.redirect(config.appOrigin + '/');
+    return reply.redirect(
+      config.appOrigin +
+        (formReturn && /^[a-z0-9][a-z0-9_-]{0,39}$/.test(formReturn) ? '/forms/' + formReturn : '/'),
+    );
   });
   app.get('/api/me', async (request) => {
     const session = request.adminSession!;
@@ -274,6 +311,43 @@ export async function createApp(options: {
   app.get('/api/workspace', async () => store.workspace());
   await composerRoutes(app, store, discord, activity);
   await moduleRoutes(app, config, store, discord, activity, options.errors);
+  settingsRoutes(app, store, config, discord, activity);
+  moderationRoutes(app, config, store, discord, activity);
+  const moduleContext = {
+    config,
+    store,
+    discord,
+    activity,
+    errors: options.errors || new ErrorReporter(config, 'web'),
+  };
+  communityRoutes(app, moduleContext);
+  integrationRoutes(app, config, store, discord);
+  const forms = new FormService(moduleContext);
+  app.get('/api/applicant/me', async (request) => ({
+    user: { id: request.adminSession!.userId, name: request.adminSession!.name },
+    csrf: request.adminSession!.csrf,
+  }));
+  app.get('/api/applicant/forms/:id', async (request) => {
+    const { id } = z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,39}$/) }).parse(request.params);
+    const { form } = forms.definition(id);
+    await forms.available(form, request.adminSession!.userId);
+    return {
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      anonymous: form.anonymous,
+      retentionDays: form.retentionDays,
+      questions: form.questions,
+    };
+  });
+  app.post('/api/applicant/forms/:id', async (request) => {
+    const { id } = z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,39}$/) }).parse(request.params),
+      input = z
+        .object({ answers: z.unknown(), caseId: z.number().int().positive().optional() })
+        .parse(request.body);
+    const draft = await forms.open(id, request.adminSession!.userId, input.caseId);
+    return forms.submit(draft.id, request.adminSession!.userId, input.answers);
+  });
   app.post(
     '/api/activity',
     { config: { rateLimit: { max: 600, timeWindow: '1 minute' } } },
@@ -378,6 +452,7 @@ export async function createApp(options: {
   const webRoot = resolve('dist/web');
   if (existsSync(resolve(webRoot, 'index.html'))) {
     await app.register(serveStatic, { root: webRoot, prefix: '/' });
+    app.get('/forms/:id', async (_request, reply) => reply.sendFile('index.html'));
   } else {
     app.get('/', async (_request, reply) =>
       reply

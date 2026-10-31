@@ -18,7 +18,7 @@ Read `src/server/runtime/types.ts`, `module-manager.ts`, `modules/catalog.ts` an
 
 ## Lifecycle and side effects
 
-Ticket handles buttons/selects/modals through `interactions` and `permission: 'ticketManage'`; Help must use the same permission contract. Gateway message collection is opt-in with TICKETS_ENABLED/Message Content and only covers ticket channels/threads. Preserve the separate full/view roles and author exclusion from staff scope.
+Ticket handles buttons/selects/modals through `interactions` and `permission: 'ticketManage'`; Help must use the same permission contract. Gateway collection is opt-in through application settings/Message Content. Full histories only cover ticket channels/threads; AutoMod evidence expires and explicit guild backups include configured message snapshots. Preserve the separate full/view roles and author exclusion from staff scope.
 
 Use module_config optimistic versions for shared settings. Ticket lifecycle/access changes and server watches are persisted Bot jobs, not Web timers. Watchdog confirmations pin actor/config and never auto-retry POST; unknown results block even old pending confirmations until manual resolution. Tokens are ENV references and endpoint hosts come from deployment allowlists. See docs/developer/integrations.md.
 
@@ -33,3 +33,11 @@ For state-changing integrations, define what survives a crash and how an unknown
 Use `docs/developer/telemetry.md` when adding logging or metrics. Record safe actor/operation/result projections, never credentials. Update user commands, developer docs and env/backup guidance if their contracts changed.
 
 Follow the user's requested validation scope. FakeDiscord and local builds cover development without posting to the real guild. State which checks ran and which did not. Docker availability follows the current machine instructions; it is not a module prerequisite.
+
+## Community modules
+
+Use communityDefinitions, CommunityStore, JobStore and the catalog. Operational settings belong to SQLite/web. ENV retains secrets and deployment parameters. Intent changes require explicit restart and applied-state reporting.
+
+Use GuildAuthority for guild ownership, hierarchy and safe roles. Public issuance excludes application-access roles and dangerous Discord permissions. Form reviewer access is per current form, distinct from formsView. Applicant OAuth never opens staff routes. Authorization bypasses the message-policy config cache.
+
+Keep unknown sanctions/restore steps stopped for reconciliation. New channels start closed. Replacement requires a confirmed plan and fresh source ownership/fingerprint checks. Never repeat an uncertain remote mutation automatically.

@@ -7,7 +7,9 @@ import type { ServerStatus } from '../server/modules/game-server-status/service.
 import type { PowerOperation } from '../server/modules/watchdog/service.js';
 import { Tickets } from './Tickets.js';
 import './modules.css';
-export type ModuleKind = 'tickets' | 'servers' | 'watchdog' | 'metrics';
+import { Community } from './Community.js';
+import { Moderation } from './Moderation.js';
+export type ModuleKind = 'tickets' | 'servers' | 'watchdog' | 'metrics' | 'community' | 'moderation';
 type Snapshot = {
   servers: { document: ServerConfig; version: number };
   watches: {
@@ -25,7 +27,12 @@ type Snapshot = {
   tokenNames: string[];
   metrics: { enabled: boolean; host: string; port: number };
 };
-export function Modules({
+export function Modules(props: { kind: ModuleKind; access: Access; guild?: GuildInfo | null }) {
+  if (props.kind === 'community') return <Community access={props.access} />;
+  if (props.kind === 'moderation') return <Moderation access={props.access} />;
+  return <ExistingModules {...props} />;
+}
+function ExistingModules({
   kind,
   access,
   guild,
@@ -99,7 +106,7 @@ export function Modules({
               <h2>SS14-серверы</h2>
               <p>
                 Адреса ss14:// и ss14s:// преобразуются в HTTP /status. Разрешённые хосты:{' '}
-                {snapshot.gameServerHosts.join(', ') || 'не заданы — заполните GAME_SERVER_HOSTS'}. Опрос
+                {snapshot.gameServerHosts.join(', ') || 'не заданы — откройте настройки приложения'}. Опрос
                 кешируется на 15 секунд; наблюдения обновляются раз в минуту.
               </p>
               {servers.servers.map((server, index) => (
@@ -261,8 +268,8 @@ export function Modules({
             <section className="module-card">
               <h2>SS14 Watchdog</h2>
               <p>
-                Разрешённые хосты: {snapshot.watchdogHosts.join(', ') || 'заполните WATCHDOG_HOSTS'}. Токен
-                указывается именем переменной WATCHDOG_TOKEN_…; его значение не передаётся браузеру.
+                Разрешённые хосты: {snapshot.watchdogHosts.join(', ') || 'укажите в настройках приложения'}.
+                Токен указывается именем переменной WATCHDOG_TOKEN_…; его значение не передаётся браузеру.
               </p>
               {watchdog.servers.map((server, index) => (
                 <div className="module-card" key={index}>
@@ -570,7 +577,7 @@ export function Modules({
               </p>
               <pre>
                 {
-                  'METRICS_ENABLED=true\nMETRICS_HOST=127.0.0.1\nMETRICS_PORT=9091\nMETRICS_TOKEN=<случайный секрет, минимум 32 символа>'
+                  'METRICS_HOST=127.0.0.1\nMETRICS_PORT=9091\nMETRICS_TOKEN=<случайный секрет, минимум 32 символа>'
                 }
               </pre>
               <p>

@@ -57,15 +57,44 @@ nav:
       - Игровые серверы: user/game-servers.md
       - Watchdog: user/watchdog.md
       - Метрики и Grafana: user/metrics.md
+      - Модули сообщества: user/community.md
       - Журнал и восстановление: user/logs.md
       - Команды: user/commands.md
       - Решение проблем: user/troubleshooting.md
       - Эксплуатация: OPERATIONS.md
       - Docker Compose: DOCKER.md
+  # module-reference-nav:start
+  - Модули:
+      - Все модули: user/catalog.md
+      - 'Core': user/modules/core.md
+      - 'Help': user/modules/help.md
+      - 'Info': user/modules/info.md
+      - 'Ticket': user/modules/ticket.md
+      - 'Metrics': user/modules/metrics.md
+      - 'Game Server Status': user/modules/game-server-status.md
+      - 'SS14 Watchdog': user/modules/watchdog.md
+      - 'Moderation': user/modules/moderation.md
+      - 'Moderation Logs': user/modules/moderation-logs.md
+      - 'Community Core': user/modules/community.md
+      - 'AutoMod': user/modules/automod.md
+      - 'AutoBan': user/modules/autoban.md
+      - 'AntiRaid': user/modules/anti-raid.md
+      - 'Slowmode': user/modules/slowmode.md
+      - 'Панели ролей': user/modules/role-menus.md
+      - 'Автоответы': user/modules/autoresponder.md
+      - 'Свои команды': user/modules/custom-commands.md
+      - 'Формы и апелляции': user/modules/forms.md
+      - 'Розыгрыши': user/modules/giveaways.md
+      - 'Подписки': user/modules/subscriptions.md
+      - 'Starboard': user/modules/starboard.md
+      - 'Копии Discord-сервера': user/modules/guild-backup.md
+      - 'Web': user/modules/web.md
+  # module-reference-nav:end
   - Разработчику:
       - Обзор: developer/README.md
       - Архитектура: developer/architecture.md
       - Модули: developer/modules.md
+      - Модули сообщества: developer/community.md
       - Тикеты и внешние сервисы: developer/integrations.md
       - Телеметрия: developer/telemetry.md
       - Разработка и выпуск: developer/workflow.md
@@ -73,3 +102,4 @@ nav:
       - Runtime: MODULES.md
       - Производительность: PERFORMANCE.md
   - Релиз 1.0: RELEASE-1.0.md
+  - Новые модули: COMMUNITY-RELEASE.md

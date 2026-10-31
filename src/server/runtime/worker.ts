@@ -4,6 +4,7 @@ import type { ModuleState, ProcessState, RuntimeStatus } from './types.js';
 import type { Interaction } from 'discord.js';
 import { telemetry } from '../telemetry.js';
 import { secretValues } from '../module-http.js';
+import { ApplicationSettingsStore } from '../application-settings.js';
 
 const config = loadConfig();
 const role = process.env.OS_WORKER_ROLE;
@@ -87,11 +88,32 @@ try {
     import('../activity.js'),
   ]);
   const store = new Store(config.databasePath, config.guildId, loadSeed(), config.adminRoleId);
+  const settings = new ApplicationSettingsStore(store, config);
+  settings.applyStartup();
   const logError = (error: unknown, scope: string) => {
     errors.report(error, scope);
   };
   const secrets = secretValues(config);
-  if (config.metricsEnabled) telemetry.start(store, role, (error) => logError(error, 'metrics.snapshot'));
+  let telemetryStarted = false;
+  const refreshSettings = () => {
+    settings.applyLive();
+    if (config.metricsEnabled && !telemetryStarted) {
+      telemetry.start(store, role, (error) => logError(error, 'metrics.snapshot'));
+      telemetryStarted = true;
+    } else if (!config.metricsEnabled && telemetryStarted) {
+      telemetry.stop();
+      telemetryStarted = false;
+    }
+  };
+  refreshSettings();
+  const settingsTimer = setInterval(() => {
+    try {
+      refreshSettings();
+    } catch (error) {
+      logError(error, 'settings.refresh');
+    }
+  }, 10000);
+  settingsTimer.unref();
   if (role === 'bot') {
     const [{ DiscordService }, { ModuleManager }, { Publisher }, { botModules }, { Events }] =
       await Promise.all([
@@ -162,6 +184,7 @@ try {
     await manager.load(botModules);
     if (manager.list().find((module) => module.id === 'core')?.state !== 'running')
       throw new Error('Core module failed to initialize');
+    settings.markGatewayApplied();
     state = 'running';
     sendHeartbeat();
     await repair();

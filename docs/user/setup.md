@@ -1,5 +1,7 @@
 # Установка и первый вход
 
+Рабочие настройки модулей изменяются в [панели](community.md#настройки-и-доступ). ENV содержит технические параметры и секреты; прежние флаги используются только при первом переносе конфигурации.
+
 ## Подготовьте Discord-приложение
 
 В [Discord Developer Portal](https://discord.com/developers/applications) создайте приложение и аккаунт бота. Сохраните его Application ID, OAuth Client Secret и Bot Token в своём секретном хранилище.
@@ -7,7 +9,7 @@
 1. Установите приложение на свой сервер со scopes `bot` и `applications.commands`.
 2. Дайте боту **View Channel**, **Send Messages**, **Read Message History**, **Attach Files** в используемых каналах.
 3. В **OAuth2 → Redirects** добавьте точный callback, например `http://localhost:3000/auth/discord/callback`.
-4. Базовые функции используют intent **Guilds**. Для [Ticket](tickets.md) дополнительно включите Message Content Intent и `TICKETS_ENABLED=true`: только этот модуль сохраняет переписку обращений.
+4. Базовые функции используют intent **Guilds**. Для [Ticket](tickets.md) включите Message Content Intent в Developer Portal и события сообщений в настройках приложения. Новые модули требуют дополнительных событий, указанных в панели.
 
 ## Запуск через Node.js
 

@@ -3,13 +3,12 @@
 Используются существующие Prometheus и Grafana. Open Bot предоставляет отдельный защищённый HTTP endpoint; новые контейнеры мониторинга не нужны.
 
 ```dotenv
-METRICS_ENABLED=true
 METRICS_HOST=127.0.0.1
 METRICS_PORT=9091
 METRICS_TOKEN=случайный_секрет_длиной_не_менее_32_символов
 ```
 
-Перезапустите службу. Prometheus обращается к `http://127.0.0.1:9091/metrics` с заголовком `Authorization: Bearer <METRICS_TOKEN>`. Токен храните в secret-файле Prometheus. Пример конфигурации: [monitoring/prometheus.example.yml](https://github.com/cryals/open-bot/blob/main/monitoring/prometheus.example.yml).
+После добавления секрета перезапустите службу и включите exporter в **Настройки → Настройки приложения**. Дальнейшее включение/выключение выполняется в панели. Prometheus обращается к `http://127.0.0.1:9091/metrics` с заголовком `Authorization: Bearer <METRICS_TOKEN>`. Токен храните в secret-файле Prometheus. Пример конфигурации: [monitoring/prometheus.example.yml](https://github.com/cryals/open-bot/blob/main/monitoring/prometheus.example.yml).
 
 В Compose exporter слушает `0.0.0.0` внутри контейнера, а host-порт по умолчанию привязан к `127.0.0.1`. Если Prometheus находится на другой машине, организуйте доступ через свою закрытую сеть и нужный bind address; не передавайте bearer token по открытой сети без TLS.
 

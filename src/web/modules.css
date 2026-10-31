@@ -1,5 +1,43 @@
 .module-workspace {
   min-width: 0;
+  padding: 0 clamp(16px, 3vw, 36px) 28px;
+}
+.module-workspace .module-workspace {
+  padding: 0;
+}
+.module-workspace fieldset {
+  min-width: 0;
+}
+.module-workspace pre {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.module-workspace select[multiple] {
+  min-height: 100px;
+}
+.module-workspace .module-card > .button {
+  margin: 4px;
+}
+.settings-card .checkbox-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+.settings-card .checkbox-row input {
+  width: auto;
+}
+.module-workspace label {
+  margin-block: 12px;
+}
+.module-workspace legend {
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 600;
 }
 .module-toolbar {
   display: flex;

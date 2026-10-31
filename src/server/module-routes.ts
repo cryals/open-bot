@@ -12,6 +12,7 @@ import { HttpError } from './errors.js';
 import { restPort } from './module-http.js';
 import type { ErrorReporter } from './runtime/error-reporter.js';
 import { uiEventSchema } from '../shared/activity.js';
+import { ApplicationSettingsStore } from './application-settings.js';
 const versioned = z.object({ document: z.unknown(), version: z.number().int().min(0) });
 const actor = (request: FastifyRequest) => request.adminSession!;
 const ticketManager = (request: FastifyRequest) => {
@@ -51,8 +52,8 @@ export async function moduleRoutes(
     watches: servers.watches(),
     watchdog: watchdog.settings(),
     operations: watchdog.history(),
-    gameServerHosts: config.gameServerHosts || [],
-    watchdogHosts: config.watchdogHosts || [],
+    gameServerHosts: new ApplicationSettingsStore(store, config).get().document.gameServerHosts,
+    watchdogHosts: new ApplicationSettingsStore(store, config).get().document.watchdogHosts,
     tokenNames: Object.keys(process.env).filter((key) => /^WATCHDOG_TOKEN_[A-Z0-9_]+$/.test(key)),
     metrics: {
       enabled: config.metricsEnabled || false,
@@ -161,7 +162,7 @@ export async function moduleRoutes(
     return {
       ...tickets.tickets.config(),
       panels: tickets.tickets.panels(),
-      gatewayEnabled: Boolean(config.ticketEnabled),
+      gatewayEnabled: tickets.gatewayAvailable(),
     };
   });
   app.put('/api/tickets/settings', async (request) => {

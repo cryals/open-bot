@@ -442,7 +442,8 @@ export function Tickets({ access, active = true }: { access: Access; active?: bo
             </p>
             {!settings.gatewayEnabled && (
               <p className="module-note">
-                Для включения нужны TICKETS_ENABLED=true и Message Content Intent в Developer Portal.
+                Включите события сообщений в настройках приложения и Message Content Intent в Developer
+                Portal.
               </p>
             )}
             <div className="module-grid">

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { blockSchema, uniqueBlockIds } from './blocks.js';
+import type { Capability } from './settings.js';
 
 export const snowflakeId = z.string().regex(/^\d{17,20}$/);
 export const moduleId = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,39}$/);
@@ -8,7 +9,9 @@ export const accessSchema = z.object({
   ticketManage: z.boolean(),
   ticketView: z.boolean(),
 });
-export type Access = z.infer<typeof accessSchema>;
+export type Access = z.infer<typeof accessSchema> &
+  Partial<Record<Capability, boolean>> & { formReviewer?: boolean };
+export const hasPanelAccess = (access: Access) => Object.values(access).some(Boolean);
 const roleIds = z.array(snowflakeId).max(20);
 export const blocksSchema = z
   .array(blockSchema)

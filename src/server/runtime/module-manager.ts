@@ -21,6 +21,7 @@ export class ModuleManager {
   private cooldowns = new Map<string, number>();
   private running = new Set<string>();
   private stopping = false;
+  private dynamicNames = new Map<string, Set<string>>();
   constructor(private context: Omit<BotContext, 'manager'>) {}
   get runtime(): BotContext {
     return { ...this.context, manager: this };
@@ -29,7 +30,33 @@ export class ModuleManager {
     return [...this.states.values()];
   }
   definitions() {
-    return [...this.modules.values()];
+    return [...this.modules.values()].map((module) => ({
+      ...module,
+      commands: [...this.commands.values()]
+        .filter((entry) => entry.module === module.id)
+        .map((entry) => entry.command),
+    }));
+  }
+  async replaceDynamicCommands(module: string, commands: BotCommand[]) {
+    if (!this.modules.has(module)) return;
+    const previous = this.dynamicNames.get(module) || new Set<string>();
+    const names = new Set<string>();
+    for (const command of commands) {
+      if (
+        names.has(command.data.name) ||
+        (this.commands.has(command.data.name) && !previous.has(command.data.name))
+      )
+        throw new HttpError(409, 'Конфликт имени slash-команды: ' + command.data.name);
+      names.add(command.data.name);
+    }
+    if (this.commands.size - previous.size + commands.length > 100)
+      throw new HttpError(400, 'Превышен лимит 100 slash-команд');
+    const before = [...previous].map((name) => this.commands.get(name)?.command.data.toJSON());
+    if (JSON.stringify(before) === JSON.stringify(commands.map((command) => command.data.toJSON()))) return;
+    for (const name of previous) this.commands.delete(name);
+    for (const command of commands) this.commands.set(command.data.name, { module, command });
+    this.dynamicNames.set(module, names);
+    await this.registerCommands();
   }
   async load(sources: ModuleSource[]) {
     for (const source of sources) {
@@ -97,6 +124,18 @@ export class ModuleManager {
     );
   }
   async dispatch(interaction: Interaction) {
+    if (interaction.isAutocomplete()) {
+      if (this.stopping || interaction.guildId !== this.context.config.guildId) return;
+      try {
+        const command = this.commands.get(interaction.commandName)?.command;
+        if (command?.autocomplete) await command.autocomplete(interaction, this.runtime);
+        else await interaction.respond([]);
+      } catch (error) {
+        this.context.errors.report(error, 'command.autocomplete');
+        if (!interaction.responded) await interaction.respond([]);
+      }
+      return;
+    }
     if (
       !interaction.isChatInputCommand() &&
       !interaction.isButton() &&
@@ -237,7 +276,11 @@ export class ModuleManager {
       if (scope !== 'interaction')
         telemetry.observe(
           scope.split('.')[0],
-          interaction.isChatInputCommand() ? interaction.commandName : 'interaction',
+          interaction.isChatInputCommand()
+            ? scope.startsWith('custom-commands.')
+              ? 'run'
+              : interaction.commandName
+            : 'interaction',
           success ? 'success' : 'error',
           received,
         );

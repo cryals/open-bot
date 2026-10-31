@@ -21,6 +21,9 @@ try {
   if (existsSync(outbox)) await cp(outbox, resolve(destination, 'activity-outbox'), { recursive: true });
   const tickets = resolve(dirname(config.databasePath), 'ticket-files');
   if (existsSync(tickets)) await cp(tickets, resolve(destination, 'ticket-files'), { recursive: true });
+  const guildBackups = resolve(dirname(config.databasePath), 'guild-backups');
+  if (existsSync(guildBackups))
+    await cp(guildBackups, resolve(destination, 'guild-backups'), { recursive: true });
   console.log('Backup saved: ' + destination);
 } finally {
   db.close();

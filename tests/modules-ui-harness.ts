@@ -7,7 +7,8 @@ import { ActivityService } from '../src/server/activity.js';
 import { TicketService } from '../src/server/modules/ticket/service.js';
 import { ServerStatusService } from '../src/server/modules/game-server-status/service.js';
 import { WatchdogService } from '../src/server/modules/watchdog/service.js';
-import { ModuleDiscord, ticketSettings, AUTHOR, VIEWER, MANAGER } from './module-fixtures.js';
+import { ModuleDiscord, ticketSettings, AUTHOR, VIEWER, MANAGER, SUPPORT } from './module-fixtures.js';
+import { initialTicketConfig } from '../src/shared/modules.js';
 import { testConfig } from './fixtures.js';
 const port = Number(process.env.UI_PORT || 3320),
   mockPort = port + 1;
@@ -24,6 +25,40 @@ const discord = new ModuleDiscord(),
     watchdogHosts: ['127.0.0.1'],
   };
 const activity = new ActivityService(store, discord, [], { deliver: false });
+// UI demo metadata for the new live permission diagnostics. No Gateway or real Discord credentials.
+const demoGet = discord.rest.get.bind(discord.rest),
+  demoRole = '195000000000000001';
+discord.rest.get = async (route, options) => {
+  if (route === `/guilds/${config.guildId}`)
+    return { id: config.guildId, owner_id: AUTHOR, name: 'Демонстрационный сервер' };
+  if (route === `/guilds/${config.guildId}/roles`)
+    return [
+      { id: config.guildId, name: 'everyone', permissions: '0', position: 0 },
+      { id: demoRole, name: 'Open Bot', permissions: '8', position: 100 },
+      ...[SUPPORT, initialTicketConfig.fullRoleId, initialTicketConfig.viewRoleId].map((id) => ({
+        id,
+        name: id,
+        permissions: '0',
+        position: 1,
+        managed: false,
+      })),
+    ];
+  if (route.startsWith(`/guilds/${config.guildId}/members/`)) {
+    const id = route.split('/').at(-1)!;
+    return {
+      user: { id, username: 'Демо' },
+      roles:
+        id === config.clientId
+          ? [demoRole]
+          : id === AUTHOR
+            ? []
+            : id === MANAGER
+              ? [initialTicketConfig.fullRoleId]
+              : [initialTicketConfig.viewRoleId],
+    };
+  }
+  return demoGet(route, options);
+};
 const tickets = new TicketService(config, store, discord, activity);
 await tickets.saveConfig(ticketSettings, 0, { userId: AUTHOR, name: 'Администратор' });
 for (const [author, text] of [

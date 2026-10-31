@@ -5,7 +5,7 @@ Ticket создаёт закрытый текстовый канал для об
 ## Подготовка
 
 1. В Discord Developer Portal включите **Bot → Privileged Gateway Intents → Message Content Intent**.
-2. В окружении задайте `TICKETS_ENABLED=true` и перезапустите установленную службу.
+2. В **Настройки → Настройки приложения** включите события сообщений и Message Content, сохраните и нажмите **Перезапустить Bot**.
 3. Дайте боту View Channel, Read Message History, Send Messages, Attach Files, Manage Channels, Create Private Threads, Send Messages in Threads и Manage Threads. Права нужны в соответствующих категориях и служебном канале.
 4. Создайте отдельный текстовый служебный канал. Для `@everyone` запретите **View Channel**, двум ролям Ticket разрешите его. Не открывайте канал другим ролям и участникам; доступ бота оставьте.
 5. У ролей Ticket уберите **Administrator** и **Manage Threads**. Владельца сервера и пользователей с Administrator Discord технически нельзя скрыть от приватных каналов; не выдавайте эти права обычным пользователям.

@@ -5,6 +5,7 @@ import type { Config } from '../config.js';
 import { ErrorReporter } from './error-reporter.js';
 import type { ProcessState, RuntimeStatus } from './types.js';
 import { z } from 'zod';
+import { ApplicationSettingsStore } from '../application-settings.js';
 
 const heartbeatSchema = z.object({
   type: z.literal('heartbeat'),
@@ -22,6 +23,8 @@ const heartbeatSchema = z.object({
 });
 
 type Slot = {
+  desired: boolean;
+  intentional: boolean;
   child?: ChildProcess;
   started: number;
   lastBeat: number;
@@ -55,6 +58,8 @@ export async function supervise(config: Config) {
   writeFileSync(lockFile, JSON.stringify({ pid: process.pid }));
   closeSync(lockFile);
   const empty = (): Slot => ({
+    desired: false,
+    intentional: false,
     started: 0,
     lastBeat: 0,
     readySince: 0,
@@ -119,8 +124,9 @@ export async function supervise(config: Config) {
   process.on('uncaughtException', (error) => fatal(error, 'supervisor.uncaughtException'));
   process.on('unhandledRejection', (error) => fatal(error, 'supervisor.unhandledRejection'));
   function start(role: 'bot' | 'web' | 'metrics') {
-    if (stopping) return;
+    if (stopping || !slots[role].desired) return;
     const slot = slots[role];
+    slot.intentional = false;
     slot.started = Date.now();
     slot.lastBeat = Date.now();
     slot.readySince = 0;
@@ -182,15 +188,17 @@ export async function supervise(config: Config) {
       slot.child = undefined;
       slot.state = { ...slot.state, ready: false, pid: null, state: stopping ? 'stopped' : 'restarting' };
       broadcast();
-      if (stopping) return;
-      errors.report(
-        new Error('Worker exited: code=' + code + ', signal=' + signal),
-        'supervisor.worker-exit',
-        { role, stderr: slot.stderr },
-        true,
-      );
-      const delay =
-        Math.min(60000, 1000 * 2 ** Math.min(slot.failures++, 6)) + Math.floor(Math.random() * 500);
+      if (stopping || !slot.desired) return;
+      if (!slot.intentional)
+        errors.report(
+          new Error('Worker exited: code=' + code + ', signal=' + signal),
+          'supervisor.worker-exit',
+          { role, stderr: slot.stderr },
+          true,
+        );
+      const delay = slot.intentional
+        ? 200
+        : Math.min(60000, 1000 * 2 ** Math.min(slot.failures++, 6)) + Math.floor(Math.random() * 500);
       slot.restarts++;
       slot.state.restarts = slot.restarts;
       slot.timer = setTimeout(() => start(role), delay);
@@ -201,11 +209,46 @@ export async function supervise(config: Config) {
     // Apply migrations before either process opens the shared WAL database.
     const [{ Store }, { loadSeed }] = await Promise.all([import('../store.js'), import('../seed.js')]);
     const store = new Store(config.databasePath, config.guildId, loadSeed(), config.adminRoleId);
-    store.close();
+    const settings = new ApplicationSettingsStore(store, config);
+    settings.applyLive();
+    let restart = (
+      store.sqlite.prepare('SELECT restart_bot FROM core_controls WHERE id=1').get() as {
+        restart_bot: number;
+      }
+    ).restart_bot;
+    slots.bot.desired = slots.web.desired = true;
+    slots.metrics.desired = !!config.metricsEnabled && (config.metricsToken?.length || 0) >= 32;
     start('bot');
     start('web');
-    if (config.metricsEnabled) start('metrics');
+    if (slots.metrics.desired) start('metrics');
     monitor = setInterval(() => {
+      try {
+        settings.applyLive();
+        const enabled = !!config.metricsEnabled && (config.metricsToken?.length || 0) >= 32;
+        if (slots.metrics.desired !== enabled) {
+          slots.metrics.desired = enabled;
+          if (enabled) start('metrics');
+          else {
+            clearTimeout(slots.metrics.timer);
+            slots.metrics.intentional = true;
+            if (slots.metrics.child) send(slots.metrics.child, { type: 'shutdown' });
+          }
+        }
+        const requested = (
+          store.sqlite.prepare('SELECT restart_bot FROM core_controls WHERE id=1').get() as {
+            restart_bot: number;
+          }
+        ).restart_bot;
+        if (requested !== restart) {
+          restart = requested;
+          if (slots.bot.child) {
+            slots.bot.intentional = true;
+            send(slots.bot.child, { type: 'shutdown' });
+          }
+        }
+      } catch (error) {
+        errors.report(error, 'supervisor.settings');
+      }
       for (const [role, slot] of Object.entries(slots)) {
         const timeout =
           Date.now() - slot.lastBeat > 30000 ||

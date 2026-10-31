@@ -29,4 +29,6 @@ Use bounded labels (module/operation/outcome), correct units and explicit Bot/We
 
 ## Verification
 
+Community gauges use bounded jobs/cases/feed/form labels. Dynamic slash operation labels normalize to `run`. Separate requested, observed and applied events. AutoMod excerpts expire independently of audit; form answers and Ticket transcripts must not enter permanent browser activity logs. Credentials are encrypted and write-only through HTTP. The primary error channel is now a web setting; legacy LOG_ID only seeds it. LOG_WEBHOOK stays in technical ENV.
+
 Use existing FakeDiscord/outbox regressions as relevant and within requested validation. A real Redis test uses an explicit isolated TEST_REDIS_URL and disposable UUID key. No Redis means report the integration as skipped; do not start Docker or virtualization to obtain it on a prohibited host. Preserve production queues during diagnosis.

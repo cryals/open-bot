@@ -9,6 +9,7 @@ import { serverConfigSchema, type GameServer } from '../../../shared/modules.js'
 import type { BotMessage } from '../../../shared/blocks.js';
 import { HttpError } from '../../errors.js';
 import { telemetry } from '../../telemetry.js';
+import { ApplicationSettingsStore } from '../../application-settings.js';
 
 export function statusUrl(address: string) {
   const source = address.includes('://') ? address : 'ss14://' + address;
@@ -97,7 +98,10 @@ export class ServerStatusService {
     return result;
   }
   validate(server: GameServer) {
-    allowedEndpoint(statusUrl(server.address).href, this.config.gameServerHosts || []);
+    allowedEndpoint(
+      statusUrl(server.address).href,
+      new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts,
+    );
   }
   async get(id: string): Promise<ServerStatus> {
     const server = this.settings().document.servers.find((server) => server.id === id);
@@ -111,7 +115,10 @@ export class ServerStatusService {
     const request = (async () => {
       let value: ServerStatus;
       try {
-        const url = allowedEndpoint(statusUrl(server.address).href, this.config.gameServerHosts || []);
+        const url = allowedEndpoint(
+          statusUrl(server.address).href,
+          new ApplicationSettingsStore(this.store, this.config).get().document.gameServerHosts,
+        );
         const response = await fetch(url, {
           redirect: 'error',
           signal: AbortSignal.timeout(5000),

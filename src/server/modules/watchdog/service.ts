@@ -13,6 +13,7 @@ import {
 } from '../../../shared/modules.js';
 import { HttpError } from '../../errors.js';
 import { telemetry } from '../../telemetry.js';
+import { ApplicationSettingsStore } from '../../application-settings.js';
 export type PowerOperation = {
   id: string;
   actor: string;
@@ -51,7 +52,11 @@ export class WatchdogService {
   }
   save(document: unknown, version: number) {
     const parsed = watchdogConfigSchema.parse(document);
-    for (const server of parsed.servers) allowedEndpoint(server.address, this.config.watchdogHosts || []);
+    for (const server of parsed.servers)
+      allowedEndpoint(
+        server.address,
+        new ApplicationSettingsStore(this.store, this.config).get().document.watchdogHosts,
+      );
     const targets = parsed.servers.map(
       (server) => new URL(server.address).href.replace(/\/+$/, '') + '/instances/' + server.instance,
     );
@@ -75,7 +80,10 @@ export class WatchdogService {
     return server;
   }
   private request(server: WatchdogServer, action: string, params: Record<string, string> = {}) {
-    const base = allowedEndpoint(server.address, this.config.watchdogHosts || []);
+    const base = allowedEndpoint(
+      server.address,
+      new ApplicationSettingsStore(this.store, this.config).get().document.watchdogHosts,
+    );
     const url = new URL(
       base.href.replace(/\/$/, '') + `/instances/${encodeURIComponent(server.instance)}/${action}`,
     );

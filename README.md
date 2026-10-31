@@ -35,6 +35,9 @@ Open Bot is the product name. **Open Space** is the community used in the suppli
 
 ## Features
 
+- **Community modules:** moderation cases/logs, AutoMod/AutoBan/AntiRaid/Slowmode, role menus, autoresponders, custom slash commands, forms, giveaways, feeds, Starboard and daily guild snapshots. [Guide](docs/user/community.md).
+- **Web configuration:** operational settings and role capabilities live in SQLite; ENV contains secrets and deployment parameters. Gateway changes require an explicit Bot restart.
+
 - **Rules that members can browse.** One public entry message, private navigation, logical pages, and an introduction that stays visible on every page.
 - **A visual Components V2 editor.** Text, containers, sections, images, galleries, files, dividers, and link buttons. Reorder, duplicate, or move blocks between containers.
 - **Messages sent as the bot.** Drafts, templates, up to ten messages per dispatch, notification settings, and edits to previously sent messages using saved IDs.

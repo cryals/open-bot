@@ -14,6 +14,8 @@ import type { ActivityService } from '../activity.js';
 import type { Publisher } from '../publisher.js';
 import type { ErrorReporter } from './error-reporter.js';
 import type { ModuleManager } from './module-manager.js';
+import type { Capability } from '../../shared/settings.js';
+import type { DiscordPort } from '../discord.js';
 
 export type ProcessState = {
   activityError?: string | null;
@@ -33,9 +35,13 @@ export type ModuleState = {
 };
 export type CommandContext = { interaction: ChatInputCommandInteraction; ackMs: number; signal: AbortSignal };
 export type BotCommand = {
+  autocomplete?: (
+    interaction: import('discord.js').AutocompleteInteraction,
+    context: BotContext,
+  ) => Promise<void>;
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder;
   admin?: boolean;
-  permission?: 'ticketManage';
+  permission?: 'ticketManage' | Capability;
   execute: (context: CommandContext, runtime: BotContext) => Promise<void>;
 };
 export type ModuleLifecycle<Context> = {
@@ -47,6 +53,11 @@ export type ModuleLifecycle<Context> = {
   stop?: (context: Context, signal: AbortSignal) => Promise<void>;
 };
 export type BotModule = ModuleLifecycle<BotContext> & {
+  requirements?: {
+    intents?: (keyof import('../../shared/settings.js').ApplicationSettings['gateway'])[];
+    permissions?: bigint[];
+    events?: string[];
+  };
   commands?: BotCommand[];
   buttons?: {
     prefix: string;
@@ -70,4 +81,7 @@ export type BotContext = {
   errors: ErrorReporter;
   manager: ModuleManager;
   status: () => RuntimeStatus;
+};
+export type ModuleContext = Pick<BotContext, 'config' | 'store' | 'activity' | 'errors'> & {
+  discord: DiscordPort;
 };

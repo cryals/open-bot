@@ -96,6 +96,46 @@ export class MetricsExporter {
           : 0,
       );
     }
+    const jobs = new Gauge({
+      name: 'open_bot_module_jobs',
+      help: 'Durable module jobs by kind and state',
+      labelNames: ['kind', 'state'],
+      registers: [runtime],
+    });
+    for (const row of this.store.sqlite
+      .prepare('SELECT kind,state,COUNT(*) n FROM core_jobs GROUP BY kind,state')
+      .all() as { kind: string; state: string; n: number }[])
+      jobs.set({ kind: row.kind, state: row.state }, row.n);
+    const cases = new Gauge({
+      name: 'open_bot_moderation_cases',
+      help: 'Moderation cases by action and outcome',
+      labelNames: ['action', 'state'],
+      registers: [runtime],
+    });
+    for (const row of this.store.sqlite
+      .prepare('SELECT action,state,COUNT(*) n FROM moderation_cases GROUP BY action,state')
+      .all() as { action: string; state: string; n: number }[])
+      cases.set({ action: row.action, state: row.state }, row.n);
+    const deliveries = new Gauge({
+      name: 'open_bot_feed_delivery',
+      help: 'Subscription delivery states',
+      labelNames: ['state'],
+      registers: [runtime],
+    });
+    for (const row of this.store.sqlite
+      .prepare('SELECT state,COUNT(*) n FROM feed_delivery GROUP BY state')
+      .all() as { state: string; n: number }[])
+      deliveries.set({ state: row.state }, row.n);
+    const forms = new Gauge({
+      name: 'open_bot_form_submissions',
+      help: 'Retained form submissions by state',
+      labelNames: ['state'],
+      registers: [runtime],
+    });
+    for (const row of this.store.sqlite
+      .prepare('SELECT state,COUNT(*) n FROM form_submissions GROUP BY state')
+      .all() as { state: string; n: number }[])
+      forms.set({ state: row.state }, row.n);
     return (await registry.metrics()) + '\n' + (await runtime.metrics());
   }
   async start() {

@@ -14,6 +14,8 @@
 - [Игровые серверы SS14](user/game-servers.md)
 - [Watchdog](user/watchdog.md)
 - [Prometheus и Grafana](user/metrics.md)
+- [Модули сообщества и настройки](user/community.md)
+- [Каталог модулей](user/catalog.md)
 - [Журнал, версии и восстановление](user/logs.md)
 - [Slash-команды](user/commands.md)
 - [Решение проблем](user/troubleshooting.md)
@@ -27,6 +29,7 @@
 - [Создание и обслуживание модулей](developer/modules.md)
 - [Журнал, ошибки и метрики](developer/telemetry.md)
 - [Контракты тикетов и внешних сервисов](developer/integrations.md)
+- [Устройство модулей сообщества](developer/community.md)
 - [Разработка, проверка и выпуск](developer/workflow.md)
 - [Проектные навыки Codex](developer/skills.md)
 

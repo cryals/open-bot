@@ -44,7 +44,9 @@ import { blockText } from '../shared/blocks.js';
 import { BlocksPreview } from './BlockPreview.js';
 import { useActivity } from './activity.js';
 import { Logo } from './Logo.js';
+import { ApplicationSettings } from './ApplicationSettings.js';
 import type { Access } from '../shared/modules.js';
+import { capabilityNames } from '../shared/settings.js';
 import type { ModuleKind } from './Modules.js';
 const Modules = lazy(() => import('./Modules.js').then((module) => ({ default: module.Modules })));
 const moduleTitles: Record<ModuleKind, string> = {
@@ -52,6 +54,8 @@ const moduleTitles: Record<ModuleKind, string> = {
   servers: 'Игровые серверы',
   watchdog: 'SS14 Watchdog',
   metrics: 'Метрики',
+  community: 'Модули сообщества',
+  moderation: 'Модерация',
 };
 const Composer = lazy(() => import('./Composer.js').then((module) => ({ default: module.Composer })));
 const ActivityView = lazy(() =>
@@ -108,7 +112,11 @@ export function App() {
   const [access, setAccess] = useState<Access | null>(null);
   const activityError = useActivity(
     login.kind === 'member',
-    access?.admin ? '/activity' : '/tickets/activity',
+    access?.admin
+      ? '/activity'
+      : access?.formReviewer || capabilityNames.some((key) => access?.[key])
+        ? '/community/activity'
+        : '/tickets/activity',
   );
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [document, setDocument] = useState<RulesDocument | null>(null);
@@ -301,7 +309,7 @@ export function App() {
     return (
       <main className="ticket-only">
         <header>
-          <h1>Open Bot · Тикеты</h1>
+          <h1>Open Bot · Управление сервером</h1>
           <div>
             <a className="button" href={documentation('user/tickets')} target="_blank" rel="noreferrer">
               Руководство
@@ -320,7 +328,33 @@ export function App() {
           </div>
         </header>
         <Suspense fallback={<p>Открываем тикеты…</p>}>
-          <Modules kind="tickets" access={access} />
+          <nav className="module-toolbar">
+            {access.ticketView && (
+              <button className="button" onClick={() => setMode('tickets')}>
+                Тикеты
+              </button>
+            )}
+            {(access.moderationView || access.moderationManage) && (
+              <button className="button" onClick={() => setMode('moderation')}>
+                Модерация
+              </button>
+            )}
+            <button className="button" onClick={() => setMode('community')}>
+              Модули
+            </button>
+          </nav>
+          <Modules
+            kind={
+              mode === 'tickets' && access.ticketView
+                ? 'tickets'
+                : mode === 'moderation' && (access.moderationView || access.moderationManage)
+                  ? 'moderation'
+                  : mode === 'rules' && access.ticketView
+                    ? 'tickets'
+                    : 'community'
+            }
+            access={access}
+          />
         </Suspense>
       </main>
     );
@@ -878,6 +912,7 @@ export function App() {
                   Открыть конструктор информации
                 </button>
               </section>
+              {guild && <ApplicationSettings guild={guild} />}
             </div>
             <aside className="settings-card status-card">
               <Radio size={24} />

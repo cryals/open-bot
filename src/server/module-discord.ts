@@ -1,5 +1,5 @@
 import type { APIMessageTopLevelComponent } from 'discord.js';
-import type { Block } from '../shared/blocks.js';
+import type { Block, BotMessage } from '../shared/blocks.js';
 import type { Store } from './store.js';
 import type { DiscordPort } from './discord.js';
 import { customMessage } from './blocks.js';
@@ -7,6 +7,7 @@ import { MediaService } from './media.js';
 import { restPort } from './module-http.js';
 import { HttpError } from './errors.js';
 import { hash } from './store.js';
+export type DeliveryOptions = Pick<BotMessage, 'silent' | 'mentions'>;
 export function prepareBlocks(
   store: Store,
   blocks: Block[],
@@ -14,18 +15,22 @@ export function prepareBlocks(
   nonce: string,
   messageId?: string,
   mentionRole?: string | null,
+  delivery?: DeliveryOptions,
 ) {
   const payload = customMessage({
     id: 'module',
     blocks,
-    silent: true,
-    mentions: { users: false, roles: false, everyone: false },
+    silent: delivery?.silent ?? true,
+    mentions: delivery?.mentions ?? { users: false, roles: false, everyone: false },
   });
   const media = new MediaService(store).prepare(payload);
   const body = {
     flags: payload.flags,
     components: [...media.components, ...extra],
-    allowed_mentions: { parse: [], roles: mentionRole ? [mentionRole] : [] },
+    allowed_mentions: {
+      parse: (['users', 'roles', 'everyone'] as const).filter((kind) => delivery?.mentions[kind]),
+      ...(delivery?.mentions.roles ? {} : { roles: mentionRole ? [mentionRole] : [] }),
+    },
     ...(messageId ? {} : { nonce: hash(nonce).slice(0, 24), enforce_nonce: true }),
     attachments: media.files.map((file, index) => ({ id: index, filename: file.name })),
   };
@@ -54,11 +59,19 @@ export async function sendBlocks(
   nonce: string,
   messageId?: string,
   mentionRole?: string | null,
-) {
-  const request = prepareBlocks(store, blocks, extra, nonce, messageId, mentionRole);
+  delivery?: DeliveryOptions,
+): Promise<string> {
+  const request = prepareBlocks(store, blocks, extra, nonce, messageId, mentionRole, delivery);
   const rest = restPort(discord);
-  const response = messageId
-    ? await rest.patch(`/channels/${channel}/messages/${messageId}`, request)
-    : await rest.post(`/channels/${channel}/messages`, request);
+  let response: unknown;
+  try {
+    response = messageId
+      ? await rest.patch(`/channels/${channel}/messages/${messageId}`, request)
+      : await rest.post(`/channels/${channel}/messages`, request);
+  } catch (error) {
+    if (messageId && (error as { code?: number }).code === 10008)
+      return sendBlocks(discord, store, channel, blocks, extra, nonce, undefined, mentionRole, delivery);
+    throw error;
+  }
   return (response as { id: string }).id;
 }

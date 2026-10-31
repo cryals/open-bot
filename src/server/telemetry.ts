@@ -48,13 +48,17 @@ export const telemetry = new (class {
     registers: [this.registry],
   });
   private timer?: ReturnType<typeof setInterval>;
+  private defaultMetricsStarted = false;
   observe(module: string, operation: string, outcome: string, started: number) {
     this.operations.inc({ module, operation, outcome });
     this.duration.observe({ module, operation }, (Date.now() - started) / 1000);
   }
   start(store: Store, role: string, onError: (error: unknown) => void) {
     this.registry.setDefaultLabels({ worker: role });
-    collectDefaultMetrics({ register: this.registry, prefix: 'open_bot_' });
+    if (!this.defaultMetricsStarted) {
+      collectDefaultMetrics({ register: this.registry, prefix: 'open_bot_' });
+      this.defaultMetricsStarted = true;
+    }
     let busy = false;
     const snapshot = async () => {
       if (busy) return;

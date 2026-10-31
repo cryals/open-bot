@@ -10,8 +10,9 @@
   "scripts": {
     "dev": "concurrently -k -n server,web \"tsx watch src/server/index.ts\" \"vite --host 127.0.0.1\"",
     "build": "npm run typecheck && vite build && tsc -p tsconfig.server.json",
-    "docs:build": "python -m mkdocs build --strict",
-    "docs:dev": "python -m mkdocs serve",
+    "docs:generate": "tsx scripts/module-reference.ts",
+    "docs:build": "npm run docs:generate && python -m mkdocs build --strict",
+    "docs:dev": "npm run docs:generate && python -m mkdocs serve",
     "ui:modules": "tsx tests/modules-ui-harness.ts",
     "ui:harness": "tsx tests/ui-harness.ts",
     "start": "node --enable-source-maps dist/server/src/server/index.js",

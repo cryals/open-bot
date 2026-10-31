@@ -2,9 +2,29 @@ name: Documentation
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'mkdocs.yml', 'requirements-docs.txt', '.github/workflows/docs.yml']
+    paths:
+      [
+        'docs/**',
+        'src/**',
+        'scripts/module-reference.ts',
+        'package.json',
+        'package-lock.json',
+        'mkdocs.yml',
+        'requirements-docs.txt',
+        '.github/workflows/docs.yml',
+      ]
   pull_request:
-    paths: ['docs/**', 'mkdocs.yml', 'requirements-docs.txt', '.github/workflows/docs.yml']
+    paths:
+      [
+        'docs/**',
+        'src/**',
+        'scripts/module-reference.ts',
+        'package.json',
+        'package-lock.json',
+        'mkdocs.yml',
+        'requirements-docs.txt',
+        '.github/workflows/docs.yml',
+      ]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,6 +36,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Generate module pages and navigation
+        run: npm run docs:generate
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'

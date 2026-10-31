@@ -17,10 +17,10 @@
       "version": "1.0.0"
     }
   ],
-  "title": "Open Bot — Modules and Tickets",
+  "title": "Open Bot — Modules, Moderation and Tickets",
   "uid": "open-bot-modules",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -344,6 +344,94 @@
         },
         "overrides": []
       }
+    },
+    {
+      "gridPos": {
+        "w": 12,
+        "x": 0,
+        "h": 8,
+        "y": 48.0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "type": "timeseries",
+      "title": "Module jobs",
+      "targets": [
+        {
+          "expr": "open_bot_module_jobs",
+          "refId": "A",
+          "legendFormat": "{{kind}} / {{state}}"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "gridPos": {
+        "w": 12,
+        "x": 12,
+        "h": 8,
+        "y": 48.0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "type": "timeseries",
+      "title": "Moderation cases",
+      "targets": [
+        {
+          "expr": "open_bot_moderation_cases",
+          "refId": "A",
+          "legendFormat": "{{action}} / {{state}}"
+        }
+      ],
+      "id": 14
+    },
+    {
+      "gridPos": {
+        "w": 12,
+        "x": 0,
+        "h": 8,
+        "y": 56.0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "type": "timeseries",
+      "title": "Feed deliveries",
+      "targets": [
+        {
+          "expr": "open_bot_feed_delivery",
+          "refId": "A",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "gridPos": {
+        "w": 12,
+        "x": 12,
+        "h": 8,
+        "y": 56.0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "type": "timeseries",
+      "title": "Form submissions",
+      "targets": [
+        {
+          "expr": "open_bot_form_submissions",
+          "refId": "A",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "id": 16
     }
   ]
 }

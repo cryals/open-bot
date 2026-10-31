@@ -36,7 +36,7 @@
 4. В каналах публикации выдайте **View Channel**, **Send Messages**, **Read Message History** и **Attach Files**. Для журнала и ошибок также нужен доступ к соответствующим каналам.
 5. Заполните `.env`, выполните `npm ci`, `npm run build`, затем `npm start`.
 
-База использует intent `Guilds`. При `TICKETS_ENABLED=true` добавляются GuildMessages и привилегированный MessageContent, который нужно включить в Developer Portal. Server Members не нужен. Команды регистрируются в `GUILD_ID` автоматически.
+База использует intent `Guilds`. Для Ticket включите GuildMessages и MessageContent в настройках приложения и Message Content в Developer Portal. AutoBan/AntiRaid требуют Members Intent. Команды регистрируются в `GUILD_ID` автоматически.
 
 ## Вход и права
 
@@ -142,6 +142,8 @@ node scripts/readme-badges.mjs
 Автотесты используют FakeDiscord. Существующий `tests/ui-harness.ts` предназначен для изолированной ручной проверки, production его не импортирует.
 
 ## Новые модули и окружение
+
+Рабочие флаги, разрешённые хосты и канал ошибок редактируются в панели. Перечисленные ниже старые флаги ENV используются только при первом создании application settings; после миграции SQLite имеет приоритет. Секреты и listeners остаются в ENV. См. [руководство модулей](user/community.md).
 
 | Переменная                                | Назначение                                                | По умолчанию         |
 | ----------------------------------------- | --------------------------------------------------------- | -------------------- |

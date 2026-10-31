@@ -33,11 +33,18 @@ export class DiscordService extends DiscordRest {
     return new Client({
       intents: [
         GatewayIntentBits.Guilds,
-        ...(config.ticketEnabled ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] : []),
+        ...(config.gateway?.messages ? [GatewayIntentBits.GuildMessages] : []),
+        ...(config.gateway?.messageContent ? [GatewayIntentBits.MessageContent] : []),
+        ...(config.gateway?.members ? [GatewayIntentBits.GuildMembers] : []),
+        ...(config.gateway?.moderation ? [GatewayIntentBits.GuildModeration] : []),
+        ...(config.gateway?.reactions ? [GatewayIntentBits.GuildMessageReactions] : []),
+        ...(config.gateway?.autoModeration
+          ? [GatewayIntentBits.AutoModerationConfiguration, GatewayIntentBits.AutoModerationExecution]
+          : []),
       ],
-      partials: [Partials.Message, Partials.Channel],
+      partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember],
       allowedMentions: { parse: [] },
-      rest: { timeout: 10000, retries: 2 },
+      rest: { timeout: 10000, retries: 0 },
     });
   }
   private activity?: ActivityService;

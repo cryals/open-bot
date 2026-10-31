@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 import { snowflake } from '../shared/rules.js';
+import type { ApplicationSettings } from '../shared/settings.js';
 
 export type Config = {
   token: string;
@@ -28,6 +29,7 @@ export type Config = {
   metricsToken?: string;
   gameServerHosts?: string[];
   watchdogHosts?: string[];
+  gateway?: ApplicationSettings['gateway'];
 };
 
 export function loadConfig(): Config {
@@ -43,7 +45,7 @@ export function loadConfig(): Config {
     DATABASE_PATH: z.string().default('./data/open-bot.sqlite'),
     ADMIN_ROLE_ID: z.union([snowflake, z.literal('')]).optional(),
     TRUST_PROXY: z.enum(['true', 'false']).default('false'),
-    APP_ORIGIN: z.url().optional(),
+    APP_ORIGIN: z.union([z.url(), z.literal('')]).optional(),
     REDIS_URL: z
       .union([
         z

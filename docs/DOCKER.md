@@ -192,10 +192,10 @@ docker compose config --quiet
 
 ## Ticket и мониторинг
 
-Ticket включается через `TICKETS_ENABLED=true` и Message Content Intent в Developer Portal. Подготовьте отдельный закрытый служебный канал и права управления каналами/ветками по [руководству](user/tickets.md). `ticket-files/` сохраняется в томе вместе с SQLite и входит в backup.
+Ticket включается через события сообщений в настройках приложения и Message Content Intent в Developer Portal. Подготовьте отдельный закрытый служебный канал и права управления каналами/ветками по [руководству](user/tickets.md). `ticket-files/` сохраняется в томе вместе с SQLite и входит в backup.
 
-Для SS14 задайте `GAME_SERVER_HOSTS`, для Watchdog — `WATCHDOG_HOSTS` и `WATCHDOG_TOKEN_MAIN`. Дополнительные `WATCHDOG_TOKEN_*` явно добавляйте в `services.open-bot.environment` своего override-файла; произвольные переменные хоста контейнер не получает.
+Для SS14 и Watchdog задайте разрешённые хосты в настройках приложения. Секрет `WATCHDOG_TOKEN_MAIN` остаётся в ENV. Дополнительные `WATCHDOG_TOKEN_*` явно добавляйте в `services.open-bot.environment` своего override-файла; произвольные переменные хоста контейнер не получает.
 
-При `METRICS_ENABLED=true` нужен `METRICS_TOKEN` от 32 символов. Внутри контейнера exporter слушает `0.0.0.0:9091`, на хосте Compose публикует `${METRICS_BIND_ADDRESS:-127.0.0.1}:${METRICS_PORT:-9091}`. Подключите существующий Prometheus; Grafana и Prometheus не добавляются в Compose. Пример scrape и dashboard описаны в [метриках](user/metrics.md).
+При включении метрик в панели нужен `METRICS_TOKEN` от 32 символов. Внутри контейнера exporter слушает `0.0.0.0:9091`, на хосте Compose публикует `${METRICS_BIND_ADDRESS:-127.0.0.1}:${METRICS_PORT:-9091}`. Подключите существующий Prometheus; Grafana и Prometheus не добавляются в Compose. Пример scrape и dashboard описаны в [метриках](user/metrics.md).
 
 Документация MkDocs Material собирается отдельно и не включается в образ приложения. Python требуется только для сборки вики.

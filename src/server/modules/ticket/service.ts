@@ -16,6 +16,7 @@ import { TicketArchive } from './archive.js';
 import { restPort } from '../../module-http.js';
 import { sendBlocks, prepareBlocks } from '../../module-discord.js';
 import { permissions } from '../../access.js';
+import { ApplicationSettingsStore } from '../../application-settings.js';
 import { HttpError } from '../../errors.js';
 import { telemetry } from '../../telemetry.js';
 import { MediaService } from '../../media.js';
@@ -40,6 +41,10 @@ const controls = (id: number): APIMessageTopLevelComponent[] => [
   },
 ];
 export class TicketService {
+  gatewayAvailable() {
+    const applied = new ApplicationSettingsStore(this.store, this.config).appliedGateway();
+    return applied ? applied.messages && applied.messageContent : !!this.config.ticketEnabled;
+  }
   readonly tickets: TicketStore;
   readonly archive: TicketArchive;
   private busy = false;
@@ -76,8 +81,11 @@ export class TicketService {
   }
   async validateConfig(input: unknown) {
     const settings = ticketConfigSchema.parse(input);
-    if (settings.enabled && !this.config.ticketEnabled)
-      throw new HttpError(400, 'Включите TICKETS_ENABLED и Message Content Intent, затем перезапустите Bot');
+    if (settings.enabled && !this.gatewayAvailable())
+      throw new HttpError(
+        400,
+        'Включите сообщения и Message Content в настройках приложения, затем перезапустите Bot',
+      );
     if (!settings.enabled) return settings;
     if (!settings.staffChannelId) throw new HttpError(400, 'Выберите закрытый служебный канал');
     const rest = restPort(this.discord);
@@ -225,7 +233,8 @@ export class TicketService {
     return result;
   }
   reserve(author: string, categoryId: string, form: Record<string, string> = {}) {
-    if (!this.config.ticketEnabled) throw new HttpError(400, 'Ticket выключен в ENV');
+    if (!this.gatewayAvailable())
+      throw new HttpError(400, 'Для Ticket нужны события сообщений и Message Content');
     const category = this.category(categoryId);
     for (const question of category.questions)
       if (question.required && !form[question.id]?.trim())
@@ -383,7 +392,7 @@ export class TicketService {
   }
   async publish(channel: string, actor: { userId: string; name: string }) {
     if (!(await this.access(actor.userId)).ticketManage) throw new HttpError(403, 'Нет прав');
-    if (!this.config.ticketEnabled || !this.tickets.config().document.enabled)
+    if (!this.gatewayAvailable() || !this.tickets.config().document.enabled)
       throw new HttpError(400, 'Сначала включите и настройте Ticket');
     if (!(await this.discord.info()).channels.some((item) => item.id === channel))
       throw new HttpError(400, 'Выберите текстовый канал этого сервера');

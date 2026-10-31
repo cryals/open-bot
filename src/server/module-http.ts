@@ -18,7 +18,7 @@ export function allowedEndpoint(address: string, hosts: string[]): URL {
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash || url.search)
     throw new HttpError(400, 'Адрес должен быть HTTP(S), без пароля, query и fragment');
   if (!hosts.includes(url.hostname.toLowerCase()))
-    throw new HttpError(400, 'Хост не разрешён в ENV allowlist');
+    throw new HttpError(400, 'Хост не разрешён в настройках приложения');
   return url;
 }
 export async function limitedResponse(response: Response, limit = 256 * 1024): Promise<string> {
@@ -47,7 +47,12 @@ export function secretValues(config: Config) {
     config.redisUrl || '',
     config.metricsToken || '',
     ...Object.entries(process.env)
-      .filter(([name]) => /^WATCHDOG_TOKEN_[A-Z0-9_]+$/.test(name))
+      .filter(
+        ([name]) =>
+          /^WATCHDOG_TOKEN_[A-Z0-9_]+$/.test(name) ||
+          /(?:_SECRET|_TOKEN|_API_KEY)$/.test(name) ||
+          name === 'INTEGRATION_KEY',
+      )
       .map(([, value]) => value || ''),
   ];
 }

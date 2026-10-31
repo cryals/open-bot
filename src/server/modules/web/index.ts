@@ -7,12 +7,13 @@ import type { RuntimeStatus, ModuleLifecycle } from '../../runtime/types.js';
 import { DiscordRest } from '../../discord-rest.js';
 import { DiscordOAuth } from '../../oauth.js';
 import { createApp } from '../../app.js';
+import { webModuleMetadata } from './metadata.js';
 
 /** Loaded only in the supervised Web process; it owns no Gateway event handlers. */
 export class WebModule implements ModuleLifecycle<void> {
-  readonly id = 'web';
-  readonly title = 'Web';
-  readonly description = 'Веб-панель управления информацией, правилами и сообщениями.';
+  readonly id = webModuleMetadata.id;
+  readonly title = webModuleMetadata.title;
+  readonly description = webModuleMetadata.description;
   private app?: FastifyInstance;
   constructor(
     private config: Config,

@@ -19,7 +19,10 @@
 - Status and Watchdog are separate modules adapted from upstream space-wizards/wizard-cogs. Use exact deployment host allowlists. Store Watchdog ENV references, never tokens. Power requests require actor-bound single-use confirmation, config version checks and no automatic POST retry; unknown outcomes block the target until manual resolution.
 - Metrics runs on a dedicated optional worker/port with bearer authentication. Aggregate bounded-label snapshots across workers; retain anonymous Ticket totals across archive deletion. Never use IDs, content or URLs as metric labels.
 - The user approved a modular runtime (Core, Web, Help, Info and future modules), slash commands, supervised process recovery, and error delivery via LOG_ID with LOG_WEBHOOK fallback. An authorized administrator invoking /send-info initiates a real public update. Use the published snapshot, shared Publisher and persisted publication lock. Register modules in the catalog; derive help and command registration from their definitions.
-- The app publishes and navigates rules. It does not scan chat, automatically detect violations, or issue punishments.
+- On 2026-10-31 the user authorized the roadmap in tasks.md: Moderation/Logs, AutoMod/AutoBan/AntiRaid/Slowmode, Role Menus, Autoresponder, Custom Commands, Forms, Giveaways, Social Feeds, Starboard and Guild Backup. These are opt-in modules. AutoMod evidence is limited and expires; guild backups capture the configured last 20 messages per channel/thread.
+- Operational settings belong to versioned SQLite application/module configuration and the web panel. ENV contains secrets, OAuth/listener/deployment parameters and GUILD_ID; legacy flags seed the first application configuration only. Gateway changes require an explicit Bot restart. Keep live authorization uncached.
+- Public role actions exclude roles granting Open Bot/Ticket/form access as well as dangerous Discord permission bits. Form reviewer roles are scoped per current form, distinct from global formsView. Applicant OAuth never grants staff API access.
+- Core jobs have persisted leases/results. Do not blindly repeat unknown punishments or creation steps. Guild restore starts with closed channels, remaps IDs, preserves per-object progress and validates guild ownership before deleting source channels. Replacement requires an explicit plan and separate confirmation.
 - Activity events use UUIDs, a shared durable disk outbox, Redis Streams and a single Bot consumer writing batches to SQLite/JSONL. ACK only after persistence. Preserve local batching when Redis is unavailable. Never cache authorization or defer rules/publication/message-ID commits to the activity queue. Keep tests on FakeDiscord.
 - Follow Discord Components V2 for all bot-rendered rules and navigation. Do not use classic embeds for this experience.
 - Navigation should be ephemeral and scoped to the interacting user. The public launcher remains in the configured channel.
@@ -43,7 +46,7 @@
 - Keep draft edits separate from published revisions, and record who published a revision and when.
 - Keep interaction custom IDs versioned and compact; reject stale or unauthorized interactions safely.
 - Keep user-facing rule copy in data files or database records, not embedded across source modules.
-- Document configuration, backups, restore, and deployment. Avoid adding unrelated moderation features.
+- Document configuration, backups, restore, deployment and the authorized community modules. Integration credentials stay encrypted with the deployment INTEGRATION_KEY; never expose them to the browser/audit or import them from guild snapshots.
 
 ## Validation expectations after approval
 
@@ -60,6 +63,7 @@
 - MkDocs nav/exclude_docs defines public documentation. Exclude internal specs, review reports and local data. Documentation CI builds an independent artifact and CD publishes through GitHub Pages; account/plan failures are not passing deployments. Do not change repository visibility or billing to work around them.
 - Include changed workflows and screenshots when updating user-visible behavior. Capture with FakeDiscord, preserve clean originals, and store selected illustrations under `docs/assets/screenshots/`. Authentication state and traces stay in ignored `output/playwright/`.
 - Project skills are versioned in `skills/`: open-bot-modules, open-bot-observability and open-bot-release. Read the relevant skill when changing its area; sync installed local copies after editing. Do not assume planned modules are implemented.
+- Run `npm run docs:generate` after module metadata/command changes. It owns marked regions in `docs/user/modules/*.md`, the overview and MkDocs module navigation. Preserve handwritten notes outside markers. Documentation CI generates missing pages before building; it does not commit generated files automatically.
 - Keep release completion separate from future feature plans in tasks.md. Do not keep routine run/check reminders as unfinished feature tasks or silently mark blocked checks as passed.
 
 ## Local machine constraint

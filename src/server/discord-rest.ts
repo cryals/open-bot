@@ -31,7 +31,7 @@ export class DiscordRest implements DiscordPort {
     store: Store,
     private available: () => boolean = () => true,
   ) {
-    this.rest = new REST({ version: '10', timeout: 10000, retries: 2 }).setToken(config.token);
+    this.rest = new REST({ version: '10', timeout: 10000, retries: 0 }).setToken(config.token);
     this.media = new MediaService(store);
   }
   isReady() {

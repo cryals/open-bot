@@ -18,7 +18,7 @@ const module: BotModule = {
           notice(
             config.metricsEnabled
               ? 'Экспортёр включён. Endpoint /metrics на отдельном порту; требуется bearer token.'
-              : 'Экспортёр выключен. Настройте METRICS_ENABLED и METRICS_TOKEN.',
+              : 'Экспортёр выключен. Включите его в настройках панели; METRICS_TOKEN задаётся в ENV.',
           ),
         );
       },
