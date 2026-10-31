@@ -43,3 +43,5 @@ Use communityDefinitions, CommunityStore, JobStore and the catalog. Operational 
 Use GuildAuthority for guild ownership, hierarchy and safe roles. Public issuance excludes application-access roles and dangerous Discord permissions. Form reviewer access is per current form, distinct from formsView. Applicant OAuth never opens staff routes. Authorization bypasses the message-policy config cache.
 
 Keep unknown sanctions/restore steps stopped for reconciliation. New channels start closed. Replacement requires a confirmed plan and fresh source ownership/fingerprint checks. Never repeat an uncertain remote mutation automatically.
+
+Persist new member joins before the bounded Gateway message queue. Native AutoMod uses the shared nativeTrigger validator and exact configuration signatures before delegating; periodic and manual sync use the same scope. Reconcile unknown creates from the remote list by creator and stable marker before posting again.

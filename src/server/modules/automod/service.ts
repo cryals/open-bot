@@ -13,6 +13,7 @@ import { JobStore } from '../../jobs.js';
 import { GuildAuthority } from '../../authority.js';
 import { PermissionFlagsBits as P } from 'discord.js';
 import type { APIMessage, APIGuildMember } from 'discord.js';
+import { nativeTrigger, nativeSignature } from './native.js';
 export type ObservedMessage = {
   id: string;
   channel_id: string;
@@ -32,6 +33,7 @@ const digest = (value: string) => createHash('sha256').update(value).digest('hex
 export class MessagePolicyService {
   private phishingDomains = new Set<string>();
   private phishingNextAt = 0;
+  private nativeNextAt = 0;
   private configs: CommunityStore;
   constructor(
     private context: ModuleContext,
@@ -61,8 +63,18 @@ export class MessagePolicyService {
       return;
     let removed = false;
     if (settings.enabled) {
+      const native = this.configs.state<Record<string, string>>('automod', 'native') || {},
+        signatures = this.configs.state<Record<string, string>>('automod', 'native-signatures') || {};
       const rules = [...settings.rules]
-        .filter((rule) => rule.enabled && (!rule.native || rule.observe) && this.scope(rule, message))
+        .filter(
+          (rule) =>
+            rule.enabled &&
+            (!rule.native ||
+              rule.observe ||
+              !native[rule.id] ||
+              signatures[rule.id] !== nativeSignature(settings.enabled, rule)) &&
+            this.scope(rule, message),
+        )
         .sort((a, b) => b.priority - a.priority);
       for (const rule of rules) {
         if (!(await this.match(rule, message))) continue;
@@ -403,7 +415,14 @@ export class MessagePolicyService {
     const config = this.configs.config('automod').document;
     if (!config.enabled) return;
     const native = this.configs.state<Record<string, string>>('automod', 'native') || {},
-      rule = config.rules.find((item) => item.enabled && item.native && native[item.id] === data.rule_id);
+      signatures = this.configs.state<Record<string, string>>('automod', 'native-signatures') || {},
+      rule = config.rules.find(
+        (item) =>
+          item.enabled &&
+          item.native &&
+          native[item.id] === data.rule_id &&
+          signatures[item.id] === nativeSignature(config.enabled, item),
+      );
     if (
       !rule ||
       !['warn', 'timeout', 'kick', 'ban'].includes(rule.action) ||
@@ -420,11 +439,30 @@ export class MessagePolicyService {
         duration: rule.action === 'timeout' ? rule.duration : null,
         deleteSeconds: 0,
       },
-      `native:${key}:${rule.id}`,
+      typeof data.message_id === 'string' && typeof data.content === 'string'
+        ? `automod:${key}:${digest(data.content)}`
+        : `native:${key}:${rule.id}`,
       'native-automod',
     );
   }
+  async maintainNative() {
+    if (Date.now() < this.nativeNextAt) return;
+    this.nativeNextAt = Date.now() + 60000;
+    if (
+      this.configs.config('automod').document.rules.some((rule) => rule.native) ||
+      Object.keys(this.configs.state('automod', 'native') || {}).length
+    )
+      await this.syncNative();
+  }
   async syncNative() {
+    try {
+      await this.syncNativeRules();
+    } catch (error) {
+      this.configs.set('automod', 'native-signatures', {});
+      throw error;
+    }
+  }
+  private async syncNativeRules() {
     const { PermissionFlagsBits } = await import('discord.js'),
       { GuildAuthority } = await import('../../authority.js');
     const auth = await new GuildAuthority(this.context.config, this.context.discord, this.context.store).load(
@@ -434,14 +472,33 @@ export class MessagePolicyService {
       throw new HttpError(403, 'Нужно Manage Server для Native AutoMod');
     const settings = this.configs.config('automod').document,
       mapping = this.configs.state<Record<string, string>>('automod', 'native') || {},
+      signatures = this.configs.state<Record<string, string>>('automod', 'native-signatures') || {},
       rest = restPort(this.context.discord);
+    // List first: an unknown POST response is reconciled by our stable marker, never blindly repeated.
+    const remote = (await rest.get(`/guilds/${this.context.config.guildId}/auto-moderation/rules`, {
+      signal: AbortSignal.timeout(10000),
+    })) as { id: string; name: string; creator_id: string; trigger_type: number }[];
     for (const rule of settings.rules) {
       if (!rule.native) continue;
-      if (rule.roles.length)
-        throw new HttpError(
-          400,
-          'Native AutoMod не поддерживает ограничение только выбранными ролями; используйте режим бота',
+      const trigger = nativeTrigger(rule),
+        signature = nativeSignature(settings.enabled, rule),
+        marker = `Open Bot [${digest(rule.id).slice(0, 12)}]`,
+        known = remote.find((item) => item.id === mapping[rule.id]),
+        matches = remote.filter(
+          (item) => item.creator_id === this.context.config.clientId && item.name.startsWith(marker),
         );
+      if (matches.length > 1)
+        throw new HttpError(409, 'Дубли Native AutoMod: удалите лишнее правило в Discord');
+      if (known && known.creator_id !== this.context.config.clientId)
+        throw new HttpError(409, 'Native rule ID принадлежит другому приложению');
+      const existing = known || matches[0];
+      if (mapping[rule.id] !== existing?.id) {
+        delete signatures[rule.id];
+        if (existing) mapping[rule.id] = existing.id;
+        else delete mapping[rule.id];
+        this.configs.set('automod', 'native', mapping);
+        this.configs.set('automod', 'native-signatures', signatures);
+      }
       const exempt = [
         ...new Set([
           ...rule.exceptChannels,
@@ -454,38 +511,46 @@ export class MessagePolicyService {
       ];
       if (exempt.length > 50 || rule.exceptRoles.length > 20)
         throw new HttpError(400, 'Превышены ограничения исключений Native AutoMod; используйте режим бота');
-      if (!['words', 'invites', 'mentions'].includes(rule.filter))
-        throw new HttpError(400, 'Native поддерживает words, invites и mentions');
       const body = {
-        name: 'Open Bot: ' + rule.name,
+        name: `${marker} ${rule.name}`.slice(0, 100),
         event_type: 1,
         trigger_type: rule.filter === 'mentions' ? 5 : 1,
-        trigger_metadata:
-          rule.filter === 'mentions'
-            ? { mention_total_limit: Math.min(50, rule.threshold) }
-            : {
-                keyword_filter:
-                  rule.filter === 'invites' ? ['*discord.gg/*', '*discord.com/invite/*'] : rule.values,
-              },
+        trigger_metadata: trigger,
         actions: [{ type: 1, metadata: { custom_message: 'Сообщение заблокировано правилом сервера' } }],
         enabled: settings.enabled && rule.enabled && !rule.observe,
         exempt_roles: rule.exceptRoles,
         exempt_channels: exempt,
       };
+      // Discord cannot change trigger_type in PATCH. Remove the old type before creating its replacement.
+      if (existing && existing.trigger_type !== body.trigger_type) {
+        await rest.delete(`/guilds/${this.context.config.guildId}/auto-moderation/rules/${existing.id}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        delete mapping[rule.id];
+        delete signatures[rule.id];
+        this.configs.set('automod', 'native', mapping);
+        this.configs.set('automod', 'native-signatures', signatures);
+      }
       const result = (await rest[mapping[rule.id] ? 'patch' : 'post'](
         `/guilds/${this.context.config.guildId}/auto-moderation/rules${mapping[rule.id] ? '/' + mapping[rule.id] : ''}`,
         { body, signal: AbortSignal.timeout(10000) },
       )) as { id: string };
       mapping[rule.id] = result.id;
+      signatures[rule.id] = signature;
       this.configs.set('automod', 'native', mapping);
+      this.configs.set('automod', 'native-signatures', signatures);
     }
     for (const [id, nativeId] of Object.entries(mapping))
       if (!settings.rules.some((rule) => rule.id === id && rule.native)) {
-        await rest.delete(`/guilds/${this.context.config.guildId}/auto-moderation/rules/${nativeId}`, {
-          signal: AbortSignal.timeout(10000),
-        });
+        const existing = remote.find((item) => item.id === nativeId);
+        if (existing?.creator_id === this.context.config.clientId)
+          await rest.delete(`/guilds/${this.context.config.guildId}/auto-moderation/rules/${nativeId}`, {
+            signal: AbortSignal.timeout(10000),
+          });
         delete mapping[id];
+        delete signatures[id];
         this.configs.set('automod', 'native', mapping);
+        this.configs.set('automod', 'native-signatures', signatures);
       }
   }
   async refreshPhishing() {

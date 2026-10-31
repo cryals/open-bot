@@ -65,3 +65,23 @@ The generated output was visually compared with the source. Imagegen rescaled/re
 ## Sources and rights
 
 The [Stopco source](https://github.com/cryals/cryals/blob/main/web/public/logo/stopco.png) and existing AL-S styling were supplied by the project owner. See [THIRD_PARTY_NOTICES.md](https://github.com/cryals/open-bot/blob/main/THIRD_PARTY_NOTICES.md) for scope and upstream rights. The wordmark uses the product name **Open Bot**; supplied community rule content keeps the name **Open Space**.
+
+## Release 1.3 artwork and screenshots
+
+Generated on 2026-10-31 with built-in imagegen. Outputs were inspected and copied unchanged into the repository. These are editorial illustrations; they do not show actual Discord responses or imply performance measurements.
+
+- `assets/readme-commands-1.3.png`: `/help`, `/ping`, `/send-info`; README command illustration.
+- `assets/readme-monitoring-1.3.png`: five supported games and separate SS14 Watchdog power actions.
+- `assets/screenshots/release13-automod.png`, `release13-role-panel.png`, `release13-intents.png`, `release13-access.png`: real Playwright captures at 1480×1080 from the isolated module harness with FakeDiscord and an in-memory SQLite database. No image generation or retouching was applied to these screenshots. The role panel is an unsaved example; disabled module/restart controls retain their actual state.
+
+Final prompt for `readme-commands-1.3.png`:
+
+```text
+Create one premium editorial illustration for the GitHub README of Open Bot, a modular Discord administration bot. Wide landscape 1536x864. Dark monochrome AL-S visual language: near black #080808 background, silver and warm white typography, very fine graphite rectangular borders, square corners, restrained tiny crosshair registration marks. Beautiful tactile etched metal and fine grain, substantial negative space. NOT a screenshot and NOT a fake Discord interface. A striking sculptural white geometric terminal cube at the left, and three large beautifully typeset command strips on the right. Exact text only: top small 'OPEN BOT / COMMANDS'; first strip '/help' with small label 'MODULES & COMMANDS'; second '/ping' with small label 'GATEWAY LATENCY'; third '/send-info' with small label 'PUBLISH INFORMATION'. Footer tiny 'RELEASE 1.3'. All spellings exact. Accessible high contrast, architectural technical editorial composition, elegant Github project illustration. No colored gradients, no robots, no Discord logo, no invented performance numbers, no claim that this is actual UI.
+```
+
+Final prompt for `readme-monitoring-1.3.png`:
+
+```text
+Create a refined wide editorial raster illustration for Open Bot README and documentation, landscape 1536x640. Same visual family as fine dark monochrome technical engraving: nearly black background, warm white, gray, thin rectangular borders, tiny registration marks, etched stone and metal texture, no bright color or gradients. It is explicitly conceptual artwork, NOT a screenshot or actual app UI. Composition: one sculptural white modular cube hub at center with five distinct thin connections to understated rectangular plaques around it, balanced and spacious, not crowded. Exact title text at top 'GAME SERVER STATUS'. Five plaque labels EXACTLY: 'SPACE STATION 14', 'SPACE STATION 13', 'MINECRAFT', 'TERRARIA / TSHOCK', 'PROJECT ZOMBOID'. Bottom band command text '/server-status' then tiny 'STATUS' and '/watchdog' then tiny 'SS14 POWER ACTIONS'. These are distinct operations: status supports all five games, power actions are SS14 only. No decorative fake metrics or status values. White serif command lettering with small monospaced labels, sophisticated developer project illustration, all text spelled correctly and clearly. Use no game logos or characters.
+```

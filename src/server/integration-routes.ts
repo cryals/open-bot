@@ -147,7 +147,7 @@ export function integrationRoutes(app: FastifyInstance, config: Config, store: S
       headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded' };
     if (provider === 'reddit') {
       headers.authorization = 'Basic ' + Buffer.from(client + ':' + secret).toString('base64');
-      headers['User-Agent'] = 'OpenBot/1.0';
+      headers['User-Agent'] = 'OpenBot/1.3.0';
     }
     const response = await fetch(oauthProviders[provider].token, {
       method: 'POST',

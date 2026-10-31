@@ -11,6 +11,8 @@ import { canonicalSource } from './modules/subscriptions/providers.js';
 import { restPort } from './module-http.js';
 import { HttpError } from './errors.js';
 import { JobStore } from './jobs.js';
+import { nativeTrigger } from './modules/automod/native.js';
+import { automodSchema } from '../shared/community.js';
 
 export const moduleIntents: Partial<Record<CommunityModuleId, (keyof ApplicationSettings['gateway'])[]>> = {
   automod: ['messages', 'messageContent'],
@@ -141,6 +143,8 @@ export async function saveCommunityConfiguration(
       kick: P.KickMembers,
       ban: P.BanMembers,
     };
+  if (id === 'automod')
+    for (const rule of automodSchema.parse(parsed).rules) if (rule.native) nativeTrigger(rule);
   if (id === 'automod' || id === 'autoban')
     for (const rule of parsed.rules as {
       enabled: boolean;
@@ -154,10 +158,6 @@ export async function saveCommunityConfiguration(
         requiredPermissions.add(actionPermissions[rule.action]);
       if (rule.native) {
         requiredPermissions.add(P.ManageGuild);
-        if (rule.roles?.length)
-          throw new HttpError(400, 'Native не поддерживает ограничение только выбранными ролями');
-        if (rule.values?.some((value) => value.length > 60))
-          throw new HttpError(400, 'Ключевые слова Native не длиннее 60 символов');
         if (parsed.enabled && !applied?.autoModeration)
           throw new HttpError(409, 'Включите Gateway Auto Moderation и перезапустите Bot');
       }

@@ -1011,7 +1011,7 @@ export function App() {
         )}
         <footer className="main-footer">
           <span>
-            Open Bot · Релиз 1.0 ·{' '}
+            Open Bot · Релиз 1.3 ·{' '}
             <a href={documentation()} target="_blank" rel="noreferrer">
               Вики
             </a>

@@ -78,7 +78,7 @@ async function jsonStatus(url: URL) {
   const response = await fetch(url, {
     redirect: 'error',
     signal: AbortSignal.timeout(5000),
-    headers: { 'User-Agent': 'Open-Bot/1.0 (game status)' },
+    headers: { 'User-Agent': 'Open-Bot/1.3.0 (game status)' },
   });
   if (!response.ok) throw new Error('Game status HTTP ' + response.status);
   return JSON.parse(await limitedResponse(response, 256 * 1024)) as unknown;

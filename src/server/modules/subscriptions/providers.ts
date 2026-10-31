@@ -98,7 +98,7 @@ export class FeedProviders {
                       Buffer.from(
                         (process.env.REDDIT_CLIENT_ID || '') + ':' + (process.env.REDDIT_CLIENT_SECRET || ''),
                       ).toString('base64'),
-                    'User-Agent': 'OpenBot/1.0',
+                    'User-Agent': 'OpenBot/1.3.0',
                   },
                 }
               : {}),
@@ -222,7 +222,7 @@ export class FeedProviders {
         {
           headers: {
             Authorization: 'Bearer ' + (await this.token(provider)),
-            'User-Agent': 'OpenBot/1.0 (github.com/cryals/open-bot)',
+            'User-Agent': 'OpenBot/1.3.0 (github.com/cryals/open-bot)',
           },
         },
       );

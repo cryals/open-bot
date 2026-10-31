@@ -89,6 +89,7 @@ export class ModuleDiscord extends FakeDiscord {
     const body = options?.body || {},
       parts = path.split('/').filter(Boolean);
     if (parts[0] === 'guilds') {
+      if (parts.length === 2) return { id: testConfig.guildId, owner_id: AUTHOR, name: 'Demo guild' };
       if (parts[2] === 'channels') {
         if (method === 'get') return [...this.channels.values()].filter((channel) => channel.type !== 12);
         const channel = { ...body, id: String(++this.serial), guild_id: testConfig.guildId };
@@ -98,17 +99,27 @@ export class ModuleDiscord extends FakeDiscord {
       if (parts[2] === 'threads')
         return { threads: [...this.channels.values()].filter((channel) => channel.type === 12) };
       if (parts[2] === 'roles')
-        return [SUPPORT, initialTicketConfig.fullRoleId, initialTicketConfig.viewRoleId].map((id) => ({
+        return [
+          testConfig.guildId,
+          SUPPORT,
+          initialTicketConfig.fullRoleId,
+          initialTicketConfig.viewRoleId,
+          '444444444444444444',
+        ].map((id, position) => ({
           id,
           name: id,
-          permissions: '0',
+          permissions: id === '444444444444444444' ? '8' : '0',
+          position,
         }));
       if (parts[2] === 'members')
         return {
+          user: { id: parts[3], username: 'Demo user' },
           roles:
-            parts[3] === MANAGER
-              ? [SUPPORT, initialTicketConfig.fullRoleId]
-              : [initialTicketConfig.viewRoleId],
+            parts[3] === testConfig.clientId || parts[3] === AUTHOR
+              ? ['444444444444444444']
+              : parts[3] === MANAGER
+                ? [SUPPORT, initialTicketConfig.fullRoleId]
+                : [initialTicketConfig.viewRoleId],
         };
     }
     if (parts[0] === 'channels') {

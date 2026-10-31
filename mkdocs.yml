@@ -51,6 +51,7 @@ nav:
   - Пользователю:
       - Обзор: user/README.md
       - Установка: user/setup.md
+      - Панель шаг за шагом: user/visual-guide.md
       - Правила и информация: user/rules.md
       - Сообщения бота: user/messages.md
       - Тикеты: user/tickets.md
@@ -101,5 +102,6 @@ nav:
       - Навыки Codex: developer/skills.md
       - Runtime: MODULES.md
       - Производительность: PERFORMANCE.md
-  - Релиз 1.0: RELEASE-1.0.md
+  - Релиз 1.3: RELEASE-1.3.md
+  - Архив релиза 1.0: RELEASE-1.0.md
   - Новые модули: COMMUNITY-RELEASE.md

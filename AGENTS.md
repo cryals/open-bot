@@ -24,6 +24,7 @@
 - Operational settings belong to versioned SQLite application/module configuration and the web panel. ENV contains secrets, OAuth/listener/deployment parameters and GUILD_ID; legacy flags seed the first application configuration only. Gateway changes require an explicit Bot restart. Keep live authorization uncached.
 - Public role actions exclude roles granting Open Bot/Ticket/form access as well as dangerous Discord permission bits. Form reviewer roles are scoped per current form, distinct from global formsView. Applicant OAuth never grants staff API access.
 - Core jobs have persisted leases/results. Do not blindly repeat unknown punishments or creation steps. Guild restore starts with closed channels, remaps IDs, preserves per-object progress and validates guild ownership before deleting source channels. Replacement requires an explicit plan and separate confirmation.
+- Persist member joins before the bounded Gateway message queue. Native AutoMod delegation requires an exact synchronized configuration signature; periodic/manual sync shares one scope and reconciles unknown creates by owned stable markers.
 - Activity events use UUIDs, a shared durable disk outbox, Redis Streams and a single Bot consumer writing batches to SQLite/JSONL. ACK only after persistence. Preserve local batching when Redis is unavailable. Never cache authorization or defer rules/publication/message-ID commits to the activity queue. Keep tests on FakeDiscord.
 - Follow Discord Components V2 for all bot-rendered rules and navigation. Do not use classic embeds for this experience.
 - Navigation should be ephemeral and scoped to the interacting user. The public launcher remains in the configured channel.
@@ -59,7 +60,7 @@
 
 ## Release and documentation
 
-- Product status is Release 1.0. This is product metadata, not a claim of uninterrupted availability or passing CI. Keep the draft version indicator: it describes editable content.
+- Product status is Release 1.3 (package/tag 1.3.0/v1.3.0). This is product metadata, not a claim of uninterrupted availability or passing CI. Keep the draft version indicator: it describes editable content.
 - Maintain user/developer sections in a standalone MkDocs Material wiki (`mkdocs.yml`, `requirements-docs.txt`, `docs/`). The web panel is only the administration application: do not reintroduce a custom /docs renderer or bundle the wiki in its build.
 - MkDocs nav/exclude_docs defines public documentation. Exclude internal specs, review reports and local data. Documentation CI builds an independent artifact and CD publishes through GitHub Pages; account/plan failures are not passing deployments. Do not change repository visibility or billing to work around them.
 - Include changed workflows and screenshots when updating user-visible behavior. Capture with FakeDiscord, preserve clean originals, and store selected illustrations under `docs/assets/screenshots/`. Authentication state and traces stay in ignored `output/playwright/`.

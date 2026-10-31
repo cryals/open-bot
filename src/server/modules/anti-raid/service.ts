@@ -28,7 +28,7 @@ export class JoinPolicyService {
     this.configs = new CommunityStore(context.store);
     this.authority = new GuildAuthority(context.config, context.discord, context.store);
   }
-  async join(data: Record<string, unknown>) {
+  join(data: Record<string, unknown>) {
     if (data.guild_id !== this.context.config.guildId || !data.user || typeof data.user !== 'object') return;
     const user = data.user as { id: string; username: string; bot?: boolean };
     if (user.bot) return;

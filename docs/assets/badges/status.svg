@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="133" height="28" viewBox="0 0 133 28" role="img" aria-label="STATUS: RELEASE">
-  <title>STATUS: RELEASE</title>
-  <rect x=".5" y=".5" width="132" height="27" fill="#080808" stroke="#444442"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="161" height="28" viewBox="0 0 161 28" role="img" aria-label="STATUS: RELEASE 1.3">
+  <title>STATUS: RELEASE 1.3</title>
+  <rect x=".5" y=".5" width="160" height="27" fill="#080808" stroke="#444442"/>
   <path d="M62 1v26" stroke="#444442"/>
-  <path d="M.5 7V.5H7 M126 27.5h6.5V21" fill="none" stroke="#f4f4f2"/>
+  <path d="M.5 7V.5H7 M154 27.5h6.5V21" fill="none" stroke="#f4f4f2"/>
   <g font-family="'DejaVu Sans Mono',monospace" font-size="11" letter-spacing=".2">
     <text x="10" y="18" fill="#969694">STATUS</text>
-    <text x="73" y="18" fill="#f4f4f2">RELEASE</text>
+    <text x="73" y="18" fill="#f4f4f2">RELEASE 1.3</text>
   </g>
 </svg>

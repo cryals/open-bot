@@ -67,6 +67,15 @@ export class CommunityRuntime {
     await this.counters.start();
     this.rawHandler = (event) => {
       if (this.stopped || event.d?.guild_id !== this.context.config.guildId) return;
+      // Join ingestion only writes the durable queue. Never drop it behind the bounded message queue.
+      if (event.t === 'GUILD_MEMBER_ADD') {
+        try {
+          this.joins.join(event.d);
+        } catch (error) {
+          this.context.errors.report(error, 'community.join');
+        }
+        return;
+      }
       if (this.pending >= 250) {
         if (Date.now() - this.overloadReportedAt >= 60000) {
           this.overloadReportedAt = Date.now();
@@ -109,7 +118,6 @@ export class CommunityRuntime {
     } else if (event.t === 'MESSAGE_DELETE') await this.starboard.event(data);
     else if (event.t === 'MESSAGE_DELETE_BULK')
       for (const id of (data.ids as string[]) || []) await this.starboard.event({ ...data, id });
-    else if (event.t === 'GUILD_MEMBER_ADD') await this.joins.join(data);
     else if (event.t === 'MESSAGE_REACTION_ADD' || event.t === 'MESSAGE_REACTION_REMOVE') {
       await this.roles.reaction(data, event.t === 'MESSAGE_REACTION_ADD');
       await this.starboard.event(data);
@@ -219,6 +227,7 @@ export class CommunityRuntime {
           ['giveaways', () => this.giveaways.tick()],
           ['starboard', () => this.starboard.tick()],
           ['phishing-source', () => this.policies.refreshPhishing()],
+          ['automod', () => this.policies.maintainNative()],
           ['subscriptions', () => this.feeds.tick()],
           ['guild-backup', () => this.backup.tick()],
         ] as const;
