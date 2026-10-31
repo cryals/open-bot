@@ -67,6 +67,7 @@
 - Project skills are versioned in `skills/`: open-bot-modules, open-bot-observability and open-bot-release. Read the relevant skill when changing its area; sync installed local copies after editing. Do not assume planned modules are implemented.
 - Run `npm run docs:generate` after module metadata/command changes. It owns marked regions in `docs/user/modules/*.md`, the overview and MkDocs module navigation. Preserve handwritten notes outside markers. Documentation CI generates missing pages before building; it does not commit generated files automatically.
 - Module reference headers use conceptual artwork from `docs/assets/modules/<module-id>.png`; the generator includes available images below each title. Keep full imagegen prompts in the artwork manifest and distinguish these illustrations from actual UI screenshots.
+- Wiki styling lives in `docs/assets/stylesheets/open-bot.css`, with the `open-bot` Material scheme and custom primary/accent. Match the panel's B&W tokens and typography; preserve native search, navigation, mobile drawers, keyboard focus and legible print output.
 - Keep release completion separate from future feature plans in tasks.md. Do not keep routine run/check reminders as unfinished feature tasks or silently mark blocked checks as passed.
 
 ## Local machine constraint

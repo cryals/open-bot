@@ -16,9 +16,9 @@ theme:
   logo: assets/favicon.svg
   favicon: assets/favicon.svg
   palette:
-    scheme: slate
-    primary: black
-    accent: grey
+    scheme: open-bot
+    primary: custom
+    accent: custom
   features:
     - navigation.tabs
     - navigation.sections
@@ -27,6 +27,9 @@ theme:
     - content.code.copy
     - search.suggest
     - search.highlight
+extra_css:
+  - 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap'
+  - assets/stylesheets/open-bot.css
 plugins:
   - search:
       lang: [ru, en]
